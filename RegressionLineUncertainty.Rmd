@@ -1,0 +1,189 @@
+---
+title: "LineUncertainty"
+author: "Christophe Bontemps"
+date: "2023-05-16"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    keep_md: yes
+    code_folding: show
+    fig_width: 6.5
+    fig_height: 4
+  pdf_document:
+    df_print: kable
+    toc: yes
+    keep_tex: yes
+    fig_width: 6.5
+    fig_height: 4
+    extra_dependencies: ["float"]
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Knitr_Global_Options, include=FALSE, cache=FALSE}
+library(knitr)
+opts_chunk$set(warning = FALSE, message = FALSE, 
+               fig.pos = "!H", fig.align = "center",
+               autodep = TRUE, tidy = FALSE, cache = TRUE)
+#opts_chunk$set(cache.rebuild=TRUE) 
+
+# My colors:
+SIAP.color <- "#0385a8"
+```
+
+`r if(knitr:::pandoc_to() == "latex") {paste("\\large")}` 
+
+
+```{r}
+
+# Based on https://github.com/mjskay/uncertainty-examples/blob/master/linear-regression.md
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(rstanarm)
+library(modelr)
+library(tidybayes)
+
+library(gganimate)
+library(colorspace)
+library(cowplot)
+library(patchwork)
+
+```
+
+# Create a data frame
+
+```{r}
+set.seed(123)
+sample_size = 60
+a = 1
+b = 2
+sigma = 3
+
+
+df = data_frame(
+  x = seq(1, 10, length.out = sample_size),
+  y = rnorm(sample_size, a + b * x, sigma),
+  group = rep(c("a", "b"), sample_size/2),
+  x_centered = x - mean(x)
+) 
+```
+
+
+```{r}
+df %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_point(color = SIAP.color)  +
+  scale_x_continuous( limits = c(0, 11))+
+  scale_y_continuous( limits = c(0, 28))+
+  theme_minimal()
+```
+
+
+```{r}
+m = stan_glm(y ~ x, data = df)
+```
+
+```{r}
+df %>%
+  add_fitted_draws(m) %>%
+  ggplot(aes(x = x, y = .value)) +
+  stat_lineribbon(.width = c(.50, .80, .95), fill = "gray50", alpha = .15) +
+  geom_point(aes(y = y), data = df, color = SIAP.color)  +
+  scale_x_continuous( limits = c(0, 11))+
+  scale_y_continuous( limits = c(0, 28))+
+  theme_minimal()
+  
+```
+### Overplotted regression lines
+
+```{r}
+df %>%
+  add_fitted_draws(m, n = 20) %>%
+  ggplot(aes(x = x, y = .value)) +
+  geom_line(aes(group = .draw), alpha = 0.4, color = SIAP.color) +
+  geom_point(aes(y = y), data = df, color = SIAP.color) +
+  scale_x_continuous( limits = c(0, 11))+
+  scale_y_continuous( limits = c(0, 28))+
+  theme_minimal()
+```
+
+# Regression lines  animated 
+
+```{r}
+p = df %>%
+  add_fitted_draws(m, n = 100) %>%
+  ggplot(aes(x = x, y = .value)) +
+  geom_line(color = "#3573b9", size = 1) +
+  geom_point(aes(y = y), data = df)  +
+  scale_x_continuous( limits = c(0, 11))+
+  scale_y_continuous( limits = c(0, 28))+
+  transition_manual(.draw) +
+  theme_minimal()
+
+animate(p, fps = 2.5, res = 100, width = 500, height = 500)
+```
+
+# Posterior bayes predictions with uncertainty bands
+
+```{r}
+df %>%
+  add_predicted_draws(m) %>%
+  ggplot(aes(x = x, y = y)) +
+  stat_lineribbon(aes(y = .prediction), color = "black") +
+  geom_point(data = df, color = SIAP.color)  +
+  scale_x_continuous( limits = c(0, 11))+
+  scale_y_continuous( limits = c(0, 28))+
+  scale_fill_discrete_sequential(palette = "Blues", nmax = 5, order = 2:4) +
+  theme_minimal()+
+  theme(legend.position = "none")
+```
+
+# Now arima prediction 
+
+```{r}
+library(brms)
+library(bsts)
+```
+## Data set 
+
+```{r}
+set.seed(250)
+t_drift = arima.sim(list(order = c(1,0,0), ar = 0.8), n = 50) + 0.50 * seq(1,50)
+t_drift_df = data_frame(
+  time = seq_along(t_drift),
+  y = as.vector(t_drift)
+)
+```
+
+
+```{r}
+t_drift_df %>%
+  ggplot(aes(x = time, y = y)) +
+  geom_point(color= SIAP.color)+ 
+  theme_minimal()
+```
+## estimates
+
+A simple autoregressive model in brms:
+
+
+```{r, cache = TRUE}
+# see https://github.com/mjskay/uncertainty-examples/blob/master/arima.md
+# m <- brm(y ~ 1 + time, autocor = cor_ar(~ 1, p = 1), data = t_drift_df)
+```
+
+```{r}
+# t_drift_df %>%
+#   add_predicted_draws(m, n = 20) %>%
+#   ggplot(aes(x = time, y = .prediction)) +
+#   geom_line(aes(group = .draw), alpha = 1/20) +
+#   geom_point(aes(y = y), data = t_drift_df, color = SIAP.color)
+```
+
+

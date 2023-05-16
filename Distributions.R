@@ -2,6 +2,8 @@ library(ggplot2)
 set.seed(123) # for reproducibility
 SIAP.color <- "#0385a8"
 
+
+
 # create data set with bimodal variable
 df <- data.frame(x = c(rnorm(50, -2, 1), rnorm(100, 2, 1.5)))
 

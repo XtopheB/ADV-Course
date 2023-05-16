@@ -1,0 +1,119 @@
+---
+title: "LineUncertainty"
+author: "Christophe Bontemps"
+date: "2023-05-16"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    keep_md: yes
+    code_folding: show
+    fig_width: 6.5
+    fig_height: 4
+  pdf_document:
+    df_print: kable
+    toc: yes
+    keep_tex: yes
+    fig_width: 6.5
+    fig_height: 4
+    extra_dependencies: ["float"]
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Knitr_Global_Options, include=FALSE, cache=FALSE}
+library(knitr)
+opts_chunk$set(warning = FALSE, message = FALSE, 
+               fig.pos = "!H", fig.align = "center",
+               autodep = TRUE, tidy = FALSE, cache = TRUE)
+#opts_chunk$set(cache.rebuild=TRUE) 
+
+# My colors:
+SIAP.color <- "#0385a8"
+```
+
+`r if(knitr:::pandoc_to() == "latex") {paste("\\large")}` 
+
+
+```{r}
+library(tidyverse)
+library(patchwork)
+
+```
+
+# Create a data frame
+
+```{r}
+
+set.seed(123)
+
+# Create an empty data.frame
+df <- data.frame()
+
+# Loop over years from 2003 to 2022
+for(year in 2003:2022) {
+  # Create a data.frame with 100 observations for group A, with mean increasing over time
+  a <- data.frame(year = year, group = "A", value = rnorm(100, mean = 10 + (year - 2003)*0.4, sd = 1 + (year - 2003)*0.22))
+  # Create a data.frame with 100 observations for group B, with mean increasing over time
+  b <- data.frame(year = year, group = "B", value = rnorm(100, mean = 20 - (year - 2003)*0.15, sd = 4 - (year - 2003)*0.15))
+  # Create a data.frame with 100 observations for group C, with constant mean
+  # c <- data.frame(year = year, group = "C", value = rnorm(100, mean = 15 + (year - 2003)*0.05,  sd = 3 - (year - 2003)*0.1))
+  # Bind the three data.frames together
+  df <- rbind(df, a, b)
+}
+```
+
+
+### Create the first plot (mean over time)
+
+```{r}
+p1 <-  ggplot(df, aes(x = year, y = value, color = group)) +
+   stat_summary(fun = mean, geom = "line", size = 2 ) +
+  scale_y_continuous(limits = c(0, 30)) +
+  labs(title = "Index over Time (Mean)", x = "Year", y = "SDG Indicator") + 
+   theme_minimal()
+```
+
+### Create the second plot (mean and variance over time)
+
+```{r}
+p2 <-  ggplot(df, aes(x = year, y = value, color = group, fill = group)) +
+  stat_summary(fun = mean, geom = "line", size = 2) +
+  stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "ribbon", alpha = 0.2) +
+  scale_y_continuous(limits = c(0, 30)) +
+  labs(title = "Index over Time (with uncertainty)", x = "Year", y = "SDG Indicator") +  
+   theme_minimal()
+```
+
+
+```{r}
+p3 <-  ggplot(df, aes(x = year, y = value, color = group)) +
+  stat_summary(fun = mean, geom = "line", size = 2) +
+  #stat_summary(fun.data = "mean_sdl", fun.args = list(mult = 1), geom = "ribbon", alpha = 0.2) +
+  geom_jitter(alpha = 0.2, size = 1) +
+  scale_y_continuous(limits = c(0, 30)) +
+  labs(title = "Index over Time (with observations)", x = "Year", y = "SDG Indicator") +  
+  theme_minimal()
+```
+
+# Display the plots
+### Individually
+```{r}
+p1
+p2
+p3
+
+```
+
+### Together
+```{r}
+(p1 / p2/p3)
+```
+
+
+
+
