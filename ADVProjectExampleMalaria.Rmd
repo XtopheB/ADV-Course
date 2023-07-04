@@ -1,0 +1,668 @@
+---
+title: "Data-Dased Assessment Report Example"
+subtitle: "(*Just a proposal: Other solutions exist!*)" 
+author: "Christophe Bontemps (UN SIAP)"
+output:
+  html_document:
+    code_folding: show
+    highlight: tango
+    number_sections: yes
+    theme: lumen
+  html_notebook: default
+  pdf_document:
+    keep_tex: yes
+  word_document: default
+---
+
+
+```{r setup, include=FALSE}
+# Remember to disable png for Word export...
+knitr::opts_chunk$set( message = FALSE, warning = FALSE, 
+                       results =FALSE, echo = FALSE,
+                       dev="png", 
+                       fig.height=3.5,
+                       dev.args=list(type="cairo"), dpi=96)
+
+# My colors:
+SIAP.color <- "#0385a8"
+
+# Function used to recreate ggplot standard colors
+ggplotColours <- function(n = 6, h = c(0, 360) + 15){
+  if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
+  hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
+}
+
+```
+
+```{r libraries}
+library(readxl)
+library(tidyverse)
+library(viridis)
+library(ggthemes)
+library(ggplot2)
+library(forcats)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer)
+
+```
+
+```{r sources}
+# data from https://datatopics.worldbank.org/sdgatlas/goal-3-good-health-and-well-being
+
+label <- "Tuberculosis incidence per 100k"  
+source <- "Source: World Health Organization. Global tuberculosis report 2022. Retrieved from World Development Indicators (SH.TBS.INCD)."
+
+
+df <- read.csv( file =  "DataRaw/goal03.malaria-incidence-OverTime.csv" )
+
+df <- df %>%
+ filter(type == "per1000")%>%
+  mutate_at(vars(starts_with("X")), as.numeric)
+
+
+```
+
+
+```{r long}
+# Transform the data into long format
+df_long <- df %>%
+  pivot_longer(cols = starts_with("X"), 
+               names_to = "Year", 
+               values_to = "Value") %>%
+  mutate(Year = gsub("X", "", Year)) %>%  # Remove the 'X' from Year column
+  select(!type)
+
+```
+
+
+```{r Countries}
+# Data used https://unstats.un.org/unsd/methodology/m49/overview/
+country_df <- read.csv("DataRaw/UNSD-CountryCodes.csv", sep = ";")
+
+# Select relevant columns 
+country_df <- country_df %>% 
+select(ISO.alpha3.Code, Country.or.Area, Sub.region.Name)%>%
+  rename( Country.Code = ISO.alpha3.Code, 
+          Country = Country.or.Area, 
+          Region = Sub.region.Name)
+
+# Merge with df_long
+
+df_long <-   left_join(x= df_long, y= country_df, by = "Country.Code")
+
+# Format variables
+
+df_long <- df_long %>%
+  mutate(Region = as.factor(Region), 
+         Country = as.factor(Country))
+
+```
+
+```{r SaveCsv}
+write.csv(df_long, "Data/MalariaWorld.csv", row.names =FALSE)
+
+```
+
+```{r}
+# Second file
+df2 <- read.csv( file =  "DataRaw/goal03.malaria-deaths-Agegroup.csv")
+
+df2 <- df2 %>%
+  select(!X0.28.days) %>%
+  rename(Year = Age.group)%>%
+  mutate(across(starts_with("X"), as.numeric)) %>%
+  mutate(Year = gsub("Malaria", "", Year),
+         Year = as.numeric(Year)) %>%
+  arrange(Year)
+
+
+df.Age <- df2 %>%
+  pivot_longer(cols = starts_with("X"),
+                 names_to = "Age.Group",
+                 values_to = "Value")
+
+df.Age <- df.Age %>%
+   mutate(Age = case_when(
+    Age.Group =="X1.59.months"  ~ "01-05",
+    Age.Group =="X5.14.years"  ~  "05-14",
+    Age.Group =="X15.29.years"  ~ "15-29",
+    Age.Group =="X30.49.years"  ~ "30-49",
+    Age.Group =="X50.59.years"  ~ "50-59",
+    Age.Group =="X60.69.years"  ~ "50-59",
+    Age.Group =="X70..years"  ~ "70+"  )) %>%
+  mutate(Age.Dummy = ifelse(Age.Group =="X1.59.months", "Under5", "Over5" ))
+```
+
+
+```{r}
+toexport <- df.Age %>%
+ select(Year, Age, Value)
+
+write.csv(toexport, "Data/MalariaByAge.csv", row.names=FALSE)
+rm(toexport)
+
+```
+
+```{r}
+# be careful that the dates are not equally spaced
+ggplot(df.Age) +
+ aes(x = Year, y = Value, fill = Age.Group) +
+ geom_area() +
+scale_x_continuous(breaks = c(2000, 2010, 2015, 2019))+
+ scale_fill_manual(values = c(X1.59.months = "#EFF86D", 
+                             X15.29.years = "#BD9A00",
+                             X30.49.years = "#31B425",
+                             X5.14.years = "#00C19F",
+                             X50.59.years = "#20AFEC",
+                             X60.69.years = "#B280FC",
+                             X70..years = "#FF61C3")) +
+ labs(x = "Years",
+      y = "Estimated deaths", 
+      title = "A sharp decline after 2000 should not hide that\n Malaria disproportionally affects children under 5", 
+      subtitle = "Children under the age of 5 are the most affected by Malaria ", 
+      caption = "Source: World Health Organization. Global health estimates: Leading causes of death.", 
+ fill = "Age Groups") +
+ theme_minimal()
+
+```
+
+
+
+This report is just my personal view on how I would have handled this data set, and what type of graphics I would have used. This is **not**  what **you** should have done, nor the ultimate answer to the questions asked. Please consider it as an example of what one may expect and **not** as the reference for assessing your peers. 
+
+
+
+
+
+# Exploratory analysis
+
+
+
+```{r EDA}
+library(DataExplorer)
+plot_missing(df_long)
+
+```
+
+
+```{r}
+plot_bar(df_long)
+```
+```{r}
+create_report(df_long, y = "Value")
+```
+
+
+
+```{r summaryOne}
+
+# Display summary statistics of the data
+summary(df)
+
+
+```
+```{r}
+
+
+# Create a scatter plot to visualize the relationship between DrinkingWater and Malaria
+ggplot(df, aes(x = DrinkingWater, y = Malaria)) +
+  geom_point() +
+  labs(x = "Drinking Water", y = "Malaria", title = "Scatter Plot: Drinking Water vs. Malaria")
+
+```
+
+```{r}
+# Create a box plot to compare the distribution of Malaria across different regions
+ggplot(df, aes(x = Region, y = Malaria)) +
+  geom_boxplot() +
+  labs(x = "Region", y = "Malaria", title = "Box Plot: Malaria Distribution by Region")
+```
+```{r}
+# Calculate the total population by region
+population_by_region <- aggregate(population_by2020 ~ Region, data = df, FUN = sum)
+
+# Create a bar plot to compare the total population by region
+ggplot(population_by_region, aes(x = Region, y = population_by2020)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Region", y = "Total Population", title = "Bar Plot: Total Population by Region") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+###  Data Explorer
+```{r}
+library(DataExplorer)
+plot_missing(df)
+
+```
+
+```{r}
+plot_bar(df)
+```
+
+
+
+
+
+```{r Histogram, eval = FALSE}
+SDGMM %>% filter(!is.na(Region))%>%
+  ggplot() +
+ aes(x = MortalityRate) +
+ geom_histogram(bins = 39L, fill = SIAP.color, aes(y=..density..) )+
+  # ggtitle("Histogram")+ 
+  xlab(lab3)+
+ theme_tufte()
+```
+
+We propose an histogram, with the colors of the different countries entering in the composition of each bin. We can notice a clear rupture in the distribution, with only African countries having an infant mortality rate greater than 80 deaths per 1.000 live births.
+
+```{r HistogramColor}
+# strange thta we do not have the same dnsity values....
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, fill = Region) +
+ geom_histogram(bins = 39L,  aes(y=..density..) )+
+ geom_rug(color=SIAP.color, size=0.2, alpha=0.7) +
+ annotate("rect", xmin = 80, xmax = max(SDGMM$MortalityRate),
+                  ymin = 0, ymax = 0.25,
+                  fill = ggplotColours(1) , alpha = .2)+
+ annotate("text", x = 110, y = 0.15,
+          color= "red", 
+          label = "Only African countries \n exceed a ratio of 80")+
+  ggtitle("Distribution of Infant mortality (Histogram)")+ 
+  xlab(lab3)+
+ scale_fill_hue() +
+ theme_tufte() +
+ theme(legend.position = "right")
+
+```
+
+ 
+
+```{r Density, eval = FALSE }
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate) +
+    geom_density(adjust = 0.9, fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+   ggtitle("Density estimate")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+```{r DensityMulti, eval = FALSE }
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, group=Region, fill=Region, color = Region) +
+    geom_density( adjust=2, alpha=0.2) +
+  # geom_density( fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+   ggtitle("Density estimate")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+
+```{r Rug, eval = FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate) +
+    geom_rug(color=SIAP.color, size=0.9, alpha=0.7, 
+             length = unit(0.2, "npc")) +
+   ggtitle("Rug plot")+ 
+  xlab(lab3)+
+ theme_tufte() 
+ 
+
+```
+
+```{r Jitter, eval=FALSE, include=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate, y ="") +
+    geom_jitter(color=SIAP.color, size=0.9, alpha=0.9,  height = 0.1 ) +
+   ggtitle("Points (jitter)")+ 
+  xlab(lab3)+
+ theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank())
+
+```
+
+
+Another view using a *boxplot* per region shows that most of the African countries have higher values. The vertical ranking of the regions has been chosen from the highest mean value (*Africa*) to the lowest (*Americas*). 
+
+```{r BoxplotFacet,  fig.height=3.2, out.width = "70%"}
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, y= "", fill = Region) +
+  geom_rug(aes( color = Region), alpha=0.5, 
+           length = unit(0.3, "cm"))  +
+  geom_boxplot(width=0.3 ,  alpha=0.2) +
+  ggtitle("Distribution of Infant mortality per region (Boxplot)")+ 
+  facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Oceania", "Americas" )), ncol =1) +
+  xlab(lab3)+
+ theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), 
+  legend.position = "none")
+```
+
+
+
+```{r BoxplotJitter, eval=FALSE, include=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate, y ="") +
+    geom_boxplot(width=0.3 ,fill=SIAP.color,color=SIAP.color, alpha=0.2,
+                 outlier.colour = "red", outlier.alpha = 0.3)  +
+    geom_jitter(color=SIAP.color, size=0.9, alpha=0.9, height = 0.1 ) +
+   ggtitle("Horizontal Boxplot with points (jittered)")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+```{r Densityrug, eval=FALSE, include=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate) +
+    geom_density( fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+    geom_rug(color=SIAP.color, size=0.9, alpha=0.7) +
+   ggtitle("Density estimate and rug")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+
+```{r TableHigh, echo = FALSE, results=TRUE, eval = FALSE}
+# list of countries  with high and low Maternal Mortality 
+# We observe a threshold at around 80
+thres3 <- 80
+ t <-  kbl(SDGMM[,]%>% 
+             filter(MortalityRate >thres3) %>%
+             arrange(-MortalityRate), 
+           caption = paste("List of countries with an", lab3, "greater than", thres3),
+           digits = 2)  
+
+kable_styling(t,full_width = F)
+```
+
+
+# Part 2: Working with both categorical and continuous data
+
+> *You have to analyse the deaths rate due to disasters by Region of the world and by classes of countries. You must analyse and describe the main features of this indicator when comparing the situations in the different regions of the world and for high, medium or low GHG emissions countries*. 
+
+
+```{r DataPart2}
+## data saved for part2
+
+ SDGAgg <- read.csv( file =  "RawData/SDGDataPart2.csv")
+
+```
+
+First, let us examine the allocation of the countries according to their classification as High, Medium or Low GHG emitters, per Region. We see that a high percentage of countries in Europe are classified as highly GHG emitters, contrary to countries in the Oceania region. The horizontal ordering follows the percentage of high emitters for each Region, from the smallest (*Oceania*) to the highest (*Europe*)
+
+
+```{r mosaic, fig.height=4, out.width = "70%"}
+library(RColorBrewer)
+# Tree colors
+my_highlow <- c('#fc8d59','#ffffbf','#91bfdb')
+
+SDGAgg <- SDGAgg %>%
+   mutate(
+    GHG_class = factor(GHG_class, levels=c( "High", "Medium", "Low")),
+    Region = factor(Region, levels=c( "Oceania","Africa", "Americas", "Asia",  "Europe"))
+  )
+
+
+mosaicplot(table(SDGAgg$Region, SDGAgg$GHG_class),
+  #color = TRUE,
+  #shade = FALSE,
+  col = my_highlow, off = 5,  las = 0.2,
+  main = "Countries classification in GHG emissions per region", 
+  xlab = "Regions", # label for x-axis
+  ylab = paste("Countries classification") # label for y-axis,
+)
+```
+
+Now,  we compare the number of deaths due to disasters within each region and decompose the values according by classes of GHG emissions. Here, the order of the small multiple graphics follows the total number of deaths due to disasters per region. 
+In each region of the world, the number of deaths due to disasters is higher when living in a country that is in the "*Low*" class in terms of GHG emissions. This shows an apparent inverse relationship between emissions and disasters. The countries that emit the less GHG experience more deaths due to disasters per 100.000 hab. If we think that some of these disasters may be due to climate change (floods, landslides, hurricanes), this finding is quite worrisome.  
+
+
+```{r StackedBarSmall, out.width = "80%"}
+### Small multiples
+
+SDGAgg%>%
+   filter(
+   !is.na(Region), 
+   !is.na(GHG_class)) %>%
+  mutate(
+    GHG_class = factor(GHG_class, levels=c( "Low", "Medium", "High")),
+  )%>%
+ ggplot() +
+ aes(x = GHG_class , fill = Region, weight = Disaster) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~factor(Region, levels=c( "Asia", "Oceania", "Africa", "Americas", "Europe"))
+                     , switch = "x") +    
+ scale_fill_hue() +
+labs( title= "Deaths due to disasters by region and by GHG emissions classes" ) +
+ xlab(paste("Countries GHG classes"))+
+ ylab(paste(lab11,"\n",unit11))+
+ theme_tufte() +
+ theme(legend.position = "none")
+```
+
+
+
+```{r StackedBar, eval = FALSE}
+### Stacked bars (bad idea)
+SDGAgg%>%
+   filter(
+   !is.na(Region), 
+   !is.na(GHG_class)) %>%
+  mutate(
+    Region = factor(Region, levels= c("Asia", "Africa", "Americas", "Oceania", "Europe"))
+  )%>%
+ ggplot() +
+ aes(x = GHG_class ,fill = Region, weight = Disaster) +
+ geom_bar() +
+ scale_fill_manual(values=c("#00BF7D", "#F8766D", "#A3A500",  "#E76BF3" ,"#00B0F6" )) +
+ labs( title= "Deaths due to disasters by region and by countries GHG emission classes" ) +
+ xlab(paste("Countries GHG classes"))+
+ ylab(paste(lab11, unit11))+
+ theme_tufte() +
+ theme(legend.position = "bottom")
+```
+
+
+
+```{r StackedBarDodged, eval = FALSE}
+### Dodged 
+
+SDGAgg%>%
+   filter(
+   !is.na(Region), 
+   !is.na(GHG_class)) %>%
+  mutate(
+    Region = factor(Region, levels=c( "Asia", "Africa", "Americas", "Oceania", "Europe"))
+  )%>%
+ ggplot() +
+ aes(x = GHG_class ,fill = Region, weight = Disaster) +
+ geom_bar(position = "dodge", aes(fill= Region)) +
+ scale_fill_manual(values=c("#00BF7D", "#F8766D", "#A3A500",  "#E76BF3" ,"#00B0F6" )) +
+labs( title= "Deaths due to disasters by region and by GHG emissions countries" ) +
+ xlab(paste("Countries GHG classes"))+
+ ylab(paste(lab11, unit11))+
+ theme_tufte() +
+ theme(legend.position = "bottom")
+```
+
+
+
+# Part 3: Evolution over time 
+
+
+
+> *You have to analyse the Infant Mortality for 144 countries over a long period of time (2000-2019) and to show the evolution of this indicator.  In particular, the differences in the evolution over time between countries in different regions of the world and noticeable event should be highlighted*. 
+
+
+
+```{r DataPart3}
+
+SDGExportPart3 <-read.csv( file = "RawData/SDGDataPart3.csv" )
+
+```
+
+A simple line plot, with some transparent lines, where each country is colored according to its region shows already some very interesting features: 
+
+- There is an an overall decline in the curves, with maximum values in 2000 declining for 200 to 120.
+- The countries in red (*Africa*) are at the top, while the country at the bottom are in green (*Americas*).^[Note that we have only data for these 3 regions of the world] 
+
+We also immediately notice a peak in 2010 for a country in the *Americas* region. 
+
+```{r lineplot,fig.height=3, fig.width=6, eval = TRUE}
+p <- SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  #filter(Region == "Africa" | Region == "Asia" | Region == "Americas" | Region == "Oceania") %>%
+  ggplot( ) +
+  aes(x = Year, y = Mortality, group = Country, color = Region) +
+  geom_line(alpha= 0.3, size = 1) +
+ # facet_wrap(~Region) +
+ # scale_x_discrete(breaks = seq(2000, 2019, by = 5)) +
+  ggtitle(paste(lab3, "over time", unit3)) +
+  xlab(lab3) +
+  theme_tufte() +
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 60))
+p
+```
+
+
+```{r plotly, eval = FALSE}
+library(plotly)
+ggplotly(p, 
+         #tooltip = c("country,region_name"),
+         alpha = 0.6)
+```
+
+If we decompose that line chart by region using a good ordering of the regions (not alphabetical) and using a clever choice of the alignment, we see that: 
+
+- All the curves are sharply declining from 2000 to 2019, in all regions. 
+- African countries exhibit the most important decline (almost divided by 2 in 20 years)
+- In some African countries the decline has mostly started after 2010
+- the range of Infant Mortality values for Africa countries in 2019 is very similar to the range that was observed for Asian countries in 2000. The same is true for the comparison of the  values of Asian countries in 2019 which can be compared to the range in Americas in 2000. 
+
+
+But the most striking events are for Haiti (earthquake in *2010*). We can also see a peak for Myanmar in 2008 ([Cyclone Nargis](https://en.wikipedia.org/wiki/Cyclone_Nargis#Impact)) 
+
+
+```{r linefacet, out.width = "90%"}
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Year, y = Mortality, group = Country, color = Region) +
+  geom_line(alpha= 0.3, size = 1) +
+ facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Americas"))) +
+ scale_x_discrete(breaks = seq(2000, 2019, by = 5)) +
+  ggtitle(paste(lab3, "over time per Region", unit3)) +
+  xlab(lab3) +
+ 
+  theme_tufte() +
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 60))
+```
+
+
+More globally, we can also consider the evolution,  by region and over time, of the shape of the distributions of this indicator. The vertical alignement allows for a comparison of the values, and of the countries differences (spread),  in each region over time. 
+
+```{r Ridgehisto, eval = FALSE}
+library(ggridges)
+# Plot
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = Year, fill = Year) +
+  geom_density_ridges(stat="binline", bins=30) +
+  facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Americas")), nrow =1) +
+  ggtitle(paste(lab3, "over time per Region \n", unit3)) +
+  xlab(lab3) +
+  theme_ridges() +
+  theme(legend.position = "none")
+
+
+```
+
+
+```{r Ridge, fig.height=5.8, fig.width=5, out.width = "50%"}
+#### Using densities
+
+library(ggridges)
+nb.years <- length(unique(SDGExportPart3$Year))
+mycolors <- colorRampPalette(brewer.pal(8, "Oranges"))(nb.years)
+ 
+
+# Plot
+SDGExportPart3%>% 
+  mutate(
+    Year = as.factor(Year)
+    
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = Year,  fill = ..x..) +
+  geom_density_ridges_gradient(scale = 5, rel_min_height = 0.2, color = "white") +   
+   scale_y_discrete(breaks=c(2000, 2005, 2010, 2015, 2019))+
+  # scale_fill_viridis(name = "Temp. [F]", option="cividis", ) +
+  scale_fill_gradientn(colours = mycolors)+
+  facet_wrap(~factor(Region, levels=c( "Americas", "Asia", "Africa")),
+             ncol =1) +
+  ggtitle(paste(lab3, "over time per Region")) +
+  xlab(paste(lab3, unit3)) +
+  theme_ridges() +
+  theme(legend.position = "none")
+ 
+
+```
+
+
+
+```{r BoxplotSet, fig.height=10, fig.width=5 , eval = FALSE}
+#### Using Boxplots
+# Plot
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = Year, fill = Year) +
+  geom_boxplot(outlier.colour = "grey", outlier.alpha = 0.3) +
+   facet_wrap(~factor(Region, levels=c( "Americas", "Asia", "Africa")),
+             ncol =1) +
+  ggtitle(paste0(lab3, " over time per Region\n",unit3)) +
+  xlab(lab3) +
+  theme_tufte()+
+  theme(legend.position = "none")
+
+```
+
+
+
+
+```{r}
+knitr::knit_exit()
+```
+
+

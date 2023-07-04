@@ -85,7 +85,7 @@ df %>%
 ```
 
 
-```{r}
+```{r message=TRUE, warning=TRUE, include=FALSE}
 m = stan_glm(y ~ x, data = df)
 ```
 
@@ -117,7 +117,7 @@ df %>%
 
 ```{r}
 p = df %>%
-  add_fitted_draws(m, n = 100) %>%
+  add_fitted_draws(m, n = 20) %>%
   ggplot(aes(x = x, y = .value)) +
   geom_line(color = "#3573b9", size = 1) +
   geom_point(aes(y = y), data = df)  +
@@ -126,7 +126,8 @@ p = df %>%
   transition_manual(.draw) +
   theme_minimal()
 
-animate(p, fps = 2.5, res = 100, width = 500, height = 500)
+# this generates 20 png
+# animate(p, fps = 2.5, res = 100, width = 500, height = 500)
 ```
 
 # Posterior bayes predictions with uncertainty bands
