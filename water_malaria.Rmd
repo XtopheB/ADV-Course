@@ -1,0 +1,117 @@
+---
+title: "Drinking Water and Malaria Analysis"
+author: "ZHANG Ziyue, United Nations SIAP Intern"
+date: "2023-07-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Data & Reshape Data
+
+```{r, include=FALSE}
+library(readxl)
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+
+# Read the Excel file
+# data <- read_excel("water_disease.xlsx")
+data <- read.csv2("water_malaria.csv")
+
+
+reshaped_data <- data %>%
+  pivot_longer(cols = -Country, 
+               names_to = c("Year", "Variable"), 
+               names_pattern = "([0-9]+)_(.*)", 
+               values_to = "Value") %>%
+  pivot_wider(names_from = Variable, values_from = Value)
+
+
+
+```
+
+
+## Add Region
+
+
+```{r, include=FALSE}
+# Defining a mapping of countries to regions
+region_map <- c(
+    'Afghanistan' = 'South Asia',
+    'Armenia' = 'West Asia',
+    'Australia' = 'Oceania',
+    'Azerbaijan' = 'West Asia',
+    'Bangladesh' = 'South Asia',
+    'Bhutan' = 'South Asia',
+    'Cambodia' = 'Southeast Asia',
+    'China' = 'East Asia',
+    'DPR Korea' = 'East Asia',
+    'Fiji' = 'Oceania',
+    'Georgia' = 'West Asia',
+    'India' = 'South Asia',
+    'Indonesia' = 'Southeast Asia',
+    'Iran (Islamic Rep. of)' = 'West Asia',
+    'Kazakhstan' = 'Central Asia',
+    'Kiribati' = 'Oceania',
+    'Kyrgyzstan' = 'Central Asia',
+    'Lao PDR' = 'Southeast Asia',
+    'Malaysia' = 'Southeast Asia',
+    'Maldives' = 'South Asia',
+    'Marshall Islands' = 'Oceania',
+    'Mongolia' = 'East Asia',
+    'Myanmar' = 'Southeast Asia',
+    'Nepal' = 'South Asia',
+    'New Zealand' = 'Oceania',
+    'Pakistan' = 'South Asia',
+    'Palau' = 'Oceania',
+    'Papua New Guinea' = 'Oceania',
+    'Philippines' = 'Southeast Asia',
+    'Republic of Korea' = 'East Asia',
+    'Russian Federation' = 'Eastern Europe',
+    'Samoa' = 'Oceania',
+    'Solomon Islands' = 'Oceania',
+    'Sri Lanka' = 'South Asia',
+    'Tajikistan' = 'Central Asia',
+    'Thailand' = 'Southeast Asia',
+    'Timor-Leste' = 'Southeast Asia',
+    'Tonga' = 'Oceania',
+    'Türkiye' = 'West Asia',
+    'Turkmenistan' = 'Central Asia',
+    'Tuvalu' = 'Oceania',
+    'Uzbekistan' = 'Central Asia',
+    'Vanuatu' = 'Oceania',
+    'Viet Nam' = 'Southeast Asia'
+)
+
+# Adding a region column to the dataframe
+reshaped_data <- reshaped_data %>%
+  mutate(Region = region_map[Country])
+```
+
+
+## Add Population
+
+```{r}
+library(rvest)
+# Scrape population data
+population_data <- read_html("https://www.worldometers.info/world-population/population-by-country/") %>%
+  html_table(fill = TRUE) %>%
+  .[[1]] %>%
+  rename(Country = `Country (or dependency)`, Population = `Population (2020)`) %>%
+  mutate(Population = as.numeric(gsub(",", "", Population))) %>%
+  select(Country, Population)
+
+# Merge reshaped data with population data
+reshaped_data <- reshaped_data %>%
+  left_join(population_data, by = "Country") %>%
+  rename(population_by2020 = Population)
+```
+
+
+```{r}
+write.csv(reshaped_data, "water_malaria.csv", row.names = FALSE)
+```
+

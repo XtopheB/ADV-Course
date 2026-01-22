@@ -36,7 +36,6 @@ ggplotColours <- function(n = 6, h = c(0, 360) + 15){
 
 ```{r libraries}
 library(readxl)
-library(writexl)
 library(tidyverse)
 library(viridis)
 library(ggthemes)
@@ -48,203 +47,46 @@ library(RColorBrewer)
 
 ```
 
-```{r sources}
-# data from https://datatopics.worldbank.org/sdgatlas/goal-3-good-health-and-well-being
-
-label <- "Malaria incidence per 100k"  
-source <- "Source: World Health Organization. Global tuberculosis report 2022. Retrieved from World Development Indicators (SH.TBS.INCD)."
+```{r labels}
+lab1 <- "Poverty index"
+unit1 <- "(% of pop. below pov. line)"
 
 
-df <- read.csv( file =  "DataRaw/goal03.malaria-incidence-OverTime.csv" )
-
-df <- df %>%
- filter(type == "per1000")%>%
-  mutate_at(vars(starts_with("X")), as.numeric)
+lab3 <- "Infant mortality"
+unit3 <- "(deaths per 1,000 live births)"
 
 
+lab11 <- "Deaths due to disasters"
+unit11 <- "(per 100.000 pop)"
+
+lab6 <- "Drinking water access"
+unit6 <- "(% of pop.)"
+
+lab13 <- "Total GHG"
+unit13 <- "(Mt CO₂ equivalent)"
 ```
-
-
-```{r long}
-# Transform the data into long format
-df_long <- df %>%
-  pivot_longer(cols = starts_with("X"), 
-               names_to = "Year", 
-               values_to = "Value") %>%
-  mutate(Year = gsub("X", "", Year)) %>%  # Remove the 'X' from Year column
-  select(!type)
-
-```
-
-
-```{r Countries}
-# Data used https://unstats.un.org/unsd/methodology/m49/overview/
-country_df <- read.csv("DataRaw/UNSD-CountryCodes.csv", sep = ";")
-
-# Select relevant columns 
-country_df <- country_df %>% 
-select(ISO.alpha3.Code, Country.or.Area, Sub.region.Name)%>%
-  rename( Country.Code = ISO.alpha3.Code, 
-          Country = Country.or.Area, 
-          Region = Sub.region.Name)
-
-# Merge with df_long
-
-df_long <-   left_join(x= df_long, y= country_df, by = "Country.Code")
-
-# Format variables
-
-df_long <- df_long %>%
-  mutate(Region = as.factor(Region), 
-         Country = as.factor(Country))
-
-```
-
-```{r SaveCsv}
-# write.csv(df_long, "Data/MalariaWorld.csv", row.names =FALSE)
-# writexl::write_xlsx(df_long, path = "Data/MalariaWorld.xlsx")
-```
-
-```{r}
-# Second file
-df2 <- read.csv( file =  "DataRaw/goal03.malaria-deaths-Agegroup.csv")
-
-df2 <- df2 %>%
-  select(!X0.28.days) %>%
-  rename(Year = Age.group)%>%
-  mutate(across(starts_with("X"), as.numeric)) %>%
-  mutate(Year = gsub("Malaria", "", Year),
-         Year = as.numeric(Year)) %>%
-  arrange(Year)
-
-
-df.Age <- df2 %>%
-  pivot_longer(cols = starts_with("X"),
-                 names_to = "Age.Group",
-                 values_to = "Value")
-
-df.Age <- df.Age %>%
-   mutate(Age = case_when(
-    Age.Group =="X1.59.months"  ~ "01-05",
-    Age.Group =="X5.14.years"  ~  "05-14",
-    Age.Group =="X15.29.years"  ~ "15-29",
-    Age.Group =="X30.49.years"  ~ "30-49",
-    Age.Group =="X50.59.years"  ~ "50-59",
-    Age.Group =="X60.69.years"  ~ "50-59",
-    Age.Group =="X70..years"  ~ "70+"  )) %>%
-  mutate(Age.Dummy = ifelse(Age.Group =="X1.59.months", "Under5", "Over5" ))
-```
-
-
-```{r}
-toexport <- df.Age %>%
- select(Year, Age, Value)
-
-# write.csv(toexport, "Data/MalariaByAge.csv", row.names=FALSE)
-# writexl::write_xlsx(toexport, path = "Data/MalariaByAge.xlsx")
-# rm(toexport)
-
-```
-
-```{r}
-# be careful that the dates are not equally spaced
-ggplot(df.Age) +
- aes(x = Year, y = Value, fill = Age.Group) +
- geom_area() +
-scale_x_continuous(breaks = c(2000, 2010, 2015, 2019))+
- scale_fill_manual(values = c(X1.59.months = "#EFF86D", 
-                             X15.29.years = "#BD9A00",
-                             X30.49.years = "#31B425",
-                             X5.14.years = "#00C19F",
-                             X50.59.years = "#20AFEC",
-                             X60.69.years = "#B280FC",
-                             X70..years = "#FF61C3")) +
- labs(x = "Years",
-      y = "Estimated deaths", 
-      title = "A sharp decline after 2000 should not hide that\n Malaria disproportionally affects children under 5", 
-      subtitle = "Children under the age of 5 are the most affected by Malaria ", 
-      caption = "Source: World Health Organization. Global health estimates: Leading causes of death.", 
- fill = "Age Groups") +
- theme_minimal()
-
-```
-
-
-
 This report is just my personal view on how I would have handled this data set, and what type of graphics I would have used. This is **not**  what **you** should have done, nor the ultimate answer to the questions asked. Please consider it as an example of what one may expect and **not** as the reference for assessing your peers. 
-
-
-
-
 
 # Exploratory analysis
 
 
 
-```{r EDA}
-library(DataExplorer)
-plot_missing(df_long)
+```{r Data}
+
+
+df <- read.csv( file =  "water_malaria.csv" )
+
 
 ```
-
-
-```{r}
-plot_bar(df_long)
-```
-```{r}
-create_report(df_long, y = "Value")
-```
-
 
 
 ```{r summaryOne}
 
-# Display summary statistics of the data
-summary(df)
+T <- summary()
+print(T)
 
 
 ```
-
-```{r}
-
-
-# Create a scatter plot to visualize the relationship between DrinkingWater and Malaria
-ggplot(df, aes(x = DrinkingWater, y = Malaria)) +
-  geom_point() +
-  labs(x = "Drinking Water", y = "Malaria", title = "Scatter Plot: Drinking Water vs. Malaria")
-
-```
-
-```{r}
-# Create a box plot to compare the distribution of Malaria across different regions
-ggplot(df, aes(x = Region, y = Malaria)) +
-  geom_boxplot() +
-  labs(x = "Region", y = "Malaria", title = "Box Plot: Malaria Distribution by Region")
-```
-```{r}
-# Calculate the total population by region
-population_by_region <- aggregate(population_by2020 ~ Region, data = df, FUN = sum)
-
-# Create a bar plot to compare the total population by region
-ggplot(population_by_region, aes(x = Region, y = population_by2020)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  labs(x = "Region", y = "Total Population", title = "Bar Plot: Total Population by Region") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
-
-###  Data Explorer
-```{r}
-library(DataExplorer)
-plot_missing(df)
-
-```
-
-```{r}
-plot_bar(df)
-```
-
 
 
 
