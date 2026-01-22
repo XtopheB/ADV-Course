@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.html
+*.md
+*.Rproj
+# Specific
+LineUncertainty_cache
+LineUncertainty_files
+report_files
+RegressionLineUncertainty_cache
+RegressionLineUncertainty_files
