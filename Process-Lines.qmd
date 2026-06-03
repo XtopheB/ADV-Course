@@ -1,5 +1,7 @@
 ---
-title: "From Clutter to Clarity: Improving an SDG Time Series Chart"
+title:  "From Clutter to Clarity: Improving an SDG Time Series Chart"
+subtitle: " Astep-by-step demo"
+author: "Christophe Bontemps (SIAP)"
 format:
   html:
     toc: true
@@ -10,6 +12,7 @@ execute:
   message: false
 ---
 
+
 ## Setup
 
 ```{r}
@@ -19,10 +22,8 @@ library(plotly)
 
 df_full <- gapminder
 
-focus_country <- "Japan"
 ```
 
----
 
 # Step 1: The Typical Excel Chart
 
@@ -67,7 +68,7 @@ ggplot() +
   
 ```
 
----
+
 
 # Step 2: Remove Point Markers
 
@@ -97,7 +98,7 @@ ggplot(df,
 )
 ```
 
----
+
 
 # Step 3: Reduce Visual Noise
 
@@ -126,7 +127,7 @@ ggplot(df,
 )
 ```
 
----
+
 
 # Step 4: Remove the Rainbow
 
@@ -151,7 +152,7 @@ ggplot(df,
   )
 ```
 
----
+
 
 # Step 5: Remove Unnecessary Borders
 
@@ -178,7 +179,7 @@ ggplot(df,
   )
 ```
 
----
+
 
 # Step 6: Highlight Regions Instead of Countries
 
@@ -204,7 +205,7 @@ ggplot() +
   ) 
 ```
 
----
+
 ## Also using "small multiple" graphics
 
 ```{r}
@@ -285,6 +286,7 @@ How has a specific country evolved compared with all other countries?
 ```{r}
 
 focus_country <- "Rwanda"
+
 df <- df |>
   mutate(
     highlight =
@@ -300,7 +302,7 @@ ggplot(df,
   theme_minimal(base_size = 14)
 ```
 
----
+
 
 # Step 8: "*Le gris est mon ami*" (Grey is my friend )
 
@@ -342,7 +344,7 @@ ggplot() +
   )
 ```
 
----
+
 
 # Step 9: Direct Labelling
 
@@ -404,18 +406,11 @@ ggplot() +
   )
 ```
 
----
 
-# Final Version
 
-Principles applied:
+# Final Version*S*: Tell a story! 
 
-1. Remove clutter
-2. Remove unnecessary colour
-3. Use colour only for emphasis
-4. Put context in the background
-5. Highlight the message
-6. Label directly
+Titles and annotations should guide the reader and tell stories!  
 
 ```{r}
 focus_last <-
@@ -475,18 +470,31 @@ ggplot() +
     y = "Years"
   )
 ```
-This sequence works particularly well in training because each slide illustrates one design principle:
 
-Step	Principle
-1 → 2	Remove unnecessary ink
-2 → 3	Reduce chart furniture
-3 → 4	Colour is not decoration
-4 → 5	Simplify background
-5 → 6	Use colour for information
-6 → 7	Identify the analytical question
-7 → 8	Context vs focus
-8 → 9	Direct labelling
-9 → Final	Tell the story, not the dataset
-For an SDG training, you could replace Gapminder with an actual SDG indicator such as SDG 3.2 (under-5 mortality), SDG 4.1 (completion rate), or SDG 6.1 (access to drinking water) while keeping exactly the same progression.
+
+# Using analytics to tell other stories
+
+> Ideas (TBC)
+ - Highligt countries that have experienced a decrease
+ - Use joyplot to highlight Africa vs Asia dynamics
+ 
+
+
+
+
+# In conclusion
+
+Design principles:
+
+
+- Remove unnecessary ink
+- Too many colors (Color is not decoration)
+- Simplify background
+- Identify a question
+- Context vs focus
+- Direct labelling
+- Tell the story, not the dataset!
+
+
 
 
