@@ -3,9 +3,9 @@ title:  "From Clutter to Clarity: Improving an SDG Time Series Chart"
 subtitle: " Astep-by-step demo"
 author: "Christophe Bontemps (SIAP)"
 format:
-  html:
+  html: 
     toc: true
-    code-fold: false
+    code-fold: true
   pdf:
     documentclass: article
     toc: true
@@ -28,10 +28,7 @@ df_full <- gapminder
 ```
 
 
-# Step 1: The Typical Excel Chart
-
-Everything at once.
-
+# The Typical Excel Chart
 Problems:
 
 - Too many colours
@@ -41,7 +38,6 @@ Problems:
 - Visual overload
 
 ```{r}
-
 df <- df_full %>%
   filter(continent =="Asia" | continent == "Africa")
 
@@ -73,7 +69,7 @@ ggplot() +
 
 
 
-# Step 2: Remove Point Markers
+# Remove Point Markers
 
 Lines already show the trend.
 
@@ -103,7 +99,7 @@ ggplot(df,
 
 
 
-# Step 3: Reduce Visual Noise
+# Reduce Visual Noise
 
 Lighter gridlines and cleaner theme.
 
@@ -132,7 +128,7 @@ ggplot(df,
 
 
 
-# Step 4: Remove the Rainbow
+# Remove the Rainbow
 
 Colour should communicate meaning.
 
@@ -157,7 +153,7 @@ ggplot(df,
 
 
 
-# Step 5: Remove Unnecessary Borders
+# Remove Unnecessary Borders
 
 Focus attention on the data.
 
@@ -184,7 +180,7 @@ ggplot(df,
 
 
 
-# Step 6: Highlight Regions Instead of Countries
+# Highlight Regions Instead of Countries
 
 Color now carries information.
 
@@ -233,7 +229,8 @@ ggplot() +
   ) 
 ```
 
-## No legend needed
+## Remmove legend if not needed
+
 ```{r}
 df %>%
 ggplot() +
@@ -267,12 +264,13 @@ ggplot() +
   facet_wrap(vars(continent)) +
   labs(
     title = "Life Expectancy by continent",
+    subtitle = "Interactive version",
     x = NULL,
     y = "Life expectancy"
   ) +
    theme_minimal(base_size = 14) +
   theme(
-     legend.position = "bottom",
+     legend.position = "none",
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank()
   ) 
@@ -288,13 +286,16 @@ if (knitr::is_html_output()) {
 ```
 
 
-# Step 7: Ask a Question
-
-How has a specific country evolved compared with all other countries?
+# Ask a Question
 
 ```{r}
-
 focus_country <- "Rwanda"
+```
+
+
+> How has a specific country (*`r focus_country`*) evolved compared with all other countries?
+
+```{r}
 
 df <- df |>
   mutate(
@@ -313,9 +314,9 @@ ggplot(df,
 
 
 
-# Step 8: "*Le gris est mon ami*" (Grey is my friend )
+# Identify:  "*Le gris est mon ami*" (Grey is my friend )
 
-Reference lines should stay in the background.
+Reference lines should stay be in grey, in the background.
 
 ```{r}
 ggplot() +
@@ -355,9 +356,9 @@ ggplot() +
 
 
 
-# Step 9: Direct Labelling
+# Direct Labelling
 
-The chart should work without a legend.
+Direct labeling when possible
 
 ```{r}
 focus_last <-
@@ -481,17 +482,144 @@ ggplot() +
 ```
 
 
-# Using analytics to tell other stories
+# Use analytics to tell other stories
 
 > Ideas (TBC)
- - Highligt countries that have experienced a decrease
+ - Highlight countries that have experienced a decrease
  - Use joyplot to highlight Africa vs Asia dynamics
  
 
+```{r}
+# Identifying countries with  decreases
+
+Shocks <- df %>%
+  arrange(country, year) %>%
+  group_by(country, continent) %>%
+  mutate(year_lag = lag(year),
+         life_lag = lag(lifeExp),
+         delta_years = year - year_lag,
+         delta_life  = lifeExp - life_lag) %>%
+  ungroup() %>%
+  filter(
+    delta_years >= 2,      # at least 2-year gap
+    delta_years <= 5,      # at most 5-year gap
+    delta_life <= -2       # drop of at least 2 years
+  ) %>%
+  arrange(country, continent, year, lifeExp, delta_years, delta_life)
+
+Shocks
+```
+
+
+```{r}
+shock_countries <- Shocks %>%
+  distinct(country) %>%
+  pull(country)
+shock_countries
+
+```
+```{r}
+df <-df %>%
+  mutate(shock = country %in% shock_countries)
+```
 
 
 
-# In conclusion
+```{r}
+
+
+shock_events <- df %>%
+  arrange(country, year) %>%
+  group_by(country, continent) %>%
+  mutate(
+    prev_year = lag(year),
+    prev_life = lag(lifeExp),
+    delta_year = year - prev_year,
+    delta_life = lifeExp - prev_life
+  ) %>%
+  ungroup() %>%
+  filter(
+    delta_year >= 2,
+    delta_year <= 5,
+    delta_life <= -2
+  ) %>%
+  mutate(
+    event_label = paste0(country, " (", prev_year, "→", year, ")")
+  )
+
+shock_events
+```
+
+
+
+### top shocks
+
+```{r}
+# Top N shocks
+NbShocks <- 8
+
+top_shocks <- shock_events %>%
+  arrange(delta_life) %>%
+  slice_head(n = NbShocks)
+
+
+```
+
+
+
+```{r}
+
+# Base plot: all trajectories in background
+p <- ggplot(df,
+            aes(year, lifeExp, group = country)) +
+  geom_line(
+    colour = "grey85",
+    alpha = 0.4,
+    linewidth = 0.5
+  )
+
+## Adding segments with decreasing LE
+p <- p +
+  geom_segment(
+    data = top_shocks,
+    aes(
+      x = prev_year,
+      xend = year,
+      y = prev_life,
+      yend = lifeExp,
+      group = country
+    ),
+    colour = "#B22222",
+    linewidth = 0.5
+  ) +
+  geom_text(
+  data = top_shocks,
+  aes(x = prev_year, y = prev_life+2, label = country),
+  color = "#B22222",
+  size = 3
+) +
+  labs(
+    title = "Life Expectancy Shock Events",
+    subtitle = "Highlighted segments show 2–5 year drops ≥ 2 years",
+    x = NULL,
+    y = "Life expectancy"
+  )+
+ theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
+p
+
+```
+
+
+
+
+
+
+
+# Conclusion
 
 Design principles:
 
