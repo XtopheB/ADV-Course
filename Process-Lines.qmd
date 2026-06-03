@@ -30,9 +30,19 @@ library(gapminder)
 library(ggrepel)
 library(plotly)
 library(kableExtra)
+library(gridExtra)
+library(patchwork)
 
 df_full <- gapminder
 
+```
+
+
+```{r}
+MyPalette <- c(
+  "Africa" = "#2A9D8F",
+  "Asia" = "#E9C46A"
+)
 ```
 
 
@@ -42,7 +52,7 @@ df_full <- gapminder
 df <- df_full %>%
   filter(continent =="Asia" | continent == "Africa")
 
-pExcel <-  df%>%
+p_Excel <-  df%>%
 ggplot() +
  aes(year,
      lifeExp,
@@ -64,7 +74,7 @@ ggplot() +
   guides(
   colour = guide_legend(nrow = 6)
 )
-pExcel   
+p_Excel   
   
 ```
 ## Problems:
@@ -76,7 +86,7 @@ pExcel
 - Visual overload
 
 ```{r}
-pExcel
+p_Excel
 ```
 
 
@@ -139,7 +149,7 @@ ggplot(df,
 
 
 
-# Remove the Rainbow
+## Remove the Rainbow
 
 Color should communicate meaning, or help...
 
@@ -163,7 +173,7 @@ ggplot(df,
 
 
 
-# Remove Borders & Grids
+## Remove Borders & Grids
 
 Focus attention on the data.
 
@@ -189,7 +199,6 @@ ggplot(df,
 ```
 
 
-
 # Highlight Regions not Countries
 
 Color now carries information.
@@ -202,6 +211,7 @@ ggplot() +
            group = country,
            colour = continent) +
   geom_line(linewidth = 0.8, alpha = 1) +
+  scale_colour_manual(values = MyPalette) +
   labs(
     title = "Life Expectancy by Country",
     x = NULL,
@@ -228,6 +238,7 @@ ggplot() +
            group = country,
            colour = continent) +
   geom_line(linewidth = 0.8) +
+  scale_colour_manual(values = MyPalette) +
   facet_wrap(vars(continent)) +
   labs(
     title = "Life Expectancy by continent",
@@ -254,6 +265,7 @@ ggplot() +
            group = country,
            colour = continent) +
   geom_line(linewidth = 0.8) +
+  scale_colour_manual(values = MyPalette) +
   facet_wrap(vars(continent)) +
   labs(
     title = "Life Expectancy by continent",
@@ -279,8 +291,9 @@ ggplot() +
            lifeExp,
            group = country,
            colour = continent) +
-  geom_line(linewidth = 0.8) +
+  geom_line(linewidth = 0.8, alpha = 0.6) +
   facet_wrap(vars(continent)) +
+  scale_colour_manual(values = MyPalette) +
   labs(
     title = "Life Expectancy by continent",
     subtitle = "Interactive version",
@@ -312,7 +325,7 @@ focus_country <- "Rwanda"
 ```
 
 
-> How has a specific country (*`r focus_country`*) evolved?
+How has a specific country (*`r focus_country`*) evolved?
 
 ```{r}
 
@@ -321,13 +334,13 @@ df <- df |>
     highlight =
       ifelse(country == focus_country, focus_country,  "Other countries")
   )
-
 ggplot(df,
        aes(year,
            lifeExp,
            group = country,
            colour = highlight)) +
-  geom_line(linewidth = 0.8) +
+  geom_line(linewidth = 0.9, alpha = 0.6) +
+  scale_colour_manual(values = c("steelblue", "darkred")) +
   theme_minimal(base_size = 14) +
   theme(
      legend.position = "bottom",
@@ -349,7 +362,7 @@ ggplot() +
     aes(year,
         lifeExp,
         group = country),
-    colour = "grey50",
+    colour = "grey70",
     alpha = 1,
     linewidth = .6
   ) +
@@ -390,7 +403,7 @@ ggplot() +
         group = country),
     colour = "grey50",
     alpha = .4,
-    linewidth = .6
+    linewidth = .7
   ) +
 
   geom_line(
@@ -546,36 +559,57 @@ p_focus
 Context always help the reader
 
 ```{r}
-p_annotate <- p_focus + 
+p_Annotate <- p_focus + 
   annotate("rect", xmin = 1990, xmax = 1994,
-                  ymin = 20, ymax = 30,
+                  ymin = 20, ymax = 38,
                   fill = "darkblue" , alpha = .1)+
                   
-  annotate("text", x = 1992 , y = 30,
+  annotate("text", x = 1993 , y = 40,
          color= "darkblue",
          alpha = 0.7,
          label = "Civil war")
-p_annotate
+p_Annotate
   
 ```
 ## Provide a useful title
-And mention source
+
+And mention source!
 
 ```{r}
-p_annotate  + 
+p_Final <- p_Annotate  + 
   labs(
     title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
-    subtitle = "A clear upside trend, but Life Expectancy is still quite low",
+    subtitle = "Life Expectancy is still quite low",
     caption= " Source: Gapminder (2026)",
     x = NULL,
     y = "Years"
   )
-  
+p_Final
+```
+
+# Before/after
+
+```{r}
+
+p_Final2 <- p_Final + labs(title = NULL, subtitle = NULL)
+p_Excel2 <- p_Excel + labs(title = NULL) + theme(legend.position = "none")
+
+( p_Excel2 | p_Final2 ) +
+  plot_layout(widths = c(1, 1))
+```
+## Before
+```{r}
+p_Excel
+```
+
+## After
+
+```{r}
+p_Final
 ```
 
 
-
-# Use analytics to detect stories
+# Bonus: Use analytics to detect stories
 
 Detecting trends & highlighting countries 
  
@@ -643,7 +677,9 @@ shock_events <- df %>%
 
 
 
-# Identifying shocks
+## Identifying shocks
+
+Use analytics to detect swift declines
 
 ```{r}
 # Top N shocks
@@ -659,6 +695,9 @@ top_shocks %>%
 
 ```
 
+##  Higlight shocks
+
+Select the most dramatic declines
 
 
 ```{r}
@@ -712,14 +751,12 @@ p <- p +
   ) 
 p
 
-
-
-
 ```
 
-# A better story? 
 
-Now that we have a story, on different continents
+## A better story? 
+
+Now we have stories, on different continents..
 
 ```{r}
 shock_countries <- shock_events %>%
@@ -747,9 +784,9 @@ ggplot() +
     data = df %>% 
       filter(country %in% shock_countries),
     aes(year, lifeExp, group = country, colour = continent),
-    #colour = "darkgreen",
     linewidth = 0.5
   ) +
+  scale_colour_manual(values = MyPalette, drop = FALSE) +
 
   # 3. Shock segments (event-level emphasis)
   geom_segment(
@@ -780,32 +817,32 @@ ggplot() +
 
   theme_minimal(base_size = 14) +
   theme(
-    legend.position = "bottom",
+   legend.position = c(0.1, 0.8),
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank()
   ) +
 
   labs(
     title = "Life Expectancy Shock Events",
-    subtitle = "Full trajectories of affected countries are highlighted",
+    subtitle = "Many countries still experience sharp declines",
     caption= " Source: Gapminder (2026)",
     x = NULL,
     y = "Life expectancy"
   )
 ```
 
-# Conclusion
-
-Design principles:
-
+## Takeaways
 
 - Remove unnecessary ink
 - Too many colors (Color is not decoration)
 - Simplify background
+- Use grey
+- Use small multiples
+- Refine, refine
 - Identify a question
-- Context vs focus
-- Direct labelling
-- Tell the story, not the dataset!
+- Direct labeling
+- Use analytics! 
+- Tell the story, not the data set!
 
 
 
