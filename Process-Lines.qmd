@@ -625,6 +625,8 @@ p
 
 ```{r}
 shock_countries <- shock_events %>%
+  arrange(delta_life) %>%
+  slice_head(n = NbShocks) %>%
   distinct(country) %>%
   pull(country)
 ```
@@ -639,8 +641,8 @@ ggplot() +
     data = df,
     aes(year, lifeExp, group = country),
     colour = "grey85",
-    alpha = 0.4,
-    linewidth = 0.5
+    alpha = 0.5,
+    linewidth = 0.6
   ) +
 
   # 2. Highlight FULL trajectories of shock countries
@@ -654,7 +656,7 @@ ggplot() +
 
   # 3. Shock segments (event-level emphasis)
   geom_segment(
-    data = shock_events,
+    data = top_shocks,
     aes(
       x = prev_year,
       xend = year,
