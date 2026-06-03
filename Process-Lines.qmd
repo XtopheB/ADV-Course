@@ -1,0 +1,400 @@
+---
+title: "From Clutter to Clarity: Improving an SDG Time Series Chart"
+format:
+  html:
+    toc: true
+    code-fold: false
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Setup
+
+```{r}
+library(tidyverse)
+library(gapminder)
+
+df <- gapminder
+
+focus_country <- "Japan"
+```
+
+---
+
+# Step 1: The Typical Excel Chart
+
+Everything at once.
+
+Problems:
+
+- Too many colours
+- Markers on every point
+- Heavy gridlines
+- Large legend
+- Visual overload
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           colour = country,
+           group = country)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+ theme(
+  legend.position = "right",
+  legend.title = element_text(size = 6),
+  legend.text = element_text(size = 4),
+  legend.key.height = unit(0.2, "cm"),
+  legend.key.width = unit(0.4, "cm")  ) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = "Year",
+    y = "Life expectancy",
+    colour = "Country"  ) +
+  guides(
+  colour = guide_legend(nrow = 3)
+)
+  
+  
+```
+
+---
+
+# Step 2: Remove Point Markers
+
+Lines already show the trend.
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           colour = country,
+           group = country)) +
+  geom_line(linewidth = 1) +
+  theme_bw(base_size = 14) +
+   theme(
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = "Year",
+    y = "Life expectancy",
+    colour = "Country"
+  )
+```
+
+---
+
+# Step 3: Reduce Visual Noise
+
+Lighter gridlines and cleaner theme.
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           colour = country,
+           group = country)) +
+  geom_line(linewidth = 0.8) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Step 4: Remove the Rainbow
+
+Colour should communicate meaning.
+
+Using one colour for everything.
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           group = country)) +
+  geom_line(
+    colour = "steelblue",
+    linewidth = 0.7
+  ) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Step 5: Remove Unnecessary Borders
+
+Focus attention on the data.
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           group = country)) +
+  geom_line(
+    colour = "steelblue",
+    linewidth = 0.6
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Step 6: Highlight Regions Instead of Countries
+
+Colour now carries information.
+
+```{r}
+ggplot(df,
+       aes(year,
+           lifeExp,
+           group = country,
+           colour = continent)) +
+  geom_line(linewidth = 0.8) +
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  labs(
+    title = "Life Expectancy by Country",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Step 7: Ask a Question
+
+How has Japan evolved compared with all other countries?
+
+```{r}
+df <- df |>
+  mutate(
+    highlight =
+      ifelse(country == focus_country,
+             "Japan",
+             "Other countries")
+  )
+
+ggplot(df,
+       aes(year,
+           lifeExp,
+           group = country,
+           colour = highlight)) +
+  geom_line(linewidth = 0.8) +
+  theme_minimal(base_size = 14)
+```
+
+---
+
+# Step 8: De-emphasize the Background
+
+Reference lines should stay in the background.
+
+```{r}
+ggplot() +
+
+  geom_line(
+    data = filter(df,
+                  country != focus_country),
+    aes(year,
+        lifeExp,
+        group = country),
+    colour = "grey70",
+    alpha = .4,
+    linewidth = .6
+  ) +
+
+  geom_line(
+    data = filter(df,
+                  country == focus_country),
+    aes(year,
+        lifeExp),
+    colour = "#08306B",
+    linewidth = 1.8
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  labs(
+    title = "Japan Compared with Other Countries",
+    subtitle = "All countries shown as contextual references",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Step 9: Direct Labelling
+
+The chart should work without a legend.
+
+```{r}
+japan_last <-
+  df |>
+  filter(country == focus_country) |>
+  slice_max(year)
+
+ggplot() +
+
+  geom_line(
+    data = filter(df,
+                  country != focus_country),
+    aes(year,
+        lifeExp,
+        group = country),
+    colour = "grey75",
+    alpha = .35,
+    linewidth = .5
+  ) +
+
+  geom_line(
+    data = filter(df,
+                  country == focus_country),
+    aes(year,
+        lifeExp),
+    colour = "#08306B",
+    linewidth = 2
+  ) +
+
+  geom_text(
+    data = japan_last,
+    aes(year,
+        lifeExp,
+        label = country),
+    hjust = -0.1,
+    colour = "#08306B",
+    fontface = "bold"
+  ) +
+
+  scale_x_continuous(
+    limits = c(1952, 2010)
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.position = "none"
+  ) +
+
+  labs(
+    title = "Japan's Progress in Life Expectancy",
+    subtitle = "Other countries provide context",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+
+---
+
+# Final Version
+
+Principles applied:
+
+1. Remove clutter
+2. Remove unnecessary colour
+3. Use colour only for emphasis
+4. Put context in the background
+5. Highlight the message
+6. Label directly
+
+```{r}
+japan_last <-
+  df |>
+  filter(country == focus_country) |>
+  slice_max(year)
+
+ggplot() +
+
+  geom_line(
+    data = filter(df,
+                  country != focus_country),
+    aes(year,
+        lifeExp,
+        group = country),
+    colour = "grey80",
+    alpha = .30,
+    linewidth = .5
+  ) +
+
+  geom_line(
+    data = filter(df,
+                  country == focus_country),
+    aes(year,
+        lifeExp),
+    colour = "#08306B",
+    linewidth = 2.2
+  ) +
+
+  geom_text(
+    data = japan_last,
+    aes(year,
+        lifeExp,
+        label = country),
+    hjust = -0.1,
+    fontface = "bold",
+    colour = "#08306B"
+  ) +
+
+  scale_x_continuous(
+    limits = c(1952, 2010)
+  ) +
+
+  theme_minimal(base_size = 16) +
+
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.position = "none"
+  ) +
+
+  labs(
+    title = "Japan's Life Expectancy Has Increased Dramatically",
+    subtitle = "Compared with all countries in the dataset",
+    x = NULL,
+    y = "Years"
+  )
+```
+This sequence works particularly well in training because each slide illustrates one design principle:
+
+Step	Principle
+1 → 2	Remove unnecessary ink
+2 → 3	Reduce chart furniture
+3 → 4	Colour is not decoration
+4 → 5	Simplify background
+5 → 6	Use colour for information
+6 → 7	Identify the analytical question
+7 → 8	Context vs focus
+8 → 9	Direct labelling
+9 → Final	Tell the story, not the dataset
+For an SDG training, you could replace Gapminder with an actual SDG indicator such as SDG 3.2 (under-5 mortality), SDG 4.1 (completion rate), or SDG 6.1 (access to drinking water) while keeping exactly the same progression.
+
+
