@@ -611,13 +611,74 @@ p <- p +
   ) 
 p
 
+
+
+
+```
+```{r}
+# highlighting the countries with shocks
+
+p 
+
 ```
 
 
+```{r}
+shock_countries <- shock_events %>%
+  distinct(country) %>%
+  pull(country)
+```
+
+```{r}
 
 
+ggplot() +
+
+  # 1. All countries (background)
+  geom_line(
+    data = df,
+    aes(year, lifeExp, group = country),
+    colour = "grey85",
+    alpha = 0.4,
+    linewidth = 0.5
+  ) +
+
+  # 2. Highlight FULL trajectories of shock countries
+  geom_line(
+    data = df %>% 
+      filter(country %in% shock_countries),
+    aes(year, lifeExp, group = country),
+    colour = "darkgreen",
+    linewidth = 0.5
+  ) +
+
+  # 3. Shock segments (event-level emphasis)
+  geom_segment(
+    data = shock_events,
+    aes(
+      x = prev_year,
+      xend = year,
+      y = prev_life,
+      yend = lifeExp
+    ),
+    colour = "#B22222",
+    linewidth = 0.8
+  ) +
 
 
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+
+  labs(
+    title = "Life Expectancy Shock Events",
+    subtitle = "Full trajectories of affected countries are highlighted",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
 
 # Conclusion
 
