@@ -15,8 +15,9 @@ execute:
 ```{r}
 library(tidyverse)
 library(gapminder)
+library(plotly)
 
-df <- gapminder
+df_full <- gapminder
 
 focus_country <- "Japan"
 ```
@@ -36,26 +37,31 @@ Problems:
 - Visual overload
 
 ```{r}
-ggplot(df,
-       aes(year,
-           lifeExp,
-           colour = country,
-           group = country)) +
+
+df <- df_full %>%
+  filter(continent =="Asia" | continent == "Africa")
+
+df%>%
+ggplot() +
+ aes(year,
+     lifeExp,
+     colour = country,
+     group = country) +
   geom_line(linewidth = 1) +
   geom_point(size = 2) +
- theme(
-  legend.position = "right",
-  legend.title = element_text(size = 6),
-  legend.text = element_text(size = 4),
-  legend.key.height = unit(0.2, "cm"),
-  legend.key.width = unit(0.4, "cm")  ) +
   labs(
     title = "Life Expectancy by Country",
     x = "Year",
     y = "Life expectancy",
     colour = "Country"  ) +
+ theme(
+  legend.position = "bottom",
+  legend.title = element_text(size = 6),
+  legend.text = element_text(size = 4),
+  legend.key.height = unit(0.2, "cm"),
+  legend.key.width = unit(0.4, "cm")  ) +
   guides(
-  colour = guide_legend(nrow = 3)
+  colour = guide_legend(nrow = 6)
 )
   
   
@@ -74,16 +80,21 @@ ggplot(df,
            colour = country,
            group = country)) +
   geom_line(linewidth = 1) +
-  theme_bw(base_size = 14) +
-   theme(
-    legend.position = "none"
-  ) +
   labs(
     title = "Life Expectancy by Country",
     x = "Year",
     y = "Life expectancy",
     colour = "Country"
-  )
+  ) +
+ theme(
+  legend.position = "bottom",
+  legend.title = element_text(size = 6),
+  legend.text = element_text(size = 4),
+  legend.key.height = unit(0.2, "cm"),
+  legend.key.width = unit(0.4, "cm")  ) +
+  guides(
+  colour = guide_legend(nrow = 3)
+)
 ```
 
 ---
@@ -99,12 +110,20 @@ ggplot(df,
            colour = country,
            group = country)) +
   geom_line(linewidth = 0.8) +
-  theme_minimal(base_size = 14) +
   labs(
     title = "Life Expectancy by Country",
     x = NULL,
     y = "Life expectancy"
-  )
+  )+
+ theme(
+  legend.position = "bottom",
+  legend.title = element_text(size = 6),
+  legend.text = element_text(size = 4),
+  legend.key.height = unit(0.2, "cm"),
+  legend.key.width = unit(0.4, "cm")  ) +
+  guides(
+  colour = guide_legend(nrow = 3)
+)
 ```
 
 ---
@@ -163,40 +182,113 @@ ggplot(df,
 
 # Step 6: Highlight Regions Instead of Countries
 
-Colour now carries information.
+Color now carries information.
 
 ```{r}
-ggplot(df,
+df %>%
+ggplot() +
        aes(year,
            lifeExp,
            group = country,
-           colour = continent)) +
+           colour = continent) +
   geom_line(linewidth = 0.8) +
-  theme_minimal(base_size = 14) +
-  theme(
-    panel.grid.minor = element_blank(),
-    panel.grid.major.x = element_blank()
-  ) +
   labs(
     title = "Life Expectancy by Country",
     x = NULL,
     y = "Life expectancy"
-  )
+  ) +
+   theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
 ```
 
 ---
+## Also using "small multiple" graphics
+
+```{r}
+df %>%
+ggplot() +
+       aes(year,
+           lifeExp,
+           group = country,
+           colour = continent) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(vars(continent)) +
+  labs(
+    title = "Life Expectancy by continent",
+    x = NULL,
+    y = "Life expectancy"
+  ) +
+   theme_minimal(base_size = 14) +
+  theme(
+     legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
+```
+
+## No legend needed
+```{r}
+df %>%
+ggplot() +
+       aes(year,
+           lifeExp,
+           group = country,
+           colour = continent) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(vars(continent)) +
+  labs(
+    title = "Life Expectancy by continent",
+    x = NULL,
+    y = "Life expectancy"
+  ) +
+   theme_minimal(base_size = 14) +
+  theme(
+     legend.position = "none",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
+```
+### Interactive 
+
+```{r}
+p <- df %>%
+ggplot() +
+       aes(year,
+           lifeExp,
+           group = country,
+           colour = continent) +
+  geom_line(linewidth = 0.8) +
+  facet_wrap(vars(continent)) +
+  labs(
+    title = "Life Expectancy by continent",
+    x = NULL,
+    y = "Life expectancy"
+  ) +
+   theme_minimal(base_size = 14) +
+  theme(
+     legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
+
+ggplotly(p)
+```
+
 
 # Step 7: Ask a Question
 
-How has Japan evolved compared with all other countries?
+How has a specific country evolved compared with all other countries?
 
 ```{r}
+
+focus_country <- "Rwanda"
 df <- df |>
   mutate(
     highlight =
-      ifelse(country == focus_country,
-             "Japan",
-             "Other countries")
+      ifelse(country == focus_country, focus_country,  "Other countries")
   )
 
 ggplot(df,
@@ -210,7 +302,7 @@ ggplot(df,
 
 ---
 
-# Step 8: De-emphasize the Background
+# Step 8: "*Le gris est mon ami*" (Grey is my friend )
 
 Reference lines should stay in the background.
 
@@ -234,7 +326,7 @@ ggplot() +
     aes(year,
         lifeExp),
     colour = "#08306B",
-    linewidth = 1.8
+    linewidth = 1.2
   ) +
 
   theme_minimal(base_size = 14) +
@@ -243,7 +335,7 @@ ggplot() +
     panel.grid.major.x = element_blank()
   ) +
   labs(
-    title = "Japan Compared with Other Countries",
+    title = paste0(focus_country," Compared with Other Countries"),
     subtitle = "All countries shown as contextual references",
     x = NULL,
     y = "Life expectancy"
@@ -257,13 +349,12 @@ ggplot() +
 The chart should work without a legend.
 
 ```{r}
-japan_last <-
+focus_last <-
   df |>
   filter(country == focus_country) |>
   slice_max(year)
 
 ggplot() +
-
   geom_line(
     data = filter(df,
                   country != focus_country),
@@ -274,22 +365,22 @@ ggplot() +
     alpha = .35,
     linewidth = .5
   ) +
-
   geom_line(
     data = filter(df,
                   country == focus_country),
     aes(year,
         lifeExp),
     colour = "#08306B",
-    linewidth = 2
+    linewidth = 1.2
   ) +
 
   geom_text(
-    data = japan_last,
+    data = focus_last,
     aes(year,
         lifeExp,
         label = country),
-    hjust = -0.1,
+    hjust = 0.5,
+    vjust = -1, 
     colour = "#08306B",
     fontface = "bold"
   ) +
@@ -306,7 +397,7 @@ ggplot() +
   ) +
 
   labs(
-    title = "Japan's Progress in Life Expectancy",
+    title = paste0(focus_country," Compared with Other Countries"),
     subtitle = "Other countries provide context",
     x = NULL,
     y = "Life expectancy"
@@ -327,7 +418,7 @@ Principles applied:
 6. Label directly
 
 ```{r}
-japan_last <-
+focus_last <-
   df |>
   filter(country == focus_country) |>
   slice_max(year)
@@ -351,17 +442,18 @@ ggplot() +
     aes(year,
         lifeExp),
     colour = "#08306B",
-    linewidth = 2.2
+    linewidth = 1.2
   ) +
 
-  geom_text(
-    data = japan_last,
+   geom_text(
+    data = focus_last,
     aes(year,
         lifeExp,
         label = country),
-    hjust = -0.1,
-    fontface = "bold",
-    colour = "#08306B"
+    hjust = 0.5,
+    vjust = -1, 
+    colour = "#08306B",
+    fontface = "bold"
   ) +
 
   scale_x_continuous(
@@ -377,7 +469,7 @@ ggplot() +
   ) +
 
   labs(
-    title = "Japan's Life Expectancy Has Increased Dramatically",
+    title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
     subtitle = "Compared with all countries in the dataset",
     x = NULL,
     y = "Years"
