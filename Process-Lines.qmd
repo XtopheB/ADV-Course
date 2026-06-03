@@ -29,6 +29,7 @@ library(tidyverse)
 library(gapminder)
 library(ggrepel)
 library(plotly)
+library(kableExtra)
 
 df_full <- gapminder
 
@@ -140,7 +141,7 @@ ggplot(df,
 
 # Remove the Rainbow
 
-Colour should communicate meaning, or help...
+Color should communicate meaning, or help...
 
 
 ```{r}
@@ -162,7 +163,7 @@ ggplot(df,
 
 
 
-# Remove Borders & grids
+# Remove Borders & Grids
 
 Focus attention on the data.
 
@@ -200,7 +201,7 @@ ggplot() +
            lifeExp,
            group = country,
            colour = continent) +
-  geom_line(linewidth = 0.8) +
+  geom_line(linewidth = 0.8, alpha = 1) +
   labs(
     title = "Life Expectancy by Country",
     x = NULL,
@@ -208,6 +209,7 @@ ggplot() +
   ) +
    theme_minimal(base_size = 14) +
   theme(
+    legend.position = "bottom", 
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank()
   ) 
@@ -215,6 +217,8 @@ ggplot() +
 
 
 ## Also using "small multiple" graphics
+
+Less lines is more information
 
 ```{r}
 df %>%
@@ -238,7 +242,9 @@ ggplot() +
   ) 
 ```
 
-## Remmove legend if not needed
+## Remove legend (not needed)
+
+Avoid redundancy 
 
 ```{r}
 df %>%
@@ -262,7 +268,10 @@ ggplot() +
   ) 
 ```
 
-## 
+## Use interactivity 
+
+Helps identifying, not delivering a message
+
 ```{r interactive}
 p <- df %>%
 ggplot() +
@@ -278,7 +287,7 @@ ggplot() +
     x = NULL,
     y = "Life expectancy"
   ) +
-   theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 14) +
   theme(
      legend.position = "none",
     panel.grid.minor = element_blank(),
@@ -303,7 +312,7 @@ focus_country <- "Rwanda"
 ```
 
 
-> How has a specific country (*`r focus_country`*) evolved compared with all other countries?
+> How has a specific country (*`r focus_country`*) evolved?
 
 ```{r}
 
@@ -319,25 +328,67 @@ ggplot(df,
            group = country,
            colour = highlight)) +
   geom_line(linewidth = 0.8) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) +
+  theme(
+     legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) 
 ```
+ 
 
+## Identify patterns
 
-
-# Identify:  "*Le gris est mon ami*" (Grey is my friend )
-
-Reference lines should stay be in grey, in the background.
+"*Le gris est mon ami*": Grey other lines as references
 
 ```{r}
 ggplot() +
-
   geom_line(
     data = filter(df,
                   country != focus_country),
     aes(year,
         lifeExp,
         group = country),
-    colour = "grey70",
+    colour = "grey50",
+    alpha = 1,
+    linewidth = .6
+  ) +
+
+  geom_line(
+    data = filter(df,
+                  country == focus_country),
+    aes(year,
+        lifeExp),
+    colour = "#08306B",
+    linewidth = 1.2
+  ) +
+
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  labs(
+    title = paste0(focus_country," Compared with Other Countries"),
+    subtitle = "All countries shown as contextual references",
+    x = NULL,
+    y = "Life expectancy"
+  )
+```
+## Use transparency
+
+Overlapping transparent lines reveal patterns 
+
+
+```{r}
+ggplot() +
+  geom_line(
+    data = filter(df,
+                  country != focus_country),
+    aes(year,
+        lifeExp,
+        group = country),
+    colour = "grey50",
     alpha = .4,
     linewidth = .6
   ) +
@@ -365,10 +416,9 @@ ggplot() +
 ```
 
 
+## Direct Labelling
 
-# Direct Labelling
-
-Direct labeling when possible
+Provide labels close to information
 
 ```{r}
 focus_last <-
@@ -383,9 +433,9 @@ ggplot() +
     aes(year,
         lifeExp,
         group = country),
-    colour = "grey75",
-    alpha = .35,
-    linewidth = .5
+    colour = "grey50",
+    alpha = .4,
+    linewidth = .6
   ) +
   geom_line(
     data = filter(df,
@@ -427,8 +477,7 @@ ggplot() +
 ```
 
 
-
-# Final Version(s): Tell a story!   
+##  Refine and annotate  
 
 Titles and annotations should guide the reader and tell stories!  
 
@@ -445,9 +494,9 @@ p_focus <- ggplot() +
     aes(year,
         lifeExp,
         group = country),
-    colour = "grey80",
-    alpha = .6,
-    linewidth = .5
+    colour = "grey50",
+    alpha = .4,
+    linewidth = .6
   ) +
 
   geom_line(
@@ -483,38 +532,52 @@ p_focus <- ggplot() +
   ) +
 
   labs(
-    title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
+    title = paste0(focus_country," Compared with other Countries"),
+    #title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
     subtitle = "Compared with all countries in the dataset",
     x = NULL,
     y = "Years"
   )
 p_focus
 ```
-# Use anotations
+
+## Use anotations
+
+Context always help the reader
 
 ```{r}
-p_focus + 
+p_annotate <- p_focus + 
   annotate("rect", xmin = 1990, xmax = 1994,
-                  ymin = 20, ymax = 40,
+                  ymin = 20, ymax = 30,
                   fill = "darkblue" , alpha = .1)+
                   
-  annotate("text", x = 1992 , y = 25,
+  annotate("text", x = 1992 , y = 30,
          color= "darkblue",
-         alpha = 0.5,
+         alpha = 0.7,
          label = "Civil war")
+p_annotate
   
-  
-  
+```
+## Provide a useful title
+And mention source
+
+```{r}
+p_annotate  + 
+  labs(
+    title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
+    subtitle = "A clear upside trend, but Life Expectancy is still quite low",
+    caption= " Source: Gapminder (2026)",
+    x = NULL,
+    y = "Years"
+  )
   
 ```
 
 
 
-# Use analytics to tell other stories
+# Use analytics to detect stories
 
-> Ideas (TBC)
- - Highlight countries that have experienced a decrease
- - Use joyplot to highlight Africa vs Asia dynamics
+Detecting trends & highlighting countries 
  
 
 ```{r}
@@ -546,6 +609,8 @@ shock_countries <- Shocks %>%
 # shock_countries
 
 ```
+
+
 ```{r}
 df <-df %>%
   mutate(shock = country %in% shock_countries)
@@ -573,7 +638,7 @@ shock_events <- df %>%
     event_label = paste0(country, " (", prev_year, "→", year, ")")
   )
 
-shock_events
+# kable(shock_events)
 ```
 
 
@@ -587,6 +652,10 @@ NbShocks <- 8
 top_shocks <- shock_events %>%
   arrange(delta_life) %>%
   slice_head(n = NbShocks)
+
+top_shocks %>%
+  select(country, event_label,  prev_year,  prev_life, year, lifeExp, delta_life) %>%
+         kable()
 
 ```
 
@@ -650,6 +719,8 @@ p
 
 # A better story? 
 
+Now that we have a story, on different continents
+
 ```{r}
 shock_countries <- shock_events %>%
   arrange(delta_life) %>%
@@ -675,8 +746,8 @@ ggplot() +
   geom_line(
     data = df %>% 
       filter(country %in% shock_countries),
-    aes(year, lifeExp, group = country),
-    colour = "darkgreen",
+    aes(year, lifeExp, group = country, colour = continent),
+    #colour = "darkgreen",
     linewidth = 0.5
   ) +
 
@@ -709,6 +780,7 @@ ggplot() +
 
   theme_minimal(base_size = 14) +
   theme(
+    legend.position = "bottom",
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank()
   ) +
@@ -716,6 +788,7 @@ ggplot() +
   labs(
     title = "Life Expectancy Shock Events",
     subtitle = "Full trajectories of affected countries are highlighted",
+    caption= " Source: Gapminder (2026)",
     x = NULL,
     y = "Life expectancy"
   )
