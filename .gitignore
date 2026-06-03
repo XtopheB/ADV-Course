@@ -1,3 +1,4 @@
+# Extensions
 .Rproj.user
 .Rhistory
 .RData
@@ -5,9 +6,14 @@
 *.html
 *.md
 *.Rproj
+*.pdf
 # Specific
 LineUncertainty_cache
 LineUncertainty_files
 report_files
 RegressionLineUncertainty_cache
 RegressionLineUncertainty_files
+Process-lines_files/
+
+# Deleted
+SwchabishSpaghtetti.R

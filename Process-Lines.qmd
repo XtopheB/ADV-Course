@@ -3,16 +3,16 @@ title:  "From Clutter to Clarity: Improving a Time Series Chart"
 subtitle: " A step-by-step demo"
 author: "Christophe Bontemps (SIAP)"
 format:
-  revealjs:
-    theme: solarized 
-    css: myReveal.css
-    slide-number: true
-    transition: fade
-    center: false
-    progress: true
-  html: 
-    toc: true
-    code-fold: true
+  # revealjs:
+  #   theme: solarized 
+  #   css: myReveal.css
+  #   slide-number: true
+  #   transition: fade
+  #   center: false
+  #   progress: true
+  # html: 
+  #   toc: true
+  #   code-fold: true
   pdf:
     documentclass: article
     toc: true
