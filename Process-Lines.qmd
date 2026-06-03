@@ -1,12 +1,15 @@
 ---
-title:  "From Clutter to Clarity: Improving an SDG Time Series Chart"
-subtitle: " Astep-by-step demo"
+title:  "From Clutter to Clarity: Improving a Time Series Chart"
+subtitle: " A step-by-step demo"
 author: "Christophe Bontemps (SIAP)"
 format:
   revealjs:
-    theme: simple
+    theme: solarized 
+    css: myReveal.css
     slide-number: true
     transition: fade
+    center: false
+    progress: true
   html: 
     toc: true
     code-fold: true
@@ -20,7 +23,6 @@ execute:
 ---
 
 
-## Setup
 
 ```{r}
 library(tidyverse)
@@ -34,19 +36,12 @@ df_full <- gapminder
 
 
 # The Typical Excel Chart
-Problems:
-
-- Too many colours
-- Markers on every point
-- Heavy gridlines
-- Large legend
-- Visual overload
 
 ```{r}
 df <- df_full %>%
   filter(continent =="Asia" | continent == "Africa")
 
-df%>%
+pExcel <-  df%>%
 ggplot() +
  aes(year,
      lifeExp,
@@ -68,15 +63,25 @@ ggplot() +
   guides(
   colour = guide_legend(nrow = 6)
 )
+pExcel   
   
-  
+```
+## Problems:
+
+- Too many colours
+- Markers on every point
+- Heavy gridlines
+- Large legend
+- Visual overload
+
+```{r}
+pExcel
 ```
 
 
+# Remove to improve
 
-# Remove Point Markers
-
-Lines already show the trend.
+Remove points to focus on lines (trends).
 
 ```{r}
 ggplot(df,
@@ -104,7 +109,7 @@ ggplot(df,
 
 
 
-# Reduce Visual Noise
+## Reduce Visual Noise
 
 Lighter gridlines and cleaner theme.
 
@@ -135,9 +140,8 @@ ggplot(df,
 
 # Remove the Rainbow
 
-Colour should communicate meaning.
+Colour should communicate meaning, or help...
 
-Using one colour for everything.
 
 ```{r}
 ggplot(df,
@@ -158,7 +162,7 @@ ggplot(df,
 
 
 
-# Remove Unnecessary Borders
+# Remove Borders & grids
 
 Focus attention on the data.
 
@@ -185,7 +189,7 @@ ggplot(df,
 
 
 
-# Highlight Regions Instead of Countries
+# Highlight Regions not Countries
 
 Color now carries information.
 
@@ -258,6 +262,7 @@ ggplot() +
   ) 
 ```
 
+## 
 ```{r interactive}
 p <- df %>%
 ggplot() +
@@ -423,7 +428,7 @@ ggplot() +
 
 
 
-# Final Version(s): Tell a story!
+# Final Version(s): Tell a story!   
 
 Titles and annotations should guide the reader and tell stories!  
 

@@ -1,0 +1,70 @@
+/* -----------------------------
+   SOLARIZED BASE OVERRIDE
+   ----------------------------- */
+
+/* Background (light solarized paper) */
+.reveal {
+  background-color: #FFFFFF;  /* solarized base3 */
+  color: #586e75;             /* solarized base00 */
+}
+
+/* -----------------------------
+   TITLES (smaller than default)
+   ----------------------------- */
+
+.reveal h1 {
+  font-size: 1.5em;   /* default ~2.2em */
+  font-weight: 500;
+  color: #073642;     /* solarized base02 */
+}
+
+.reveal h2 {
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #073642;
+}
+
+.reveal h3 {
+  font-size: 1.1em;
+  color: #073642;
+}
+
+/* -----------------------------
+   BODY TEXT
+   ----------------------------- */
+
+.reveal p,
+.reveal li {
+  font-size: 0.95em;
+}
+
+/* -----------------------------
+   LOGO (bottom-left corner)
+   ----------------------------- */
+
+.reveal::after {
+  content: "";
+  position: fixed;
+  top: 15px;
+  right: 15px;
+
+  width: 190px;
+  height: 190px;
+
+  background-image: url("Images/escap_siap_logo.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: top right;
+
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* -----------------------------
+   OPTIONAL: soften code blocks
+   ----------------------------- */
+
+.reveal pre code {
+  font-size: 0.85em;
+}
