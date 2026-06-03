@@ -6,6 +6,9 @@ format:
   html:
     toc: true
     code-fold: false
+  pdf:
+    documentclass: article
+    toc: true
 execute:
   echo: false
   warning: false
@@ -252,9 +255,8 @@ ggplot() +
     panel.grid.major.x = element_blank()
   ) 
 ```
-### Interactive 
 
-```{r}
+```{r interactive}
 p <- df %>%
 ggplot() +
        aes(year,
@@ -275,7 +277,14 @@ ggplot() +
     panel.grid.major.x = element_blank()
   ) 
 
-ggplotly(p)
+if (knitr::is_html_output()) {
+
+  plotly::ggplotly(p)
+
+} else {
+
+  p
+}
 ```
 
 
