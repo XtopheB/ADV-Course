@@ -3,6 +3,10 @@ title:  "From Clutter to Clarity: Improving an SDG Time Series Chart"
 subtitle: " Astep-by-step demo"
 author: "Christophe Bontemps (SIAP)"
 format:
+  revealjs:
+    theme: simple
+    slide-number: true
+    transition: fade
   html: 
     toc: true
     code-fold: true
@@ -21,6 +25,7 @@ execute:
 ```{r}
 library(tidyverse)
 library(gapminder)
+library(ggrepel)
 library(plotly)
 
 df_full <- gapminder
@@ -418,7 +423,7 @@ ggplot() +
 
 
 
-# Final Version*S*: Tell a story! 
+# Final Version(s): Tell a story!
 
 Titles and annotations should guide the reader and tell stories!  
 
@@ -428,8 +433,7 @@ focus_last <-
   filter(country == focus_country) |>
   slice_max(year)
 
-ggplot() +
-
+p_focus <- ggplot() +
   geom_line(
     data = filter(df,
                   country != focus_country),
@@ -437,7 +441,7 @@ ggplot() +
         lifeExp,
         group = country),
     colour = "grey80",
-    alpha = .30,
+    alpha = .6,
     linewidth = .5
   ) +
 
@@ -479,7 +483,26 @@ ggplot() +
     x = NULL,
     y = "Years"
   )
+p_focus
 ```
+# Use anotations
+
+```{r}
+p_focus + 
+  annotate("rect", xmin = 1990, xmax = 1994,
+                  ymin = 20, ymax = 40,
+                  fill = "darkblue" , alpha = .1)+
+                  
+  annotate("text", x = 1992 , y = 25,
+         color= "darkblue",
+         alpha = 0.5,
+         label = "Civil war")
+  
+  
+  
+  
+```
+
 
 
 # Use analytics to tell other stories
@@ -507,7 +530,7 @@ Shocks <- df %>%
   ) %>%
   arrange(country, continent, year, lifeExp, delta_years, delta_life)
 
-Shocks
+# Shocks
 ```
 
 
@@ -515,7 +538,7 @@ Shocks
 shock_countries <- Shocks %>%
   distinct(country) %>%
   pull(country)
-shock_countries
+# shock_countries
 
 ```
 ```{r}
@@ -526,8 +549,6 @@ df <-df %>%
 
 
 ```{r}
-
-
 shock_events <- df %>%
   arrange(country, year) %>%
   group_by(country, continent) %>%
@@ -552,7 +573,7 @@ shock_events
 
 
 
-### top shocks
+# Identifying shocks
 
 ```{r}
 # Top N shocks
@@ -561,7 +582,6 @@ NbShocks <- 8
 top_shocks <- shock_events %>%
   arrange(delta_life) %>%
   slice_head(n = NbShocks)
-
 
 ```
 
@@ -592,15 +612,22 @@ p <- p +
     colour = "#B22222",
     linewidth = 0.5
   ) +
-  geom_text(
+   geom_text_repel(
   data = top_shocks,
-  aes(x = prev_year, y = prev_life+2, label = country),
+  aes(x = prev_year, y = prev_life, label = country),
   color = "#B22222",
-  size = 3
+  size = 3,
+  box.padding = 0.4,
+  point.padding = 0.3,
+  direction = "both", 
+  # segment.color = "#B22222",
+  # segment.size = 0.5, 
+  max.overlaps = Inf, 
+  force = 1
 ) +
   labs(
     title = "Life Expectancy Shock Events",
-    subtitle = "Highlighted segments show 2–5 year drops ≥ 2 years",
+    subtitle = "Highlighted segments with 2–5 year drops",
     x = NULL,
     y = "Life expectancy"
   )+
@@ -615,13 +642,8 @@ p
 
 
 ```
-```{r}
-# highlighting the countries with shocks
 
-p 
-
-```
-
+# A better story? 
 
 ```{r}
 shock_countries <- shock_events %>%
@@ -633,7 +655,6 @@ shock_countries <- shock_events %>%
 
 ```{r}
 
-
 ggplot() +
 
   # 1. All countries (background)
@@ -642,7 +663,7 @@ ggplot() +
     aes(year, lifeExp, group = country),
     colour = "grey85",
     alpha = 0.5,
-    linewidth = 0.6
+    linewidth = 0.5
   ) +
 
   # 2. Highlight FULL trajectories of shock countries
@@ -666,7 +687,20 @@ ggplot() +
     colour = "#B22222",
     linewidth = 0.8
   ) +
-
+  # 4. Direct label
+  geom_text_repel(
+  data = top_shocks,
+  aes(x = prev_year, y = prev_life, label = country),
+  color = "#B22222",
+  size = 3,
+  box.padding = 0.4,
+  point.padding = 0.3,
+  direction = "both", 
+  # segment.color = "#B22222",
+  # segment.size = 0.5, 
+  max.overlaps = Inf, 
+  force = 1
+) +
 
   theme_minimal(base_size = 14) +
   theme(
