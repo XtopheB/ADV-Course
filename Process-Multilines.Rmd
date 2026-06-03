@@ -1,0 +1,431 @@
+---
+title: "The process: Muliple lines graph revisited"
+subtitle: "A temptative tutorial " 
+author: "Christophe Bontemps (UN SIAP)"
+output:
+  pdf_document:
+    keep_tex: yes
+  html_notebook: default
+  html_document:
+    code_folding: show
+    highlight: tango
+    number_sections: yes
+    theme: lumen
+  word_document: default
+---
+
+
+```{r setup, include=FALSE}
+# Remember to disable png for Word export...
+knitr::opts_chunk$set( message = FALSE, warning = FALSE, 
+                       results =FALSE, echo = FALSE,
+                       dev="png", 
+                       fig.height=3.5,
+                       dev.args=list(type="cairo"), dpi=96)
+
+# My colors:
+SIAP.color <- "#0385a8"
+
+# Function used to recreate ggplot standard colors
+ggplotColours <- function(n = 6, h = c(0, 360) + 15){
+  if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n
+  hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)
+}
+
+```
+
+```{r libraries}
+library(writexl)
+library(tidyverse)
+library(viridis)
+library(ggthemes)
+library(ggplot2)
+library(forcats)
+library(knitr)
+library(kableExtra)
+library(RColorBrewer)
+library(modelsummary)
+
+```
+
+```{r labels}
+lab1 <- "Poverty index"
+unit1 <- "(% of pop. below pov. line)"
+
+
+lab3 <- "Infant mortality"
+unit3 <- "(deaths per 1,000 live births)"
+
+
+```
+
+
+
+```{r DataPart1}
+
+SDGMM <- read.csv( file =  "DataRaw/SDGDataPart1.csv" )
+```
+
+`
+
+## Descriptive analysis
+
+Some first descriptive statistics give us an overview of the range of this indicator. We can use a simple table for that. From this table, we can see that **half of the countries have an Infant Mortality rate lower than `r round(median(SDGMM$MortalityRate), 1)`**. Over the 70 countries in the data set, *Sierra Leone*  has the highest while the Philippines have the highest  Infant Mortality rate (`r max(SDGMM$MortalityRate)`), while the *Philippines* has the lowest (`r min(SDGMM$MortalityRate)`) 
+
+```{r echo=FALSE, results= TRUE}
+Desc <- SDGMM %>%
+  group_by(Region) %>%
+  summarise(
+    min = min(MortalityRate),
+    median = median(MortalityRate),
+    mean = mean(MortalityRate),
+    max = max(MortalityRate),
+    sd = sd(MortalityRate),
+    nb_countries = n()
+  )
+kableExtra::kable(Desc, digits = 1, caption = "Summary descriptive statistics of infant Mortality rate (all countries) ")
+
+```
+
+To see the complete distribution over all 70 countries, we propose to use a *boxplot* per region. This shows that most of the African countries have higher values. Also, it shows differences among countries per region and how spread is this indicator, particularly in Africa with `r nrow(subset(SDGMM, Region == "Africa"))` countries. The vertical **ranking** of the regions has been chosen from the highest mean value (*Africa*) to the lowest (*Americas*) to facilitate the reading. 
+
+>  ***African countries (`r nrow(subset(SDGMM, Region == "Africa"))` countries) have very high and very low Infant Mortality rates, but mostly higher than in other region in the world***
+
+```{r BoxplotFacet,  fig.height=3.2, out.width = "70%"}
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, y= "", fill = Region) +
+  geom_rug(aes( color = Region), alpha=0.5, 
+           length = unit(0.3, "cm"))  +
+  geom_boxplot(width=0.3 ,  alpha=0.2) +
+  ggtitle("Distribution of Infant mortality per region (Boxplot)")+ 
+  facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Oceania", "Americas" )), ncol =1) +
+  xlab(lab3)+
+ theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(), 
+  legend.position = "none")
+```
+
+
+
+
+```{r Histogram, eval = FALSE}
+SDGMM %>% filter(!is.na(Region))%>%
+  ggplot() +
+ aes(x = MortalityRate) +
+ geom_histogram(bins = 39L, fill = SIAP.color, aes(y=..density..) )+
+  # ggtitle("Histogram")+ 
+  xlab(lab3)+
+ theme_tufte()
+```
+
+But since this graphic is quite technical, we will provide another analysis, for a broader audience. 
+
+## Main analysis
+
+We propose a colored histogram - each country entering in the composition of each bin being colored by its region. We can notice a clear rupture in the distribution, with only African countries having an infant mortality rate greater than **80** deaths per 1.000 live births.
+
+```{r HistogramColor}
+# strange thta we do not have the same dnsity values....
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, fill = Region) +
+ geom_histogram(bins = 39L,  aes(y=..count..) )+ 
+ geom_rug(color="grey", size=0.2, alpha=0.7) +
+ annotate("rect", xmin = 81, xmax = max(SDGMM$MortalityRate),
+                  ymin = 0, ymax = 6,
+                  fill = ggplotColours(1) , alpha = .2)+
+ annotate("text", x = 118, y = 4,
+          color= "red", 
+          label = "Only African countries \n exceed a ratio of 80 deaths \n per 1.000 live births")+
+  labs( title = "Infant mortality is an important issue for Africa", 
+        caption = " Source: Global SDG Indicators Database (2010)." ) +
+  xlab(lab3)+
+  ylab(" Nb countries")+
+  
+ scale_fill_hue() +
+ theme_tufte() +
+ theme(legend.position = "right")
+
+```
+
+ 
+
+```{r Density, eval = FALSE }
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate) +
+    geom_density(adjust = 0.9, fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+   ggtitle("Density estimate")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+```{r DensityMulti, eval = FALSE }
+SDGMM %>% filter(!is.na(Region))%>%
+ ggplot() +
+ aes(x = MortalityRate, group=Region, fill=Region, color = Region) +
+    geom_density( adjust=2, alpha=0.2) +
+  # geom_density( fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+   ggtitle("Density estimate")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+
+```{r Rug, eval = FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate) +
+    geom_rug(color=SIAP.color, size=0.9, alpha=0.7, 
+             length = unit(0.2, "npc")) +
+   ggtitle("Rug plot")+ 
+  xlab(lab3)+
+ theme_tufte() 
+ 
+
+```
+
+```{r Jitter, eval=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate, y ="") +
+    geom_jitter(color=SIAP.color, size=0.9, alpha=0.9,  height = 0.1 ) +
+   ggtitle("Points (jitter)")+ 
+  xlab(lab3)+
+ theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank())
+
+```
+
+# Analysis 
+
+Infant mortality, analyzed through the SDG indicator 3.2.1 (Infant mortality deaths per 1,000 live births), remains significantly higher in Africa than in other regions of the world. We can notice that while some African countries have low rates, only African countries have an infant mortality rate greater than **80** deaths per 1.000 live births.
+
+> ***While some African countries have low rates, most African coutries have a very high Infant Mortality as compared to other countries.***
+
+This fact can be due to persistent challenges such as limited access to quality maternal and newborn healthcare, high rates of preventable diseases, undernutrition, and weak health systems. 
+
+The data is lacking of information for further explanation, but the graphics analysis show this clear pattern.   
+
+
+
+*Software used:* I have used the free software ***R***, with ***RStudio***
+
+```{r}
+knitr::knit_exit()
+```
+
+
+
+```{r BoxplotJitter, eval=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate, y ="") +
+    geom_boxplot(width=0.3 ,fill=SIAP.color,color=SIAP.color, alpha=0.2,
+                 outlier.colour = "red", outlier.alpha = 0.3)  +
+    geom_jitter(color=SIAP.color, size=0.9, alpha=0.9, height = 0.1 ) +
+   ggtitle("Horizontal Boxplot with points (jittered)")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+```{r Densityrug, eval=FALSE, include=FALSE}
+ggplot(data= SDGMM) +
+ aes(x = MortalityRate) +
+    geom_density( fill=SIAP.color,color=SIAP.color, alpha=0.2) +
+    geom_rug(color=SIAP.color, size=0.9, alpha=0.7) +
+   ggtitle("Density estimate and rug")+ 
+  xlab(lab3)+
+ theme_tufte()
+
+```
+
+
+
+```{r TableHigh, echo = FALSE, results=TRUE, eval = FALSE}
+# list of countries  with high and low Maternal Mortality 
+# We observe a threshold at around 80
+thres3 <- 80
+ t <-  kbl(SDGMM[,]%>% 
+             filter(MortalityRate >thres3) %>%
+             arrange(-MortalityRate), 
+           caption = paste("List of countries with an", lab3, "greater than", thres3),
+           digits = 2)  
+
+kable_styling(t,full_width = F)
+```
+
+
+
+
+# Part 3: Evolution over time 
+
+
+
+> *You have to analyse the Infant Mortality for 144 countries over a long period of time (2000-2019) and to show the evolution of this indicator.  In particular, the differences in the evolution over time between countries in different regions of the world and noticeable event should be highlighted*. 
+
+
+
+```{r DataPart3}
+
+SDGExportPart3 <-read.csv( file = "DataRaw/SDGDataPart3.csv" )
+
+```
+
+A simple line plot, with some transparent lines, where each country is colored according to its region shows already some very interesting features: 
+
+- There is an an overall decline in the curves, with maximum values in 2000 declining for 200 to 120.
+- The countries in red (*Africa*) are at the top, while the country at the bottom are in green (*Americas*).^[Note that we have only data for these 3 regions of the world] 
+
+We also immediately notice a peak in 2010 for a country in the *Americas* region. 
+
+```{r lineplot,fig.height=3, fig.width=6, eval = TRUE}
+
+p <- SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" | Region == "Oceania") %>%
+  #filter( Region == "Asia" ) %>%
+  ggplot( ) +
+  aes(x = Year, y = Mortality, group = Country,  color = Region) +
+  geom_line(alpha= 0.3, size = 1) +
+ # facet_wrap(~Region) +
+ # scale_x_discrete(breaks = seq(2000, 2019, by = 5)) +
+  ggtitle(paste(lab3, "over time", unit3)) +
+  xlab(lab3) +
+  theme_tufte() +
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 60))
+p
+```
+
+
+```{r plotly, eval = FALSE}
+library(plotly)
+ggplotly(p, 
+         #tooltip = c("country,region_name"),
+         alpha = 0.6)
+```
+
+If we decompose that line chart by region using a good ordering of the regions (not alphabetical) and using a clever choice of the alignment, we see that: 
+
+- All the curves are sharply declining from 2000 to 2019, in all regions. 
+- African countries exhibit the most important decline (almost divided by 2 in 20 years)
+- In some African countries the decline has mostly started after 2010
+- the range of Infant Mortality values for Africa countries in 2019 is very similar to the range that was observed for Asian countries in 2000. The same is true for the comparison of the  values of Asian countries in 2019 which can be compared to the range in Americas in 2000. 
+
+
+But the most striking events are for Haiti (earthquake in *2010*). We can also see a peak for Myanmar in 2008 ([Cyclone Nargis](https://en.wikipedia.org/wiki/Cyclone_Nargis#Impact)) 
+
+
+```{r linefacet, out.width = "90%"}
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Year, y = Mortality, group = Country, color = Region) +
+  geom_line(alpha= 0.3, size = 1) +
+ facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Americas"))) +
+ scale_x_discrete(breaks = seq(2000, 2019, by = 5)) +
+  ggtitle(paste(lab3, "over time per Region", unit3)) +
+  xlab(lab3) +
+ 
+  theme_tufte() +
+  theme(legend.position = "bottom", 
+        axis.text.x = element_text(angle = 60))
+```
+
+
+More globally, we can also consider the evolution,  by region and over time, of the shape of the distributions of this indicator. The vertical alignement allows for a comparison of the values, and of the countries differences (spread),  in each region over time. 
+
+```{r Ridgehisto, eval = FALSE}
+library(ggridges)
+# Plot
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = Year, fill = Year) +
+  geom_density_ridges(stat="binline", bins=30) +
+  facet_wrap(~factor(Region, levels=c("Africa", "Asia", "Americas")), nrow =1) +
+  ggtitle(paste(lab3, "over time per Region \n", unit3)) +
+  xlab(lab3) +
+  theme_ridges() +
+  theme(legend.position = "none")
+
+
+```
+
+
+```{r Ridge, fig.height=5.8, fig.width=5, out.width = "50%"}
+#### Using densities
+
+library(ggridges)
+nb.years <- length(unique(SDGExportPart3$Year))
+mycolors <- colorRampPalette(brewer.pal(8, "Oranges"))(nb.years)
+ 
+
+# Plot
+SDGExportPart3%>% 
+  mutate(
+    Year = as.factor(Year)
+    
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = fct_rev(Year),  fill = ..x..) +
+  geom_density_ridges_gradient(scale = 5, rel_min_height = 0.2, color = "white") +   
+   scale_y_discrete(breaks=c(2000, 2005, 2010, 2015, 2019))+
+  # scale_fill_viridis(name = "Temp. [F]", option="cividis", ) +
+  scale_fill_gradientn(colours = mycolors)+
+  facet_wrap(~factor(Region, levels=c( "Africa" , "Asia","Americas" )),
+             ncol =1) +
+  ggtitle(paste(lab3, "over time per Region")) +
+  xlab(paste(lab3, unit3)) +
+  theme_ridges() +
+  theme(legend.position = "none")
+ 
+
+```
+
+
+
+```{r BoxplotSet, fig.height=10, fig.width=5 , eval = FALSE}
+#### Using Boxplots
+# Plot
+SDGExportPart3 %>% 
+  mutate(
+    Year = as.factor(Year)
+  ) %>%
+  filter(Region == "Africa" | Region == "Asia" | Region == "Americas" ) %>%
+  ggplot( ) +
+  aes(x = Mortality, y = fct_rev(Year), fill = Region) +
+  geom_boxplot(outlier.colour = "grey", outlier.alpha = 0.3) +
+   facet_wrap(~factor(Region, levels=c("Africa",  "Asia", "Americas" )),
+             ncol =1) +
+  ggtitle(paste0(lab3, " over time per Region\n",unit3)) +
+  xlab(lab3) +
+  theme_tufte()+
+  theme(legend.position = "none")
+
+```
+
+
+
+
+```{r}
+knitr::knit_exit()
+```
+
+
