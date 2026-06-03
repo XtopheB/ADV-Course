@@ -61,6 +61,13 @@
   z-index: 9999;
 }
 
+ /*   Size of tables (kable) */ 
+.reveal table {
+  font-size: 0.5em;   /* main control: smaller text */
+  line-height: 1.1;
+}
+
+
 /* -----------------------------
    OPTIONAL: soften code blocks
    ----------------------------- */
