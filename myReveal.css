@@ -29,6 +29,12 @@
   color: #073642;
 }
 
+.reveal .footer {
+  font-size: 0.45em;
+  color: #93a1a1;
+  left: 15px;
+}
+
 /* -----------------------------
    BODY TEXT
    ----------------------------- */
@@ -39,7 +45,7 @@
 }
 
 /* -----------------------------
-   LOGO (bottom-left corner)
+   LOGO (top-right corner)
    ----------------------------- */
 
 .reveal::after {
@@ -68,10 +74,32 @@
 }
 
 
+
 /* -----------------------------
-   OPTIONAL: soften code blocks
+   OPTIONAL: soften code blocks (NOT Used here)
    ----------------------------- */
 
 .reveal pre code {
   font-size: 0.85em;
 }
+
+
+/* -----------------------------
+   BLUE LINE AT BOTTOM OF SLIDES
+   ----------------------------- */
+
+.reveal::before {
+  content: "";
+  position: fixed;
+  bottom: 40px ;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #93a1a1;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+
+
+
