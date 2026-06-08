@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="Process-Lines_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Process-Lines_files/libs/quarto-html/tabby.min.js"></script>
+<script src="Process-Lines_files/libs/quarto-html/popper.min.js"></script>
+<script src="Process-Lines_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="Process-Lines_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Process-Lines_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="Process-Lines_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.8.25">
+
+  <meta name="author" content="Christophe Bontemps (SIAP)">
+  <title>From Clutter to Clarity: Improving a Time Series Chart</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="Process-Lines_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="Process-Lines_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="Process-Lines_files/libs/revealjs/dist/theme/quarto-832775eafbd512325564c8c290c39367.css">
+  <link rel="stylesheet" href="myReveal.css">
+  <link href="Process-Lines_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="Process-Lines_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="Process-Lines_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="Process-Lines_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+  <link href="Process-Lines_files/libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+
+  <script src="Process-Lines_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+  <script src="Process-Lines_files/libs/plotly-binding-4.12.0/plotly.js"></script>
+
+  <script src="Process-Lines_files/libs/typedarray-0.1/typedarray.min.js"></script>
+
+  <script src="Process-Lines_files/libs/jquery-3.5.1/jquery.min.js"></script>
+
+  <link href="Process-Lines_files/libs/crosstalk-1.2.2/css/crosstalk.min.css" rel="stylesheet">
+
+  <script src="Process-Lines_files/libs/crosstalk-1.2.2/js/crosstalk.min.js"></script>
+
+  <link href="Process-Lines_files/libs/plotly-htmlwidgets-css-2.25.2/plotly-htmlwidgets.css" rel="stylesheet">
+
+  <script src="Process-Lines_files/libs/plotly-main-2.25.2/plotly-latest.min.js"></script>
+
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">From Clutter to Clarity: Improving a Time Series Chart</h1>
+  <p class="subtitle">A step-by-step demo</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Christophe Bontemps (SIAP) 
+</div>
+        <p class="quarto-title-affiliation">
+            <img data-src="Images/escap_siap_logo.png" width="150">
+          </p>
+    </div>
+</div>
+
+</section>
+<section>
+<section id="the-typical-excel-chart" class="title-slide slide level1 center">
+<h1>The Typical Excel Chart</h1>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
+<section id="problems" class="slide level2">
+<h2>Problems:</h2>
+<ul>
+<li>Too many colours</li>
+<li>Markers on every point</li>
+<li>Heavy gridlines</li>
+<li>Large legend</li>
+<li>Visual overload</li>
+</ul>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"></section></section>
+<section>
+<section id="remove-to-improve" class="title-slide slide level1 center">
+<h1>Remove to improve</h1>
+<p>Remove points to focus on lines (trends).</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+<section id="reduce-visual-noise" class="slide level2">
+<h2>Reduce Visual Noise</h2>
+<p>Lighter gridlines and cleaner theme.</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
+<section id="remove-the-rainbow" class="slide level2">
+<h2>Remove the Rainbow</h2>
+<p>Color should communicate meaning, or help…</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"></section>
+<section id="remove-borders-grids" class="slide level2">
+<h2>Remove Borders &amp; Grids</h2>
+<p>Focus attention on the data, not on the grid.</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch"></section></section>
+<section>
+<section id="highlight-regions" class="title-slide slide level1 center">
+<h1>Highlight Regions</h1>
+<p>Use color to encode information (from data).</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"></section>
+<section id="be-inclusive" class="slide level2">
+<h2>Be inclusive</h2>
+<p>About 7% of men are colorblind. They see this:</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch"></section>
+<section id="be-inclusive-1" class="slide level2">
+<h2>Be inclusive</h2>
+<p>Use a color blind friendly palette.</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"></section>
+<section id="also-using-small-multiple-graphics" class="slide level2">
+<h2>Also using “small multiple” graphics</h2>
+<p>Less lines is more information</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"></section>
+<section id="remove-legend-not-needed" class="slide level2">
+<h2>Remove legend (not needed)</h2>
+<p>Avoid redundancy</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-14-1.png" width="960" class="r-stretch"></section>
+<section id="use-interactivity" class="slide level2">
+<h2>Use interactivity</h2>
+<p>Helps identifying, not delivering a message</p>
+<div class="cell">
+<div class="cell-output-display">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-2a6f24426f590a5cdbb6" style="width:960px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-2a6f24426f590a5cdbb6">{"x":{"data":[{"x":[1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007],"y":[43.076999999999998,45.685000000000002,48.302999999999997,51.406999999999996,54.518000000000001,58.014000000000003,61.368000000000002,65.799000000000007,67.744,69.152000000000001,70.994,72.301000000000002,null,30.015000000000001,31.998999999999999,34,35.984999999999999,37.927999999999997,39.482999999999997,39.942,39.905999999999999,40.646999999999998,40.963000000000001,41.003,42.731000000000002,null,38.222999999999999,40.357999999999997,42.618000000000002,44.884999999999998,47.014000000000003,49.189999999999998,50.904000000000003,52.337000000000003,53.918999999999997,54.777000000000001,54.405999999999999,56.728000000000002,null,47.622,49.618000000000002,51.520000000000003,53.298000000000002,56.024000000000001,59.319000000000003,61.484000000000002,63.622,62.744999999999997,52.555999999999997,46.634,50.728000000000002,null,31.975000000000001,34.905999999999999,37.814,40.697000000000003,43.591000000000001,46.137,48.122,49.557000000000002,50.259999999999998,50.323999999999998,50.649999999999999,52.295000000000002,null,39.030999999999999,40.533000000000001,42.045000000000002,43.548000000000002,44.057000000000002,45.909999999999997,47.470999999999997,48.210999999999999,44.735999999999997,45.326000000000001,47.359999999999999,49.579999999999998,null,38.523000000000003,40.427999999999997,42.643000000000001,44.798999999999999,47.048999999999999,49.354999999999997,52.960999999999999,54.984999999999999,54.314,52.198999999999998,49.856000000000002,50.43,null,35.463000000000001,37.463999999999999,39.475000000000001,41.478000000000002,43.457000000000001,46.774999999999999,48.295000000000002,50.484999999999999,49.396000000000001,46.066000000000003,43.308,44.741,null,38.091999999999999,39.881,41.716000000000001,43.600999999999999,45.569000000000003,47.383000000000003,49.517000000000003,51.051000000000002,51.723999999999997,51.573,50.524999999999999,50.651000000000003,null,40.715000000000003,42.460000000000001,44.466999999999999,46.472000000000001,48.944000000000003,50.939,52.933,54.926000000000002,57.939,60.659999999999997,62.973999999999997,65.152000000000001,null,39.143000000000001,40.652000000000001,42.122,44.055999999999997,45.988999999999997,47.804000000000002,47.783999999999999,47.411999999999999,45.548000000000002,42.587000000000003,44.966000000000001,46.462000000000003,null,42.110999999999997,45.052999999999997,48.435000000000002,52.039999999999999,54.906999999999996,55.625,56.695,57.469999999999999,56.433,52.962000000000003,52.969999999999999,55.322000000000003,null,40.476999999999997,42.469000000000001,44.93,47.350000000000001,49.801000000000002,52.374000000000002,53.982999999999997,54.655000000000001,52.043999999999997,47.991,46.832000000000001,48.328000000000003,null,34.811999999999998,37.328000000000003,39.692999999999998,42.073999999999998,44.366,46.518999999999998,48.811999999999998,50.039999999999999,51.603999999999999,53.156999999999996,53.372999999999998,54.790999999999997,null,41.893000000000001,44.444000000000003,46.991999999999997,49.292999999999999,51.137,53.319000000000003,56.006,59.796999999999997,63.673999999999999,67.216999999999999,69.805999999999997,71.337999999999994,null,34.481999999999999,35.982999999999997,37.484999999999999,38.987000000000002,40.515999999999998,42.024000000000001,43.661999999999999,45.664000000000001,47.545000000000002,48.244999999999997,49.347999999999999,51.579000000000001,null,35.927999999999997,38.046999999999997,40.158000000000001,42.189,44.142000000000003,44.534999999999997,43.890000000000001,46.453000000000003,49.991,53.378,55.240000000000002,58.039999999999999,null,34.078000000000003,36.667000000000002,40.058999999999997,42.115000000000002,43.515000000000001,44.509999999999998,44.915999999999997,46.683999999999997,48.091000000000001,49.402000000000001,50.725000000000001,52.947000000000003,null,37.003,38.999000000000002,40.488999999999997,44.597999999999999,48.689999999999998,52.789999999999999,56.564,60.189999999999998,61.366,60.460999999999999,56.761000000000003,56.734999999999999,null,30,32.064999999999998,33.896000000000001,35.856999999999999,38.308,41.841999999999999,45.579999999999998,49.265000000000001,52.643999999999998,55.860999999999997,58.040999999999997,59.448,null,43.149000000000001,44.779000000000003,46.451999999999998,48.072000000000003,49.875,51.756,53.744,55.728999999999999,57.500999999999998,58.555999999999997,58.453000000000003,60.021999999999998,null,33.609000000000002,34.558,35.753,37.197000000000003,38.841999999999999,40.762,42.890999999999998,45.552,48.576000000000001,51.454999999999998,53.676000000000002,56.006999999999998,null,32.5,33.488999999999997,34.488,35.491999999999997,36.485999999999997,37.465000000000003,39.326999999999998,41.244999999999997,43.265999999999998,44.872999999999998,45.503999999999998,46.387999999999998,null,42.270000000000003,44.686,47.948999999999998,50.654000000000003,53.558999999999997,56.155000000000001,58.765999999999998,59.338999999999999,59.284999999999997,54.406999999999996,50.991999999999997,54.109999999999999,null,42.137999999999998,45.046999999999997,47.747,48.491999999999997,49.767000000000003,52.207999999999998,55.078000000000003,57.18,59.685000000000002,55.558,44.593000000000004,42.591999999999999,null,38.479999999999997,39.485999999999997,40.502000000000002,41.536000000000001,42.613999999999997,43.764000000000003,44.851999999999997,46.027000000000001,40.802,42.220999999999997,43.753,45.677999999999997,null,42.722999999999999,45.289000000000001,47.808,50.226999999999997,52.773000000000003,57.442,62.155000000000001,66.233999999999995,68.754999999999995,71.555000000000007,72.736999999999995,73.951999999999998,null,36.680999999999997,38.865000000000002,40.847999999999999,42.881,44.850999999999999,46.881,48.969000000000001,49.350000000000001,52.213999999999999,54.978000000000002,57.286000000000001,59.442999999999998,null,36.256,37.207000000000001,38.409999999999997,39.487000000000002,41.765999999999998,43.767000000000003,45.642000000000003,47.457000000000001,49.420000000000002,47.494999999999997,45.009,48.302999999999997,null,33.685000000000002,35.307000000000002,36.936,38.487000000000002,39.976999999999997,41.713999999999999,43.915999999999997,46.363999999999997,48.387999999999998,49.902999999999999,51.817999999999998,54.466999999999999,null,40.542999999999999,42.338000000000001,44.247999999999998,46.289000000000001,48.436999999999998,50.851999999999997,53.598999999999997,56.145000000000003,58.332999999999998,60.43,62.247,64.164000000000001,null,50.985999999999997,58.088999999999999,60.246000000000002,61.557000000000002,62.944000000000003,64.930000000000007,66.710999999999999,68.739999999999995,69.745000000000005,70.736000000000004,71.953999999999994,72.801000000000002,null,42.872999999999998,45.423000000000002,47.923999999999999,50.335000000000001,52.862000000000002,55.729999999999997,59.649999999999999,62.677,65.393000000000001,67.659999999999997,69.614999999999995,71.164000000000001,null,31.286000000000001,33.779000000000003,36.161000000000001,38.113,40.328000000000003,42.494999999999997,42.795000000000002,42.860999999999997,44.283999999999999,46.344000000000001,44.026000000000003,42.082000000000001,null,41.725000000000001,45.225999999999999,48.386000000000003,51.158999999999999,53.866999999999997,56.436999999999998,58.968000000000004,60.835000000000001,61.999000000000002,58.908999999999999,51.478999999999999,52.905999999999999,null,37.444000000000003,38.597999999999999,39.487000000000002,40.118000000000002,40.545999999999999,41.290999999999997,42.597999999999999,44.555,47.390999999999998,51.313000000000002,54.496000000000002,56.866999999999997,null,36.323999999999998,37.802,39.359999999999999,41.039999999999999,42.820999999999998,44.514000000000003,45.826000000000001,46.886000000000003,47.472000000000001,47.463999999999999,46.607999999999997,46.859000000000002,null,52.723999999999997,55.090000000000003,57.665999999999997,60.542000000000002,64.274000000000001,67.063999999999993,69.885000000000005,71.912999999999997,73.614999999999995,74.772000000000006,75.744,76.441999999999993,null,40,41.5,43,44.100000000000001,44.600000000000001,45,46.218000000000004,44.020000000000003,23.599,36.087000000000003,43.412999999999997,46.241999999999997,null,46.470999999999997,48.945,51.893000000000001,54.424999999999997,56.479999999999997,58.549999999999997,60.350999999999999,61.728000000000002,62.741999999999997,63.305999999999997,64.337000000000003,65.528000000000006,null,37.277999999999999,39.329000000000001,41.454000000000001,43.563000000000002,45.814999999999998,48.878999999999998,52.378999999999998,55.768999999999998,58.195999999999998,60.186999999999998,61.600000000000001,63.061999999999998,null,30.331,31.57,32.767000000000003,34.113,35.399999999999999,36.787999999999997,38.445,40.006,38.332999999999998,39.896999999999998,41.012,42.567999999999998,null,32.978000000000002,34.976999999999997,36.981000000000002,38.976999999999997,40.972999999999999,41.973999999999997,42.954999999999998,44.500999999999998,39.658000000000001,43.795000000000002,45.936,48.158999999999999,null,45.009,47.984999999999999,49.951000000000001,51.927,53.695999999999998,55.527000000000001,58.161000000000001,60.834000000000003,61.887999999999998,60.235999999999997,53.365000000000002,49.338999999999999,null,38.634999999999998,39.624000000000002,40.869999999999997,42.857999999999997,45.082999999999998,47.799999999999997,50.338000000000001,51.744,53.555999999999997,55.372999999999998,56.369,58.555999999999997,null,41.406999999999996,43.423999999999999,44.991999999999997,46.633000000000003,49.552,52.536999999999999,55.561,57.677999999999997,58.473999999999997,54.289000000000001,43.869,39.613,null,41.215000000000003,42.973999999999997,44.246000000000002,45.756999999999998,47.619999999999997,49.918999999999997,50.607999999999997,51.534999999999997,50.439999999999998,48.466000000000001,49.651000000000003,52.517000000000003,null,38.595999999999997,41.207999999999998,43.921999999999997,46.768999999999998,49.759,52.887,55.470999999999997,56.941000000000003,58.061,58.390000000000001,57.561,58.420000000000002,null,44.600000000000001,47.100000000000001,49.579000000000001,52.052999999999997,55.601999999999997,59.837000000000003,64.048000000000002,66.894000000000005,70.001000000000005,71.972999999999999,73.042000000000002,73.923000000000002,null,39.978000000000002,42.570999999999998,45.344000000000001,48.051000000000002,51.015999999999998,50.350000000000001,49.848999999999997,51.509,48.825000000000003,44.578000000000003,47.813000000000002,51.542000000000002,null,42.037999999999997,44.076999999999998,46.023000000000003,47.768000000000001,50.106999999999999,51.386000000000003,51.820999999999998,50.820999999999998,46.100000000000001,40.238,39.192999999999998,42.384,null,48.451000000000001,50.469000000000001,52.357999999999997,53.994999999999997,55.634999999999998,57.673999999999999,60.363,62.350999999999999,60.377000000000002,46.808999999999997,39.988999999999997,43.487000000000002],"text":["year: 1952<br />lifeExp: 43.07700<br />country: Algeria<br />Continent: Africa","year: 1957<br />lifeExp: 45.68500<br />country: Algeria<br />Continent: Africa","year: 1962<br />lifeExp: 48.30300<br />country: Algeria<br />Continent: Africa","year: 1967<br />lifeExp: 51.40700<br />country: Algeria<br />Continent: Africa","year: 1972<br />lifeExp: 54.51800<br />country: Algeria<br />Continent: Africa","year: 1977<br />lifeExp: 58.01400<br />country: Algeria<br />Continent: Africa","year: 1982<br />lifeExp: 61.36800<br />country: Algeria<br />Continent: Africa","year: 1987<br />lifeExp: 65.79900<br />country: Algeria<br />Continent: Africa","year: 1992<br />lifeExp: 67.74400<br />country: Algeria<br />Continent: Africa","year: 1997<br />lifeExp: 69.15200<br />country: Algeria<br />Continent: Africa","year: 2002<br />lifeExp: 70.99400<br />country: Algeria<br />Continent: Africa","year: 2007<br />lifeExp: 72.30100<br />country: Algeria<br />Continent: Africa",null,"year: 1952<br />lifeExp: 30.01500<br />country: Angola<br />Continent: Africa","year: 1957<br />lifeExp: 31.99900<br />country: Angola<br />Continent: Africa","year: 1962<br />lifeExp: 34.00000<br />country: Angola<br />Continent: Africa","year: 1967<br />lifeExp: 35.98500<br />country: Angola<br />Continent: Africa","year: 1972<br />lifeExp: 37.92800<br />country: Angola<br />Continent: Africa","year: 1977<br />lifeExp: 39.48300<br />country: Angola<br />Continent: Africa","year: 1982<br />lifeExp: 39.94200<br />country: Angola<br />Continent: Africa","year: 1987<br />lifeExp: 39.90600<br />country: Angola<br />Continent: Africa","year: 1992<br />lifeExp: 40.64700<br />country: Angola<br />Continent: Africa","year: 1997<br />lifeExp: 40.96300<br />country: Angola<br />Continent: Africa","year: 2002<br />lifeExp: 41.00300<br />country: Angola<br />Continent: Africa","year: 2007<br />lifeExp: 42.73100<br />country: Angola<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.22300<br />country: Benin<br />Continent: Africa","year: 1957<br />lifeExp: 40.35800<br />country: Benin<br />Continent: Africa","year: 1962<br />lifeExp: 42.61800<br />country: Benin<br />Continent: Africa","year: 1967<br />lifeExp: 44.88500<br />country: Benin<br />Continent: Africa","year: 1972<br />lifeExp: 47.01400<br />country: Benin<br />Continent: Africa","year: 1977<br />lifeExp: 49.19000<br />country: Benin<br />Continent: Africa","year: 1982<br />lifeExp: 50.90400<br />country: Benin<br />Continent: Africa","year: 1987<br />lifeExp: 52.33700<br />country: Benin<br />Continent: Africa","year: 1992<br />lifeExp: 53.91900<br />country: Benin<br />Continent: Africa","year: 1997<br />lifeExp: 54.77700<br />country: Benin<br />Continent: Africa","year: 2002<br />lifeExp: 54.40600<br />country: Benin<br />Continent: Africa","year: 2007<br />lifeExp: 56.72800<br />country: Benin<br />Continent: Africa",null,"year: 1952<br />lifeExp: 47.62200<br />country: Botswana<br />Continent: Africa","year: 1957<br />lifeExp: 49.61800<br />country: Botswana<br />Continent: Africa","year: 1962<br />lifeExp: 51.52000<br />country: Botswana<br />Continent: Africa","year: 1967<br />lifeExp: 53.29800<br />country: Botswana<br />Continent: Africa","year: 1972<br />lifeExp: 56.02400<br />country: Botswana<br />Continent: Africa","year: 1977<br />lifeExp: 59.31900<br />country: Botswana<br />Continent: Africa","year: 1982<br />lifeExp: 61.48400<br />country: Botswana<br />Continent: Africa","year: 1987<br />lifeExp: 63.62200<br />country: Botswana<br />Continent: Africa","year: 1992<br />lifeExp: 62.74500<br />country: Botswana<br />Continent: Africa","year: 1997<br />lifeExp: 52.55600<br />country: Botswana<br />Continent: Africa","year: 2002<br />lifeExp: 46.63400<br />country: Botswana<br />Continent: Africa","year: 2007<br />lifeExp: 50.72800<br />country: Botswana<br />Continent: Africa",null,"year: 1952<br />lifeExp: 31.97500<br />country: Burkina Faso<br />Continent: Africa","year: 1957<br />lifeExp: 34.90600<br />country: Burkina Faso<br />Continent: Africa","year: 1962<br />lifeExp: 37.81400<br />country: Burkina Faso<br />Continent: Africa","year: 1967<br />lifeExp: 40.69700<br />country: Burkina Faso<br />Continent: Africa","year: 1972<br />lifeExp: 43.59100<br />country: Burkina Faso<br />Continent: Africa","year: 1977<br />lifeExp: 46.13700<br />country: Burkina Faso<br />Continent: Africa","year: 1982<br />lifeExp: 48.12200<br />country: Burkina Faso<br />Continent: Africa","year: 1987<br />lifeExp: 49.55700<br />country: Burkina Faso<br />Continent: Africa","year: 1992<br />lifeExp: 50.26000<br />country: Burkina Faso<br />Continent: Africa","year: 1997<br />lifeExp: 50.32400<br />country: Burkina Faso<br />Continent: Africa","year: 2002<br />lifeExp: 50.65000<br />country: Burkina Faso<br />Continent: Africa","year: 2007<br />lifeExp: 52.29500<br />country: Burkina Faso<br />Continent: Africa",null,"year: 1952<br />lifeExp: 39.03100<br />country: Burundi<br />Continent: Africa","year: 1957<br />lifeExp: 40.53300<br />country: Burundi<br />Continent: Africa","year: 1962<br />lifeExp: 42.04500<br />country: Burundi<br />Continent: Africa","year: 1967<br />lifeExp: 43.54800<br />country: Burundi<br />Continent: Africa","year: 1972<br />lifeExp: 44.05700<br />country: Burundi<br />Continent: Africa","year: 1977<br />lifeExp: 45.91000<br />country: Burundi<br />Continent: Africa","year: 1982<br />lifeExp: 47.47100<br />country: Burundi<br />Continent: Africa","year: 1987<br />lifeExp: 48.21100<br />country: Burundi<br />Continent: Africa","year: 1992<br />lifeExp: 44.73600<br />country: Burundi<br />Continent: Africa","year: 1997<br />lifeExp: 45.32600<br />country: Burundi<br />Continent: Africa","year: 2002<br />lifeExp: 47.36000<br />country: Burundi<br />Continent: Africa","year: 2007<br />lifeExp: 49.58000<br />country: Burundi<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.52300<br />country: Cameroon<br />Continent: Africa","year: 1957<br />lifeExp: 40.42800<br />country: Cameroon<br />Continent: Africa","year: 1962<br />lifeExp: 42.64300<br />country: Cameroon<br />Continent: Africa","year: 1967<br />lifeExp: 44.79900<br />country: Cameroon<br />Continent: Africa","year: 1972<br />lifeExp: 47.04900<br />country: Cameroon<br />Continent: Africa","year: 1977<br />lifeExp: 49.35500<br />country: Cameroon<br />Continent: Africa","year: 1982<br />lifeExp: 52.96100<br />country: Cameroon<br />Continent: Africa","year: 1987<br />lifeExp: 54.98500<br />country: Cameroon<br />Continent: Africa","year: 1992<br />lifeExp: 54.31400<br />country: Cameroon<br />Continent: Africa","year: 1997<br />lifeExp: 52.19900<br />country: Cameroon<br />Continent: Africa","year: 2002<br />lifeExp: 49.85600<br />country: Cameroon<br />Continent: Africa","year: 2007<br />lifeExp: 50.43000<br />country: Cameroon<br />Continent: Africa",null,"year: 1952<br />lifeExp: 35.46300<br />country: Central African Republic<br />Continent: Africa","year: 1957<br />lifeExp: 37.46400<br />country: Central African Republic<br />Continent: Africa","year: 1962<br />lifeExp: 39.47500<br />country: Central African Republic<br />Continent: Africa","year: 1967<br />lifeExp: 41.47800<br />country: Central African Republic<br />Continent: Africa","year: 1972<br />lifeExp: 43.45700<br />country: Central African Republic<br />Continent: Africa","year: 1977<br />lifeExp: 46.77500<br />country: Central African Republic<br />Continent: Africa","year: 1982<br />lifeExp: 48.29500<br />country: Central African Republic<br />Continent: Africa","year: 1987<br />lifeExp: 50.48500<br />country: Central African Republic<br />Continent: Africa","year: 1992<br />lifeExp: 49.39600<br />country: Central African Republic<br />Continent: Africa","year: 1997<br />lifeExp: 46.06600<br />country: Central African Republic<br />Continent: Africa","year: 2002<br />lifeExp: 43.30800<br />country: Central African Republic<br />Continent: Africa","year: 2007<br />lifeExp: 44.74100<br />country: Central African Republic<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.09200<br />country: Chad<br />Continent: Africa","year: 1957<br />lifeExp: 39.88100<br />country: Chad<br />Continent: Africa","year: 1962<br />lifeExp: 41.71600<br />country: Chad<br />Continent: Africa","year: 1967<br />lifeExp: 43.60100<br />country: Chad<br />Continent: Africa","year: 1972<br />lifeExp: 45.56900<br />country: Chad<br />Continent: Africa","year: 1977<br />lifeExp: 47.38300<br />country: Chad<br />Continent: Africa","year: 1982<br />lifeExp: 49.51700<br />country: Chad<br />Continent: Africa","year: 1987<br />lifeExp: 51.05100<br />country: Chad<br />Continent: Africa","year: 1992<br />lifeExp: 51.72400<br />country: Chad<br />Continent: Africa","year: 1997<br />lifeExp: 51.57300<br />country: Chad<br />Continent: Africa","year: 2002<br />lifeExp: 50.52500<br />country: Chad<br />Continent: Africa","year: 2007<br />lifeExp: 50.65100<br />country: Chad<br />Continent: Africa",null,"year: 1952<br />lifeExp: 40.71500<br />country: Comoros<br />Continent: Africa","year: 1957<br />lifeExp: 42.46000<br />country: Comoros<br />Continent: Africa","year: 1962<br />lifeExp: 44.46700<br />country: Comoros<br />Continent: Africa","year: 1967<br />lifeExp: 46.47200<br />country: Comoros<br />Continent: Africa","year: 1972<br />lifeExp: 48.94400<br />country: Comoros<br />Continent: Africa","year: 1977<br />lifeExp: 50.93900<br />country: Comoros<br />Continent: Africa","year: 1982<br />lifeExp: 52.93300<br />country: Comoros<br />Continent: Africa","year: 1987<br />lifeExp: 54.92600<br />country: Comoros<br />Continent: Africa","year: 1992<br />lifeExp: 57.93900<br />country: Comoros<br />Continent: Africa","year: 1997<br />lifeExp: 60.66000<br />country: Comoros<br />Continent: Africa","year: 2002<br />lifeExp: 62.97400<br />country: Comoros<br />Continent: Africa","year: 2007<br />lifeExp: 65.15200<br />country: Comoros<br />Continent: Africa",null,"year: 1952<br />lifeExp: 39.14300<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1957<br />lifeExp: 40.65200<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1962<br />lifeExp: 42.12200<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1967<br />lifeExp: 44.05600<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1972<br />lifeExp: 45.98900<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1977<br />lifeExp: 47.80400<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1982<br />lifeExp: 47.78400<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1987<br />lifeExp: 47.41200<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1992<br />lifeExp: 45.54800<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 1997<br />lifeExp: 42.58700<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 2002<br />lifeExp: 44.96600<br />country: Congo, Dem. Rep.<br />Continent: Africa","year: 2007<br />lifeExp: 46.46200<br />country: Congo, Dem. Rep.<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.11100<br />country: Congo, Rep.<br />Continent: Africa","year: 1957<br />lifeExp: 45.05300<br />country: Congo, Rep.<br />Continent: Africa","year: 1962<br />lifeExp: 48.43500<br />country: Congo, Rep.<br />Continent: Africa","year: 1967<br />lifeExp: 52.04000<br />country: Congo, Rep.<br />Continent: Africa","year: 1972<br />lifeExp: 54.90700<br />country: Congo, Rep.<br />Continent: Africa","year: 1977<br />lifeExp: 55.62500<br />country: Congo, Rep.<br />Continent: Africa","year: 1982<br />lifeExp: 56.69500<br />country: Congo, Rep.<br />Continent: Africa","year: 1987<br />lifeExp: 57.47000<br />country: Congo, Rep.<br />Continent: Africa","year: 1992<br />lifeExp: 56.43300<br />country: Congo, Rep.<br />Continent: Africa","year: 1997<br />lifeExp: 52.96200<br />country: Congo, Rep.<br />Continent: Africa","year: 2002<br />lifeExp: 52.97000<br />country: Congo, Rep.<br />Continent: Africa","year: 2007<br />lifeExp: 55.32200<br />country: Congo, Rep.<br />Continent: Africa",null,"year: 1952<br />lifeExp: 40.47700<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1957<br />lifeExp: 42.46900<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1962<br />lifeExp: 44.93000<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1967<br />lifeExp: 47.35000<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1972<br />lifeExp: 49.80100<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1977<br />lifeExp: 52.37400<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1982<br />lifeExp: 53.98300<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1987<br />lifeExp: 54.65500<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1992<br />lifeExp: 52.04400<br />country: Cote d'Ivoire<br />Continent: Africa","year: 1997<br />lifeExp: 47.99100<br />country: Cote d'Ivoire<br />Continent: Africa","year: 2002<br />lifeExp: 46.83200<br />country: Cote d'Ivoire<br />Continent: Africa","year: 2007<br />lifeExp: 48.32800<br />country: Cote d'Ivoire<br />Continent: Africa",null,"year: 1952<br />lifeExp: 34.81200<br />country: Djibouti<br />Continent: Africa","year: 1957<br />lifeExp: 37.32800<br />country: Djibouti<br />Continent: Africa","year: 1962<br />lifeExp: 39.69300<br />country: Djibouti<br />Continent: Africa","year: 1967<br />lifeExp: 42.07400<br />country: Djibouti<br />Continent: Africa","year: 1972<br />lifeExp: 44.36600<br />country: Djibouti<br />Continent: Africa","year: 1977<br />lifeExp: 46.51900<br />country: Djibouti<br />Continent: Africa","year: 1982<br />lifeExp: 48.81200<br />country: Djibouti<br />Continent: Africa","year: 1987<br />lifeExp: 50.04000<br />country: Djibouti<br />Continent: Africa","year: 1992<br />lifeExp: 51.60400<br />country: Djibouti<br />Continent: Africa","year: 1997<br />lifeExp: 53.15700<br />country: Djibouti<br />Continent: Africa","year: 2002<br />lifeExp: 53.37300<br />country: Djibouti<br />Continent: Africa","year: 2007<br />lifeExp: 54.79100<br />country: Djibouti<br />Continent: Africa",null,"year: 1952<br />lifeExp: 41.89300<br />country: Egypt<br />Continent: Africa","year: 1957<br />lifeExp: 44.44400<br />country: Egypt<br />Continent: Africa","year: 1962<br />lifeExp: 46.99200<br />country: Egypt<br />Continent: Africa","year: 1967<br />lifeExp: 49.29300<br />country: Egypt<br />Continent: Africa","year: 1972<br />lifeExp: 51.13700<br />country: Egypt<br />Continent: Africa","year: 1977<br />lifeExp: 53.31900<br />country: Egypt<br />Continent: Africa","year: 1982<br />lifeExp: 56.00600<br />country: Egypt<br />Continent: Africa","year: 1987<br />lifeExp: 59.79700<br />country: Egypt<br />Continent: Africa","year: 1992<br />lifeExp: 63.67400<br />country: Egypt<br />Continent: Africa","year: 1997<br />lifeExp: 67.21700<br />country: Egypt<br />Continent: Africa","year: 2002<br />lifeExp: 69.80600<br />country: Egypt<br />Continent: Africa","year: 2007<br />lifeExp: 71.33800<br />country: Egypt<br />Continent: Africa",null,"year: 1952<br />lifeExp: 34.48200<br />country: Equatorial Guinea<br />Continent: Africa","year: 1957<br />lifeExp: 35.98300<br />country: Equatorial Guinea<br />Continent: Africa","year: 1962<br />lifeExp: 37.48500<br />country: Equatorial Guinea<br />Continent: Africa","year: 1967<br />lifeExp: 38.98700<br />country: Equatorial Guinea<br />Continent: Africa","year: 1972<br />lifeExp: 40.51600<br />country: Equatorial Guinea<br />Continent: Africa","year: 1977<br />lifeExp: 42.02400<br />country: Equatorial Guinea<br />Continent: Africa","year: 1982<br />lifeExp: 43.66200<br />country: Equatorial Guinea<br />Continent: Africa","year: 1987<br />lifeExp: 45.66400<br />country: Equatorial Guinea<br />Continent: Africa","year: 1992<br />lifeExp: 47.54500<br />country: Equatorial Guinea<br />Continent: Africa","year: 1997<br />lifeExp: 48.24500<br />country: Equatorial Guinea<br />Continent: Africa","year: 2002<br />lifeExp: 49.34800<br />country: Equatorial Guinea<br />Continent: Africa","year: 2007<br />lifeExp: 51.57900<br />country: Equatorial Guinea<br />Continent: Africa",null,"year: 1952<br />lifeExp: 35.92800<br />country: Eritrea<br />Continent: Africa","year: 1957<br />lifeExp: 38.04700<br />country: Eritrea<br />Continent: Africa","year: 1962<br />lifeExp: 40.15800<br />country: Eritrea<br />Continent: Africa","year: 1967<br />lifeExp: 42.18900<br />country: Eritrea<br />Continent: Africa","year: 1972<br />lifeExp: 44.14200<br />country: Eritrea<br />Continent: Africa","year: 1977<br />lifeExp: 44.53500<br />country: Eritrea<br />Continent: Africa","year: 1982<br />lifeExp: 43.89000<br />country: Eritrea<br />Continent: Africa","year: 1987<br />lifeExp: 46.45300<br />country: Eritrea<br />Continent: Africa","year: 1992<br />lifeExp: 49.99100<br />country: Eritrea<br />Continent: Africa","year: 1997<br />lifeExp: 53.37800<br />country: Eritrea<br />Continent: Africa","year: 2002<br />lifeExp: 55.24000<br />country: Eritrea<br />Continent: Africa","year: 2007<br />lifeExp: 58.04000<br />country: Eritrea<br />Continent: Africa",null,"year: 1952<br />lifeExp: 34.07800<br />country: Ethiopia<br />Continent: Africa","year: 1957<br />lifeExp: 36.66700<br />country: Ethiopia<br />Continent: Africa","year: 1962<br />lifeExp: 40.05900<br />country: Ethiopia<br />Continent: Africa","year: 1967<br />lifeExp: 42.11500<br />country: Ethiopia<br />Continent: Africa","year: 1972<br />lifeExp: 43.51500<br />country: Ethiopia<br />Continent: Africa","year: 1977<br />lifeExp: 44.51000<br />country: Ethiopia<br />Continent: Africa","year: 1982<br />lifeExp: 44.91600<br />country: Ethiopia<br />Continent: Africa","year: 1987<br />lifeExp: 46.68400<br />country: Ethiopia<br />Continent: Africa","year: 1992<br />lifeExp: 48.09100<br />country: Ethiopia<br />Continent: Africa","year: 1997<br />lifeExp: 49.40200<br />country: Ethiopia<br />Continent: Africa","year: 2002<br />lifeExp: 50.72500<br />country: Ethiopia<br />Continent: Africa","year: 2007<br />lifeExp: 52.94700<br />country: Ethiopia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 37.00300<br />country: Gabon<br />Continent: Africa","year: 1957<br />lifeExp: 38.99900<br />country: Gabon<br />Continent: Africa","year: 1962<br />lifeExp: 40.48900<br />country: Gabon<br />Continent: Africa","year: 1967<br />lifeExp: 44.59800<br />country: Gabon<br />Continent: Africa","year: 1972<br />lifeExp: 48.69000<br />country: Gabon<br />Continent: Africa","year: 1977<br />lifeExp: 52.79000<br />country: Gabon<br />Continent: Africa","year: 1982<br />lifeExp: 56.56400<br />country: Gabon<br />Continent: Africa","year: 1987<br />lifeExp: 60.19000<br />country: Gabon<br />Continent: Africa","year: 1992<br />lifeExp: 61.36600<br />country: Gabon<br />Continent: Africa","year: 1997<br />lifeExp: 60.46100<br />country: Gabon<br />Continent: Africa","year: 2002<br />lifeExp: 56.76100<br />country: Gabon<br />Continent: Africa","year: 2007<br />lifeExp: 56.73500<br />country: Gabon<br />Continent: Africa",null,"year: 1952<br />lifeExp: 30.00000<br />country: Gambia<br />Continent: Africa","year: 1957<br />lifeExp: 32.06500<br />country: Gambia<br />Continent: Africa","year: 1962<br />lifeExp: 33.89600<br />country: Gambia<br />Continent: Africa","year: 1967<br />lifeExp: 35.85700<br />country: Gambia<br />Continent: Africa","year: 1972<br />lifeExp: 38.30800<br />country: Gambia<br />Continent: Africa","year: 1977<br />lifeExp: 41.84200<br />country: Gambia<br />Continent: Africa","year: 1982<br />lifeExp: 45.58000<br />country: Gambia<br />Continent: Africa","year: 1987<br />lifeExp: 49.26500<br />country: Gambia<br />Continent: Africa","year: 1992<br />lifeExp: 52.64400<br />country: Gambia<br />Continent: Africa","year: 1997<br />lifeExp: 55.86100<br />country: Gambia<br />Continent: Africa","year: 2002<br />lifeExp: 58.04100<br />country: Gambia<br />Continent: Africa","year: 2007<br />lifeExp: 59.44800<br />country: Gambia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 43.14900<br />country: Ghana<br />Continent: Africa","year: 1957<br />lifeExp: 44.77900<br />country: Ghana<br />Continent: Africa","year: 1962<br />lifeExp: 46.45200<br />country: Ghana<br />Continent: Africa","year: 1967<br />lifeExp: 48.07200<br />country: Ghana<br />Continent: Africa","year: 1972<br />lifeExp: 49.87500<br />country: Ghana<br />Continent: Africa","year: 1977<br />lifeExp: 51.75600<br />country: Ghana<br />Continent: Africa","year: 1982<br />lifeExp: 53.74400<br />country: Ghana<br />Continent: Africa","year: 1987<br />lifeExp: 55.72900<br />country: Ghana<br />Continent: Africa","year: 1992<br />lifeExp: 57.50100<br />country: Ghana<br />Continent: Africa","year: 1997<br />lifeExp: 58.55600<br />country: Ghana<br />Continent: Africa","year: 2002<br />lifeExp: 58.45300<br />country: Ghana<br />Continent: Africa","year: 2007<br />lifeExp: 60.02200<br />country: Ghana<br />Continent: Africa",null,"year: 1952<br />lifeExp: 33.60900<br />country: Guinea<br />Continent: Africa","year: 1957<br />lifeExp: 34.55800<br />country: Guinea<br />Continent: Africa","year: 1962<br />lifeExp: 35.75300<br />country: Guinea<br />Continent: Africa","year: 1967<br />lifeExp: 37.19700<br />country: Guinea<br />Continent: Africa","year: 1972<br />lifeExp: 38.84200<br />country: Guinea<br />Continent: Africa","year: 1977<br />lifeExp: 40.76200<br />country: Guinea<br />Continent: Africa","year: 1982<br />lifeExp: 42.89100<br />country: Guinea<br />Continent: Africa","year: 1987<br />lifeExp: 45.55200<br />country: Guinea<br />Continent: Africa","year: 1992<br />lifeExp: 48.57600<br />country: Guinea<br />Continent: Africa","year: 1997<br />lifeExp: 51.45500<br />country: Guinea<br />Continent: Africa","year: 2002<br />lifeExp: 53.67600<br />country: Guinea<br />Continent: Africa","year: 2007<br />lifeExp: 56.00700<br />country: Guinea<br />Continent: Africa",null,"year: 1952<br />lifeExp: 32.50000<br />country: Guinea-Bissau<br />Continent: Africa","year: 1957<br />lifeExp: 33.48900<br />country: Guinea-Bissau<br />Continent: Africa","year: 1962<br />lifeExp: 34.48800<br />country: Guinea-Bissau<br />Continent: Africa","year: 1967<br />lifeExp: 35.49200<br />country: Guinea-Bissau<br />Continent: Africa","year: 1972<br />lifeExp: 36.48600<br />country: Guinea-Bissau<br />Continent: Africa","year: 1977<br />lifeExp: 37.46500<br />country: Guinea-Bissau<br />Continent: Africa","year: 1982<br />lifeExp: 39.32700<br />country: Guinea-Bissau<br />Continent: Africa","year: 1987<br />lifeExp: 41.24500<br />country: Guinea-Bissau<br />Continent: Africa","year: 1992<br />lifeExp: 43.26600<br />country: Guinea-Bissau<br />Continent: Africa","year: 1997<br />lifeExp: 44.87300<br />country: Guinea-Bissau<br />Continent: Africa","year: 2002<br />lifeExp: 45.50400<br />country: Guinea-Bissau<br />Continent: Africa","year: 2007<br />lifeExp: 46.38800<br />country: Guinea-Bissau<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.27000<br />country: Kenya<br />Continent: Africa","year: 1957<br />lifeExp: 44.68600<br />country: Kenya<br />Continent: Africa","year: 1962<br />lifeExp: 47.94900<br />country: Kenya<br />Continent: Africa","year: 1967<br />lifeExp: 50.65400<br />country: Kenya<br />Continent: Africa","year: 1972<br />lifeExp: 53.55900<br />country: Kenya<br />Continent: Africa","year: 1977<br />lifeExp: 56.15500<br />country: Kenya<br />Continent: Africa","year: 1982<br />lifeExp: 58.76600<br />country: Kenya<br />Continent: Africa","year: 1987<br />lifeExp: 59.33900<br />country: Kenya<br />Continent: Africa","year: 1992<br />lifeExp: 59.28500<br />country: Kenya<br />Continent: Africa","year: 1997<br />lifeExp: 54.40700<br />country: Kenya<br />Continent: Africa","year: 2002<br />lifeExp: 50.99200<br />country: Kenya<br />Continent: Africa","year: 2007<br />lifeExp: 54.11000<br />country: Kenya<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.13800<br />country: Lesotho<br />Continent: Africa","year: 1957<br />lifeExp: 45.04700<br />country: Lesotho<br />Continent: Africa","year: 1962<br />lifeExp: 47.74700<br />country: Lesotho<br />Continent: Africa","year: 1967<br />lifeExp: 48.49200<br />country: Lesotho<br />Continent: Africa","year: 1972<br />lifeExp: 49.76700<br />country: Lesotho<br />Continent: Africa","year: 1977<br />lifeExp: 52.20800<br />country: Lesotho<br />Continent: Africa","year: 1982<br />lifeExp: 55.07800<br />country: Lesotho<br />Continent: Africa","year: 1987<br />lifeExp: 57.18000<br />country: Lesotho<br />Continent: Africa","year: 1992<br />lifeExp: 59.68500<br />country: Lesotho<br />Continent: Africa","year: 1997<br />lifeExp: 55.55800<br />country: Lesotho<br />Continent: Africa","year: 2002<br />lifeExp: 44.59300<br />country: Lesotho<br />Continent: Africa","year: 2007<br />lifeExp: 42.59200<br />country: Lesotho<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.48000<br />country: Liberia<br />Continent: Africa","year: 1957<br />lifeExp: 39.48600<br />country: Liberia<br />Continent: Africa","year: 1962<br />lifeExp: 40.50200<br />country: Liberia<br />Continent: Africa","year: 1967<br />lifeExp: 41.53600<br />country: Liberia<br />Continent: Africa","year: 1972<br />lifeExp: 42.61400<br />country: Liberia<br />Continent: Africa","year: 1977<br />lifeExp: 43.76400<br />country: Liberia<br />Continent: Africa","year: 1982<br />lifeExp: 44.85200<br />country: Liberia<br />Continent: Africa","year: 1987<br />lifeExp: 46.02700<br />country: Liberia<br />Continent: Africa","year: 1992<br />lifeExp: 40.80200<br />country: Liberia<br />Continent: Africa","year: 1997<br />lifeExp: 42.22100<br />country: Liberia<br />Continent: Africa","year: 2002<br />lifeExp: 43.75300<br />country: Liberia<br />Continent: Africa","year: 2007<br />lifeExp: 45.67800<br />country: Liberia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.72300<br />country: Libya<br />Continent: Africa","year: 1957<br />lifeExp: 45.28900<br />country: Libya<br />Continent: Africa","year: 1962<br />lifeExp: 47.80800<br />country: Libya<br />Continent: Africa","year: 1967<br />lifeExp: 50.22700<br />country: Libya<br />Continent: Africa","year: 1972<br />lifeExp: 52.77300<br />country: Libya<br />Continent: Africa","year: 1977<br />lifeExp: 57.44200<br />country: Libya<br />Continent: Africa","year: 1982<br />lifeExp: 62.15500<br />country: Libya<br />Continent: Africa","year: 1987<br />lifeExp: 66.23400<br />country: Libya<br />Continent: Africa","year: 1992<br />lifeExp: 68.75500<br />country: Libya<br />Continent: Africa","year: 1997<br />lifeExp: 71.55500<br />country: Libya<br />Continent: Africa","year: 2002<br />lifeExp: 72.73700<br />country: Libya<br />Continent: Africa","year: 2007<br />lifeExp: 73.95200<br />country: Libya<br />Continent: Africa",null,"year: 1952<br />lifeExp: 36.68100<br />country: Madagascar<br />Continent: Africa","year: 1957<br />lifeExp: 38.86500<br />country: Madagascar<br />Continent: Africa","year: 1962<br />lifeExp: 40.84800<br />country: Madagascar<br />Continent: Africa","year: 1967<br />lifeExp: 42.88100<br />country: Madagascar<br />Continent: Africa","year: 1972<br />lifeExp: 44.85100<br />country: Madagascar<br />Continent: Africa","year: 1977<br />lifeExp: 46.88100<br />country: Madagascar<br />Continent: Africa","year: 1982<br />lifeExp: 48.96900<br />country: Madagascar<br />Continent: Africa","year: 1987<br />lifeExp: 49.35000<br />country: Madagascar<br />Continent: Africa","year: 1992<br />lifeExp: 52.21400<br />country: Madagascar<br />Continent: Africa","year: 1997<br />lifeExp: 54.97800<br />country: Madagascar<br />Continent: Africa","year: 2002<br />lifeExp: 57.28600<br />country: Madagascar<br />Continent: Africa","year: 2007<br />lifeExp: 59.44300<br />country: Madagascar<br />Continent: Africa",null,"year: 1952<br />lifeExp: 36.25600<br />country: Malawi<br />Continent: Africa","year: 1957<br />lifeExp: 37.20700<br />country: Malawi<br />Continent: Africa","year: 1962<br />lifeExp: 38.41000<br />country: Malawi<br />Continent: Africa","year: 1967<br />lifeExp: 39.48700<br />country: Malawi<br />Continent: Africa","year: 1972<br />lifeExp: 41.76600<br />country: Malawi<br />Continent: Africa","year: 1977<br />lifeExp: 43.76700<br />country: Malawi<br />Continent: Africa","year: 1982<br />lifeExp: 45.64200<br />country: Malawi<br />Continent: Africa","year: 1987<br />lifeExp: 47.45700<br />country: Malawi<br />Continent: Africa","year: 1992<br />lifeExp: 49.42000<br />country: Malawi<br />Continent: Africa","year: 1997<br />lifeExp: 47.49500<br />country: Malawi<br />Continent: Africa","year: 2002<br />lifeExp: 45.00900<br />country: Malawi<br />Continent: Africa","year: 2007<br />lifeExp: 48.30300<br />country: Malawi<br />Continent: Africa",null,"year: 1952<br />lifeExp: 33.68500<br />country: Mali<br />Continent: Africa","year: 1957<br />lifeExp: 35.30700<br />country: Mali<br />Continent: Africa","year: 1962<br />lifeExp: 36.93600<br />country: Mali<br />Continent: Africa","year: 1967<br />lifeExp: 38.48700<br />country: Mali<br />Continent: Africa","year: 1972<br />lifeExp: 39.97700<br />country: Mali<br />Continent: Africa","year: 1977<br />lifeExp: 41.71400<br />country: Mali<br />Continent: Africa","year: 1982<br />lifeExp: 43.91600<br />country: Mali<br />Continent: Africa","year: 1987<br />lifeExp: 46.36400<br />country: Mali<br />Continent: Africa","year: 1992<br />lifeExp: 48.38800<br />country: Mali<br />Continent: Africa","year: 1997<br />lifeExp: 49.90300<br />country: Mali<br />Continent: Africa","year: 2002<br />lifeExp: 51.81800<br />country: Mali<br />Continent: Africa","year: 2007<br />lifeExp: 54.46700<br />country: Mali<br />Continent: Africa",null,"year: 1952<br />lifeExp: 40.54300<br />country: Mauritania<br />Continent: Africa","year: 1957<br />lifeExp: 42.33800<br />country: Mauritania<br />Continent: Africa","year: 1962<br />lifeExp: 44.24800<br />country: Mauritania<br />Continent: Africa","year: 1967<br />lifeExp: 46.28900<br />country: Mauritania<br />Continent: Africa","year: 1972<br />lifeExp: 48.43700<br />country: Mauritania<br />Continent: Africa","year: 1977<br />lifeExp: 50.85200<br />country: Mauritania<br />Continent: Africa","year: 1982<br />lifeExp: 53.59900<br />country: Mauritania<br />Continent: Africa","year: 1987<br />lifeExp: 56.14500<br />country: Mauritania<br />Continent: Africa","year: 1992<br />lifeExp: 58.33300<br />country: Mauritania<br />Continent: Africa","year: 1997<br />lifeExp: 60.43000<br />country: Mauritania<br />Continent: Africa","year: 2002<br />lifeExp: 62.24700<br />country: Mauritania<br />Continent: Africa","year: 2007<br />lifeExp: 64.16400<br />country: Mauritania<br />Continent: Africa",null,"year: 1952<br />lifeExp: 50.98600<br />country: Mauritius<br />Continent: Africa","year: 1957<br />lifeExp: 58.08900<br />country: Mauritius<br />Continent: Africa","year: 1962<br />lifeExp: 60.24600<br />country: Mauritius<br />Continent: Africa","year: 1967<br />lifeExp: 61.55700<br />country: Mauritius<br />Continent: Africa","year: 1972<br />lifeExp: 62.94400<br />country: Mauritius<br />Continent: Africa","year: 1977<br />lifeExp: 64.93000<br />country: Mauritius<br />Continent: Africa","year: 1982<br />lifeExp: 66.71100<br />country: Mauritius<br />Continent: Africa","year: 1987<br />lifeExp: 68.74000<br />country: Mauritius<br />Continent: Africa","year: 1992<br />lifeExp: 69.74500<br />country: Mauritius<br />Continent: Africa","year: 1997<br />lifeExp: 70.73600<br />country: Mauritius<br />Continent: Africa","year: 2002<br />lifeExp: 71.95400<br />country: Mauritius<br />Continent: Africa","year: 2007<br />lifeExp: 72.80100<br />country: Mauritius<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.87300<br />country: Morocco<br />Continent: Africa","year: 1957<br />lifeExp: 45.42300<br />country: Morocco<br />Continent: Africa","year: 1962<br />lifeExp: 47.92400<br />country: Morocco<br />Continent: Africa","year: 1967<br />lifeExp: 50.33500<br />country: Morocco<br />Continent: Africa","year: 1972<br />lifeExp: 52.86200<br />country: Morocco<br />Continent: Africa","year: 1977<br />lifeExp: 55.73000<br />country: Morocco<br />Continent: Africa","year: 1982<br />lifeExp: 59.65000<br />country: Morocco<br />Continent: Africa","year: 1987<br />lifeExp: 62.67700<br />country: Morocco<br />Continent: Africa","year: 1992<br />lifeExp: 65.39300<br />country: Morocco<br />Continent: Africa","year: 1997<br />lifeExp: 67.66000<br />country: Morocco<br />Continent: Africa","year: 2002<br />lifeExp: 69.61500<br />country: Morocco<br />Continent: Africa","year: 2007<br />lifeExp: 71.16400<br />country: Morocco<br />Continent: Africa",null,"year: 1952<br />lifeExp: 31.28600<br />country: Mozambique<br />Continent: Africa","year: 1957<br />lifeExp: 33.77900<br />country: Mozambique<br />Continent: Africa","year: 1962<br />lifeExp: 36.16100<br />country: Mozambique<br />Continent: Africa","year: 1967<br />lifeExp: 38.11300<br />country: Mozambique<br />Continent: Africa","year: 1972<br />lifeExp: 40.32800<br />country: Mozambique<br />Continent: Africa","year: 1977<br />lifeExp: 42.49500<br />country: Mozambique<br />Continent: Africa","year: 1982<br />lifeExp: 42.79500<br />country: Mozambique<br />Continent: Africa","year: 1987<br />lifeExp: 42.86100<br />country: Mozambique<br />Continent: Africa","year: 1992<br />lifeExp: 44.28400<br />country: Mozambique<br />Continent: Africa","year: 1997<br />lifeExp: 46.34400<br />country: Mozambique<br />Continent: Africa","year: 2002<br />lifeExp: 44.02600<br />country: Mozambique<br />Continent: Africa","year: 2007<br />lifeExp: 42.08200<br />country: Mozambique<br />Continent: Africa",null,"year: 1952<br />lifeExp: 41.72500<br />country: Namibia<br />Continent: Africa","year: 1957<br />lifeExp: 45.22600<br />country: Namibia<br />Continent: Africa","year: 1962<br />lifeExp: 48.38600<br />country: Namibia<br />Continent: Africa","year: 1967<br />lifeExp: 51.15900<br />country: Namibia<br />Continent: Africa","year: 1972<br />lifeExp: 53.86700<br />country: Namibia<br />Continent: Africa","year: 1977<br />lifeExp: 56.43700<br />country: Namibia<br />Continent: Africa","year: 1982<br />lifeExp: 58.96800<br />country: Namibia<br />Continent: Africa","year: 1987<br />lifeExp: 60.83500<br />country: Namibia<br />Continent: Africa","year: 1992<br />lifeExp: 61.99900<br />country: Namibia<br />Continent: Africa","year: 1997<br />lifeExp: 58.90900<br />country: Namibia<br />Continent: Africa","year: 2002<br />lifeExp: 51.47900<br />country: Namibia<br />Continent: Africa","year: 2007<br />lifeExp: 52.90600<br />country: Namibia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 37.44400<br />country: Niger<br />Continent: Africa","year: 1957<br />lifeExp: 38.59800<br />country: Niger<br />Continent: Africa","year: 1962<br />lifeExp: 39.48700<br />country: Niger<br />Continent: Africa","year: 1967<br />lifeExp: 40.11800<br />country: Niger<br />Continent: Africa","year: 1972<br />lifeExp: 40.54600<br />country: Niger<br />Continent: Africa","year: 1977<br />lifeExp: 41.29100<br />country: Niger<br />Continent: Africa","year: 1982<br />lifeExp: 42.59800<br />country: Niger<br />Continent: Africa","year: 1987<br />lifeExp: 44.55500<br />country: Niger<br />Continent: Africa","year: 1992<br />lifeExp: 47.39100<br />country: Niger<br />Continent: Africa","year: 1997<br />lifeExp: 51.31300<br />country: Niger<br />Continent: Africa","year: 2002<br />lifeExp: 54.49600<br />country: Niger<br />Continent: Africa","year: 2007<br />lifeExp: 56.86700<br />country: Niger<br />Continent: Africa",null,"year: 1952<br />lifeExp: 36.32400<br />country: Nigeria<br />Continent: Africa","year: 1957<br />lifeExp: 37.80200<br />country: Nigeria<br />Continent: Africa","year: 1962<br />lifeExp: 39.36000<br />country: Nigeria<br />Continent: Africa","year: 1967<br />lifeExp: 41.04000<br />country: Nigeria<br />Continent: Africa","year: 1972<br />lifeExp: 42.82100<br />country: Nigeria<br />Continent: Africa","year: 1977<br />lifeExp: 44.51400<br />country: Nigeria<br />Continent: Africa","year: 1982<br />lifeExp: 45.82600<br />country: Nigeria<br />Continent: Africa","year: 1987<br />lifeExp: 46.88600<br />country: Nigeria<br />Continent: Africa","year: 1992<br />lifeExp: 47.47200<br />country: Nigeria<br />Continent: Africa","year: 1997<br />lifeExp: 47.46400<br />country: Nigeria<br />Continent: Africa","year: 2002<br />lifeExp: 46.60800<br />country: Nigeria<br />Continent: Africa","year: 2007<br />lifeExp: 46.85900<br />country: Nigeria<br />Continent: Africa",null,"year: 1952<br />lifeExp: 52.72400<br />country: Reunion<br />Continent: Africa","year: 1957<br />lifeExp: 55.09000<br />country: Reunion<br />Continent: Africa","year: 1962<br />lifeExp: 57.66600<br />country: Reunion<br />Continent: Africa","year: 1967<br />lifeExp: 60.54200<br />country: Reunion<br />Continent: Africa","year: 1972<br />lifeExp: 64.27400<br />country: Reunion<br />Continent: Africa","year: 1977<br />lifeExp: 67.06400<br />country: Reunion<br />Continent: Africa","year: 1982<br />lifeExp: 69.88500<br />country: Reunion<br />Continent: Africa","year: 1987<br />lifeExp: 71.91300<br />country: Reunion<br />Continent: Africa","year: 1992<br />lifeExp: 73.61500<br />country: Reunion<br />Continent: Africa","year: 1997<br />lifeExp: 74.77200<br />country: Reunion<br />Continent: Africa","year: 2002<br />lifeExp: 75.74400<br />country: Reunion<br />Continent: Africa","year: 2007<br />lifeExp: 76.44200<br />country: Reunion<br />Continent: Africa",null,"year: 1952<br />lifeExp: 40.00000<br />country: Rwanda<br />Continent: Africa","year: 1957<br />lifeExp: 41.50000<br />country: Rwanda<br />Continent: Africa","year: 1962<br />lifeExp: 43.00000<br />country: Rwanda<br />Continent: Africa","year: 1967<br />lifeExp: 44.10000<br />country: Rwanda<br />Continent: Africa","year: 1972<br />lifeExp: 44.60000<br />country: Rwanda<br />Continent: Africa","year: 1977<br />lifeExp: 45.00000<br />country: Rwanda<br />Continent: Africa","year: 1982<br />lifeExp: 46.21800<br />country: Rwanda<br />Continent: Africa","year: 1987<br />lifeExp: 44.02000<br />country: Rwanda<br />Continent: Africa","year: 1992<br />lifeExp: 23.59900<br />country: Rwanda<br />Continent: Africa","year: 1997<br />lifeExp: 36.08700<br />country: Rwanda<br />Continent: Africa","year: 2002<br />lifeExp: 43.41300<br />country: Rwanda<br />Continent: Africa","year: 2007<br />lifeExp: 46.24200<br />country: Rwanda<br />Continent: Africa",null,"year: 1952<br />lifeExp: 46.47100<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1957<br />lifeExp: 48.94500<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1962<br />lifeExp: 51.89300<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1967<br />lifeExp: 54.42500<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1972<br />lifeExp: 56.48000<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1977<br />lifeExp: 58.55000<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1982<br />lifeExp: 60.35100<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1987<br />lifeExp: 61.72800<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1992<br />lifeExp: 62.74200<br />country: Sao Tome and Principe<br />Continent: Africa","year: 1997<br />lifeExp: 63.30600<br />country: Sao Tome and Principe<br />Continent: Africa","year: 2002<br />lifeExp: 64.33700<br />country: Sao Tome and Principe<br />Continent: Africa","year: 2007<br />lifeExp: 65.52800<br />country: Sao Tome and Principe<br />Continent: Africa",null,"year: 1952<br />lifeExp: 37.27800<br />country: Senegal<br />Continent: Africa","year: 1957<br />lifeExp: 39.32900<br />country: Senegal<br />Continent: Africa","year: 1962<br />lifeExp: 41.45400<br />country: Senegal<br />Continent: Africa","year: 1967<br />lifeExp: 43.56300<br />country: Senegal<br />Continent: Africa","year: 1972<br />lifeExp: 45.81500<br />country: Senegal<br />Continent: Africa","year: 1977<br />lifeExp: 48.87900<br />country: Senegal<br />Continent: Africa","year: 1982<br />lifeExp: 52.37900<br />country: Senegal<br />Continent: Africa","year: 1987<br />lifeExp: 55.76900<br />country: Senegal<br />Continent: Africa","year: 1992<br />lifeExp: 58.19600<br />country: Senegal<br />Continent: Africa","year: 1997<br />lifeExp: 60.18700<br />country: Senegal<br />Continent: Africa","year: 2002<br />lifeExp: 61.60000<br />country: Senegal<br />Continent: Africa","year: 2007<br />lifeExp: 63.06200<br />country: Senegal<br />Continent: Africa",null,"year: 1952<br />lifeExp: 30.33100<br />country: Sierra Leone<br />Continent: Africa","year: 1957<br />lifeExp: 31.57000<br />country: Sierra Leone<br />Continent: Africa","year: 1962<br />lifeExp: 32.76700<br />country: Sierra Leone<br />Continent: Africa","year: 1967<br />lifeExp: 34.11300<br />country: Sierra Leone<br />Continent: Africa","year: 1972<br />lifeExp: 35.40000<br />country: Sierra Leone<br />Continent: Africa","year: 1977<br />lifeExp: 36.78800<br />country: Sierra Leone<br />Continent: Africa","year: 1982<br />lifeExp: 38.44500<br />country: Sierra Leone<br />Continent: Africa","year: 1987<br />lifeExp: 40.00600<br />country: Sierra Leone<br />Continent: Africa","year: 1992<br />lifeExp: 38.33300<br />country: Sierra Leone<br />Continent: Africa","year: 1997<br />lifeExp: 39.89700<br />country: Sierra Leone<br />Continent: Africa","year: 2002<br />lifeExp: 41.01200<br />country: Sierra Leone<br />Continent: Africa","year: 2007<br />lifeExp: 42.56800<br />country: Sierra Leone<br />Continent: Africa",null,"year: 1952<br />lifeExp: 32.97800<br />country: Somalia<br />Continent: Africa","year: 1957<br />lifeExp: 34.97700<br />country: Somalia<br />Continent: Africa","year: 1962<br />lifeExp: 36.98100<br />country: Somalia<br />Continent: Africa","year: 1967<br />lifeExp: 38.97700<br />country: Somalia<br />Continent: Africa","year: 1972<br />lifeExp: 40.97300<br />country: Somalia<br />Continent: Africa","year: 1977<br />lifeExp: 41.97400<br />country: Somalia<br />Continent: Africa","year: 1982<br />lifeExp: 42.95500<br />country: Somalia<br />Continent: Africa","year: 1987<br />lifeExp: 44.50100<br />country: Somalia<br />Continent: Africa","year: 1992<br />lifeExp: 39.65800<br />country: Somalia<br />Continent: Africa","year: 1997<br />lifeExp: 43.79500<br />country: Somalia<br />Continent: Africa","year: 2002<br />lifeExp: 45.93600<br />country: Somalia<br />Continent: Africa","year: 2007<br />lifeExp: 48.15900<br />country: Somalia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 45.00900<br />country: South Africa<br />Continent: Africa","year: 1957<br />lifeExp: 47.98500<br />country: South Africa<br />Continent: Africa","year: 1962<br />lifeExp: 49.95100<br />country: South Africa<br />Continent: Africa","year: 1967<br />lifeExp: 51.92700<br />country: South Africa<br />Continent: Africa","year: 1972<br />lifeExp: 53.69600<br />country: South Africa<br />Continent: Africa","year: 1977<br />lifeExp: 55.52700<br />country: South Africa<br />Continent: Africa","year: 1982<br />lifeExp: 58.16100<br />country: South Africa<br />Continent: Africa","year: 1987<br />lifeExp: 60.83400<br />country: South Africa<br />Continent: Africa","year: 1992<br />lifeExp: 61.88800<br />country: South Africa<br />Continent: Africa","year: 1997<br />lifeExp: 60.23600<br />country: South Africa<br />Continent: Africa","year: 2002<br />lifeExp: 53.36500<br />country: South Africa<br />Continent: Africa","year: 2007<br />lifeExp: 49.33900<br />country: South Africa<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.63500<br />country: Sudan<br />Continent: Africa","year: 1957<br />lifeExp: 39.62400<br />country: Sudan<br />Continent: Africa","year: 1962<br />lifeExp: 40.87000<br />country: Sudan<br />Continent: Africa","year: 1967<br />lifeExp: 42.85800<br />country: Sudan<br />Continent: Africa","year: 1972<br />lifeExp: 45.08300<br />country: Sudan<br />Continent: Africa","year: 1977<br />lifeExp: 47.80000<br />country: Sudan<br />Continent: Africa","year: 1982<br />lifeExp: 50.33800<br />country: Sudan<br />Continent: Africa","year: 1987<br />lifeExp: 51.74400<br />country: Sudan<br />Continent: Africa","year: 1992<br />lifeExp: 53.55600<br />country: Sudan<br />Continent: Africa","year: 1997<br />lifeExp: 55.37300<br />country: Sudan<br />Continent: Africa","year: 2002<br />lifeExp: 56.36900<br />country: Sudan<br />Continent: Africa","year: 2007<br />lifeExp: 58.55600<br />country: Sudan<br />Continent: Africa",null,"year: 1952<br />lifeExp: 41.40700<br />country: Swaziland<br />Continent: Africa","year: 1957<br />lifeExp: 43.42400<br />country: Swaziland<br />Continent: Africa","year: 1962<br />lifeExp: 44.99200<br />country: Swaziland<br />Continent: Africa","year: 1967<br />lifeExp: 46.63300<br />country: Swaziland<br />Continent: Africa","year: 1972<br />lifeExp: 49.55200<br />country: Swaziland<br />Continent: Africa","year: 1977<br />lifeExp: 52.53700<br />country: Swaziland<br />Continent: Africa","year: 1982<br />lifeExp: 55.56100<br />country: Swaziland<br />Continent: Africa","year: 1987<br />lifeExp: 57.67800<br />country: Swaziland<br />Continent: Africa","year: 1992<br />lifeExp: 58.47400<br />country: Swaziland<br />Continent: Africa","year: 1997<br />lifeExp: 54.28900<br />country: Swaziland<br />Continent: Africa","year: 2002<br />lifeExp: 43.86900<br />country: Swaziland<br />Continent: Africa","year: 2007<br />lifeExp: 39.61300<br />country: Swaziland<br />Continent: Africa",null,"year: 1952<br />lifeExp: 41.21500<br />country: Tanzania<br />Continent: Africa","year: 1957<br />lifeExp: 42.97400<br />country: Tanzania<br />Continent: Africa","year: 1962<br />lifeExp: 44.24600<br />country: Tanzania<br />Continent: Africa","year: 1967<br />lifeExp: 45.75700<br />country: Tanzania<br />Continent: Africa","year: 1972<br />lifeExp: 47.62000<br />country: Tanzania<br />Continent: Africa","year: 1977<br />lifeExp: 49.91900<br />country: Tanzania<br />Continent: Africa","year: 1982<br />lifeExp: 50.60800<br />country: Tanzania<br />Continent: Africa","year: 1987<br />lifeExp: 51.53500<br />country: Tanzania<br />Continent: Africa","year: 1992<br />lifeExp: 50.44000<br />country: Tanzania<br />Continent: Africa","year: 1997<br />lifeExp: 48.46600<br />country: Tanzania<br />Continent: Africa","year: 2002<br />lifeExp: 49.65100<br />country: Tanzania<br />Continent: Africa","year: 2007<br />lifeExp: 52.51700<br />country: Tanzania<br />Continent: Africa",null,"year: 1952<br />lifeExp: 38.59600<br />country: Togo<br />Continent: Africa","year: 1957<br />lifeExp: 41.20800<br />country: Togo<br />Continent: Africa","year: 1962<br />lifeExp: 43.92200<br />country: Togo<br />Continent: Africa","year: 1967<br />lifeExp: 46.76900<br />country: Togo<br />Continent: Africa","year: 1972<br />lifeExp: 49.75900<br />country: Togo<br />Continent: Africa","year: 1977<br />lifeExp: 52.88700<br />country: Togo<br />Continent: Africa","year: 1982<br />lifeExp: 55.47100<br />country: Togo<br />Continent: Africa","year: 1987<br />lifeExp: 56.94100<br />country: Togo<br />Continent: Africa","year: 1992<br />lifeExp: 58.06100<br />country: Togo<br />Continent: Africa","year: 1997<br />lifeExp: 58.39000<br />country: Togo<br />Continent: Africa","year: 2002<br />lifeExp: 57.56100<br />country: Togo<br />Continent: Africa","year: 2007<br />lifeExp: 58.42000<br />country: Togo<br />Continent: Africa",null,"year: 1952<br />lifeExp: 44.60000<br />country: Tunisia<br />Continent: Africa","year: 1957<br />lifeExp: 47.10000<br />country: Tunisia<br />Continent: Africa","year: 1962<br />lifeExp: 49.57900<br />country: Tunisia<br />Continent: Africa","year: 1967<br />lifeExp: 52.05300<br />country: Tunisia<br />Continent: Africa","year: 1972<br />lifeExp: 55.60200<br />country: Tunisia<br />Continent: Africa","year: 1977<br />lifeExp: 59.83700<br />country: Tunisia<br />Continent: Africa","year: 1982<br />lifeExp: 64.04800<br />country: Tunisia<br />Continent: Africa","year: 1987<br />lifeExp: 66.89400<br />country: Tunisia<br />Continent: Africa","year: 1992<br />lifeExp: 70.00100<br />country: Tunisia<br />Continent: Africa","year: 1997<br />lifeExp: 71.97300<br />country: Tunisia<br />Continent: Africa","year: 2002<br />lifeExp: 73.04200<br />country: Tunisia<br />Continent: Africa","year: 2007<br />lifeExp: 73.92300<br />country: Tunisia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 39.97800<br />country: Uganda<br />Continent: Africa","year: 1957<br />lifeExp: 42.57100<br />country: Uganda<br />Continent: Africa","year: 1962<br />lifeExp: 45.34400<br />country: Uganda<br />Continent: Africa","year: 1967<br />lifeExp: 48.05100<br />country: Uganda<br />Continent: Africa","year: 1972<br />lifeExp: 51.01600<br />country: Uganda<br />Continent: Africa","year: 1977<br />lifeExp: 50.35000<br />country: Uganda<br />Continent: Africa","year: 1982<br />lifeExp: 49.84900<br />country: Uganda<br />Continent: Africa","year: 1987<br />lifeExp: 51.50900<br />country: Uganda<br />Continent: Africa","year: 1992<br />lifeExp: 48.82500<br />country: Uganda<br />Continent: Africa","year: 1997<br />lifeExp: 44.57800<br />country: Uganda<br />Continent: Africa","year: 2002<br />lifeExp: 47.81300<br />country: Uganda<br />Continent: Africa","year: 2007<br />lifeExp: 51.54200<br />country: Uganda<br />Continent: Africa",null,"year: 1952<br />lifeExp: 42.03800<br />country: Zambia<br />Continent: Africa","year: 1957<br />lifeExp: 44.07700<br />country: Zambia<br />Continent: Africa","year: 1962<br />lifeExp: 46.02300<br />country: Zambia<br />Continent: Africa","year: 1967<br />lifeExp: 47.76800<br />country: Zambia<br />Continent: Africa","year: 1972<br />lifeExp: 50.10700<br />country: Zambia<br />Continent: Africa","year: 1977<br />lifeExp: 51.38600<br />country: Zambia<br />Continent: Africa","year: 1982<br />lifeExp: 51.82100<br />country: Zambia<br />Continent: Africa","year: 1987<br />lifeExp: 50.82100<br />country: Zambia<br />Continent: Africa","year: 1992<br />lifeExp: 46.10000<br />country: Zambia<br />Continent: Africa","year: 1997<br />lifeExp: 40.23800<br />country: Zambia<br />Continent: Africa","year: 2002<br />lifeExp: 39.19300<br />country: Zambia<br />Continent: Africa","year: 2007<br />lifeExp: 42.38400<br />country: Zambia<br />Continent: Africa",null,"year: 1952<br />lifeExp: 48.45100<br />country: Zimbabwe<br />Continent: Africa","year: 1957<br />lifeExp: 50.46900<br />country: Zimbabwe<br />Continent: Africa","year: 1962<br />lifeExp: 52.35800<br />country: Zimbabwe<br />Continent: Africa","year: 1967<br />lifeExp: 53.99500<br />country: Zimbabwe<br />Continent: Africa","year: 1972<br />lifeExp: 55.63500<br />country: Zimbabwe<br />Continent: Africa","year: 1977<br />lifeExp: 57.67400<br />country: Zimbabwe<br />Continent: Africa","year: 1982<br />lifeExp: 60.36300<br />country: Zimbabwe<br />Continent: Africa","year: 1987<br />lifeExp: 62.35100<br />country: Zimbabwe<br />Continent: Africa","year: 1992<br />lifeExp: 60.37700<br />country: Zimbabwe<br />Continent: Africa","year: 1997<br />lifeExp: 46.80900<br />country: Zimbabwe<br />Continent: Africa","year: 2002<br />lifeExp: 39.98900<br />country: Zimbabwe<br />Continent: Africa","year: 2007<br />lifeExp: 43.48700<br />country: Zimbabwe<br />Continent: Africa"],"type":"scatter","mode":"lines","line":{"width":3.0236220472440949,"color":"rgba(213,94,0,0.6)","dash":"solid"},"hoveron":"points","name":"Africa","legendgroup":"Africa","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007,null,1952,1957,1962,1967,1972,1977,1982,1987,1992,1997,2002,2007],"y":[28.800999999999998,30.332000000000001,31.997,34.020000000000003,36.088000000000001,38.438000000000002,39.853999999999999,40.822000000000003,41.673999999999999,41.762999999999998,42.128999999999998,43.828000000000003,null,50.939,53.832000000000001,56.923000000000002,59.923000000000002,63.299999999999997,65.593000000000004,69.052000000000007,70.75,72.600999999999999,73.924999999999997,74.795000000000002,75.635000000000005,null,37.484000000000002,39.347999999999999,41.216000000000001,43.453000000000003,45.252000000000002,46.923000000000002,50.009,52.819000000000003,56.018000000000001,59.411999999999999,62.012999999999998,64.061999999999998,null,39.417000000000002,41.366,43.414999999999999,45.414999999999999,40.317,31.219999999999999,50.957000000000001,53.914000000000001,55.802999999999997,56.533999999999999,56.752000000000002,59.722999999999999,null,44,50.548960000000001,44.501359999999998,58.381120000000003,63.118879999999997,63.967359999999999,65.525000000000006,67.274000000000001,68.689999999999998,70.426000000000002,72.028000000000006,72.960999999999999,null,60.960000000000001,64.75,67.650000000000006,70,72,73.599999999999994,75.450000000000003,76.200000000000003,77.600999999999999,80,81.495000000000005,82.207999999999998,null,37.372999999999998,40.249000000000002,43.604999999999997,47.192999999999998,50.651000000000003,54.207999999999998,56.595999999999997,58.552999999999997,60.222999999999999,61.765000000000001,62.878999999999998,64.697999999999993,null,37.468000000000004,39.917999999999999,42.518000000000001,45.963999999999999,49.203000000000003,52.701999999999998,56.158999999999999,60.137,62.680999999999997,66.040999999999997,68.587999999999994,70.650000000000006,null,44.869,47.180999999999997,49.325000000000003,52.469000000000001,55.234000000000002,57.701999999999998,59.619999999999997,63.039999999999999,65.742000000000004,68.042000000000002,69.450999999999993,70.963999999999999,null,45.32,48.436999999999998,51.457000000000001,54.459000000000003,56.950000000000003,60.412999999999997,62.037999999999997,65.043999999999997,59.460999999999999,58.811,57.045999999999999,59.545000000000002,null,65.390000000000001,67.840000000000003,69.390000000000001,70.75,71.629999999999995,73.060000000000002,74.450000000000003,75.599999999999994,76.930000000000007,78.269000000000005,79.695999999999998,80.745000000000005,null,63.030000000000001,65.5,68.730000000000004,71.430000000000007,73.420000000000002,75.379999999999995,77.109999999999999,78.670000000000002,79.359999999999999,80.689999999999998,82,82.602999999999994,null,43.158000000000001,45.668999999999997,48.125999999999998,51.628999999999998,56.527999999999999,61.134,63.738999999999997,65.869,68.015000000000001,69.772000000000006,71.263000000000005,72.534999999999997,null,50.055999999999997,54.081000000000003,56.655999999999999,59.942,63.982999999999997,67.159000000000006,69.099999999999994,70.647000000000006,69.977999999999994,67.727000000000004,66.662000000000006,67.296999999999997,null,47.453000000000003,52.680999999999997,55.292000000000002,57.716000000000001,62.612000000000002,64.766000000000005,67.123000000000005,69.810000000000002,72.244,74.647000000000006,77.045000000000002,78.623000000000005,null,55.564999999999998,58.033000000000001,60.469999999999999,64.623999999999995,67.712000000000003,69.343000000000004,71.308999999999997,74.174000000000007,75.189999999999998,76.156000000000006,76.903999999999996,77.587999999999994,null,55.927999999999997,59.488999999999997,62.094000000000001,63.869999999999997,65.421000000000006,66.099000000000004,66.983000000000004,67.926000000000002,69.292000000000002,70.265000000000001,71.028000000000006,71.992999999999995,null,48.463000000000001,52.101999999999997,55.737000000000002,59.371000000000002,63.009999999999998,65.256,68,69.5,70.692999999999998,71.938000000000002,73.043999999999997,74.241,null,42.244,45.247999999999998,48.250999999999998,51.253,53.753999999999998,55.491,57.488999999999997,60.222000000000001,61.271000000000001,63.625,65.033000000000001,66.802999999999997,null,36.319000000000003,41.905000000000001,45.107999999999997,49.378999999999998,53.07,56.058999999999997,58.055999999999997,58.338999999999999,59.32,60.328000000000003,59.908000000000001,62.069000000000003,null,36.156999999999996,37.686,39.393000000000001,41.472000000000001,43.970999999999997,46.747999999999998,49.594000000000001,52.536999999999999,55.726999999999997,59.426000000000002,61.340000000000003,63.784999999999997,null,37.578000000000003,40.079999999999998,43.164999999999999,46.988,52.143000000000001,57.366999999999997,62.728000000000002,67.733999999999995,71.197000000000003,72.498999999999995,74.192999999999998,75.640000000000001,null,43.436,45.557000000000002,47.670000000000002,49.799999999999997,51.929000000000002,54.042999999999999,56.158000000000001,58.244999999999997,60.838000000000001,61.817999999999998,63.609999999999999,65.483000000000004,null,47.752000000000002,51.334000000000003,54.756999999999998,56.393000000000001,58.064999999999998,60.060000000000002,62.082000000000001,64.150999999999996,66.457999999999998,68.563999999999993,70.302999999999997,71.688000000000002,null,39.875,42.868000000000002,45.914000000000001,49.901000000000003,53.886000000000003,58.689999999999998,63.012,66.295000000000002,68.768000000000001,70.533000000000001,71.626000000000005,72.777000000000001,null,60.396000000000001,63.179000000000002,65.798000000000002,67.945999999999998,69.521000000000001,70.795000000000002,71.760000000000005,73.560000000000002,75.787999999999997,77.158000000000001,78.769999999999996,79.971999999999994,null,57.593000000000004,61.456000000000003,62.192,64.266000000000005,65.042000000000002,65.948999999999998,68.757000000000005,69.010999999999996,70.379000000000005,70.456999999999994,70.814999999999998,72.396000000000001,null,45.883000000000003,48.283999999999999,50.305,53.655000000000001,57.295999999999999,61.195,64.590000000000003,66.974000000000004,69.248999999999995,71.527000000000001,73.052999999999997,74.143000000000001,null,58.5,62.399999999999999,65.200000000000003,67.5,69.390000000000001,70.590000000000003,72.159999999999997,73.400000000000006,74.260000000000005,75.25,76.989999999999995,78.400000000000006,null,50.847999999999999,53.630000000000003,56.061,58.284999999999997,60.405000000000001,62.494,64.596999999999994,66.084000000000003,67.298000000000002,67.521000000000001,68.563999999999993,70.616,null,40.411999999999999,42.887,45.363,47.838000000000001,50.253999999999998,55.764000000000003,58.816000000000003,62.82,67.662000000000006,70.671999999999997,73.016999999999996,74.248999999999995,null,43.159999999999997,45.670999999999999,48.127000000000002,51.631,56.531999999999996,60.765000000000001,64.406000000000006,67.046000000000006,69.718000000000004,71.096000000000004,72.370000000000005,73.421999999999997,null,32.548000000000002,33.969999999999999,35.18,36.984000000000002,39.847999999999999,44.174999999999997,49.113,52.921999999999997,55.598999999999997,58.020000000000003,60.308,62.698],"text":["year: 1952<br />lifeExp: 28.80100<br />country: Afghanistan<br />Continent: Asia","year: 1957<br />lifeExp: 30.33200<br />country: Afghanistan<br />Continent: Asia","year: 1962<br />lifeExp: 31.99700<br />country: Afghanistan<br />Continent: Asia","year: 1967<br />lifeExp: 34.02000<br />country: Afghanistan<br />Continent: Asia","year: 1972<br />lifeExp: 36.08800<br />country: Afghanistan<br />Continent: Asia","year: 1977<br />lifeExp: 38.43800<br />country: Afghanistan<br />Continent: Asia","year: 1982<br />lifeExp: 39.85400<br />country: Afghanistan<br />Continent: Asia","year: 1987<br />lifeExp: 40.82200<br />country: Afghanistan<br />Continent: Asia","year: 1992<br />lifeExp: 41.67400<br />country: Afghanistan<br />Continent: Asia","year: 1997<br />lifeExp: 41.76300<br />country: Afghanistan<br />Continent: Asia","year: 2002<br />lifeExp: 42.12900<br />country: Afghanistan<br />Continent: Asia","year: 2007<br />lifeExp: 43.82800<br />country: Afghanistan<br />Continent: Asia",null,"year: 1952<br />lifeExp: 50.93900<br />country: Bahrain<br />Continent: Asia","year: 1957<br />lifeExp: 53.83200<br />country: Bahrain<br />Continent: Asia","year: 1962<br />lifeExp: 56.92300<br />country: Bahrain<br />Continent: Asia","year: 1967<br />lifeExp: 59.92300<br />country: Bahrain<br />Continent: Asia","year: 1972<br />lifeExp: 63.30000<br />country: Bahrain<br />Continent: Asia","year: 1977<br />lifeExp: 65.59300<br />country: Bahrain<br />Continent: Asia","year: 1982<br />lifeExp: 69.05200<br />country: Bahrain<br />Continent: Asia","year: 1987<br />lifeExp: 70.75000<br />country: Bahrain<br />Continent: Asia","year: 1992<br />lifeExp: 72.60100<br />country: Bahrain<br />Continent: Asia","year: 1997<br />lifeExp: 73.92500<br />country: Bahrain<br />Continent: Asia","year: 2002<br />lifeExp: 74.79500<br />country: Bahrain<br />Continent: Asia","year: 2007<br />lifeExp: 75.63500<br />country: Bahrain<br />Continent: Asia",null,"year: 1952<br />lifeExp: 37.48400<br />country: Bangladesh<br />Continent: Asia","year: 1957<br />lifeExp: 39.34800<br />country: Bangladesh<br />Continent: Asia","year: 1962<br />lifeExp: 41.21600<br />country: Bangladesh<br />Continent: Asia","year: 1967<br />lifeExp: 43.45300<br />country: Bangladesh<br />Continent: Asia","year: 1972<br />lifeExp: 45.25200<br />country: Bangladesh<br />Continent: Asia","year: 1977<br />lifeExp: 46.92300<br />country: Bangladesh<br />Continent: Asia","year: 1982<br />lifeExp: 50.00900<br />country: Bangladesh<br />Continent: Asia","year: 1987<br />lifeExp: 52.81900<br />country: Bangladesh<br />Continent: Asia","year: 1992<br />lifeExp: 56.01800<br />country: Bangladesh<br />Continent: Asia","year: 1997<br />lifeExp: 59.41200<br />country: Bangladesh<br />Continent: Asia","year: 2002<br />lifeExp: 62.01300<br />country: Bangladesh<br />Continent: Asia","year: 2007<br />lifeExp: 64.06200<br />country: Bangladesh<br />Continent: Asia",null,"year: 1952<br />lifeExp: 39.41700<br />country: Cambodia<br />Continent: Asia","year: 1957<br />lifeExp: 41.36600<br />country: Cambodia<br />Continent: Asia","year: 1962<br />lifeExp: 43.41500<br />country: Cambodia<br />Continent: Asia","year: 1967<br />lifeExp: 45.41500<br />country: Cambodia<br />Continent: Asia","year: 1972<br />lifeExp: 40.31700<br />country: Cambodia<br />Continent: Asia","year: 1977<br />lifeExp: 31.22000<br />country: Cambodia<br />Continent: Asia","year: 1982<br />lifeExp: 50.95700<br />country: Cambodia<br />Continent: Asia","year: 1987<br />lifeExp: 53.91400<br />country: Cambodia<br />Continent: Asia","year: 1992<br />lifeExp: 55.80300<br />country: Cambodia<br />Continent: Asia","year: 1997<br />lifeExp: 56.53400<br />country: Cambodia<br />Continent: Asia","year: 2002<br />lifeExp: 56.75200<br />country: Cambodia<br />Continent: Asia","year: 2007<br />lifeExp: 59.72300<br />country: Cambodia<br />Continent: Asia",null,"year: 1952<br />lifeExp: 44.00000<br />country: China<br />Continent: Asia","year: 1957<br />lifeExp: 50.54896<br />country: China<br />Continent: Asia","year: 1962<br />lifeExp: 44.50136<br />country: China<br />Continent: Asia","year: 1967<br />lifeExp: 58.38112<br />country: China<br />Continent: Asia","year: 1972<br />lifeExp: 63.11888<br />country: China<br />Continent: Asia","year: 1977<br />lifeExp: 63.96736<br />country: China<br />Continent: Asia","year: 1982<br />lifeExp: 65.52500<br />country: China<br />Continent: Asia","year: 1987<br />lifeExp: 67.27400<br />country: China<br />Continent: Asia","year: 1992<br />lifeExp: 68.69000<br />country: China<br />Continent: Asia","year: 1997<br />lifeExp: 70.42600<br />country: China<br />Continent: Asia","year: 2002<br />lifeExp: 72.02800<br />country: China<br />Continent: Asia","year: 2007<br />lifeExp: 72.96100<br />country: China<br />Continent: Asia",null,"year: 1952<br />lifeExp: 60.96000<br />country: Hong Kong, China<br />Continent: Asia","year: 1957<br />lifeExp: 64.75000<br />country: Hong Kong, China<br />Continent: Asia","year: 1962<br />lifeExp: 67.65000<br />country: Hong Kong, China<br />Continent: Asia","year: 1967<br />lifeExp: 70.00000<br />country: Hong Kong, China<br />Continent: Asia","year: 1972<br />lifeExp: 72.00000<br />country: Hong Kong, China<br />Continent: Asia","year: 1977<br />lifeExp: 73.60000<br />country: Hong Kong, China<br />Continent: Asia","year: 1982<br />lifeExp: 75.45000<br />country: Hong Kong, China<br />Continent: Asia","year: 1987<br />lifeExp: 76.20000<br />country: Hong Kong, China<br />Continent: Asia","year: 1992<br />lifeExp: 77.60100<br />country: Hong Kong, China<br />Continent: Asia","year: 1997<br />lifeExp: 80.00000<br />country: Hong Kong, China<br />Continent: Asia","year: 2002<br />lifeExp: 81.49500<br />country: Hong Kong, China<br />Continent: Asia","year: 2007<br />lifeExp: 82.20800<br />country: Hong Kong, China<br />Continent: Asia",null,"year: 1952<br />lifeExp: 37.37300<br />country: India<br />Continent: Asia","year: 1957<br />lifeExp: 40.24900<br />country: India<br />Continent: Asia","year: 1962<br />lifeExp: 43.60500<br />country: India<br />Continent: Asia","year: 1967<br />lifeExp: 47.19300<br />country: India<br />Continent: Asia","year: 1972<br />lifeExp: 50.65100<br />country: India<br />Continent: Asia","year: 1977<br />lifeExp: 54.20800<br />country: India<br />Continent: Asia","year: 1982<br />lifeExp: 56.59600<br />country: India<br />Continent: Asia","year: 1987<br />lifeExp: 58.55300<br />country: India<br />Continent: Asia","year: 1992<br />lifeExp: 60.22300<br />country: India<br />Continent: Asia","year: 1997<br />lifeExp: 61.76500<br />country: India<br />Continent: Asia","year: 2002<br />lifeExp: 62.87900<br />country: India<br />Continent: Asia","year: 2007<br />lifeExp: 64.69800<br />country: India<br />Continent: Asia",null,"year: 1952<br />lifeExp: 37.46800<br />country: Indonesia<br />Continent: Asia","year: 1957<br />lifeExp: 39.91800<br />country: Indonesia<br />Continent: Asia","year: 1962<br />lifeExp: 42.51800<br />country: Indonesia<br />Continent: Asia","year: 1967<br />lifeExp: 45.96400<br />country: Indonesia<br />Continent: Asia","year: 1972<br />lifeExp: 49.20300<br />country: Indonesia<br />Continent: Asia","year: 1977<br />lifeExp: 52.70200<br />country: Indonesia<br />Continent: Asia","year: 1982<br />lifeExp: 56.15900<br />country: Indonesia<br />Continent: Asia","year: 1987<br />lifeExp: 60.13700<br />country: Indonesia<br />Continent: Asia","year: 1992<br />lifeExp: 62.68100<br />country: Indonesia<br />Continent: Asia","year: 1997<br />lifeExp: 66.04100<br />country: Indonesia<br />Continent: Asia","year: 2002<br />lifeExp: 68.58800<br />country: Indonesia<br />Continent: Asia","year: 2007<br />lifeExp: 70.65000<br />country: Indonesia<br />Continent: Asia",null,"year: 1952<br />lifeExp: 44.86900<br />country: Iran<br />Continent: Asia","year: 1957<br />lifeExp: 47.18100<br />country: Iran<br />Continent: Asia","year: 1962<br />lifeExp: 49.32500<br />country: Iran<br />Continent: Asia","year: 1967<br />lifeExp: 52.46900<br />country: Iran<br />Continent: Asia","year: 1972<br />lifeExp: 55.23400<br />country: Iran<br />Continent: Asia","year: 1977<br />lifeExp: 57.70200<br />country: Iran<br />Continent: Asia","year: 1982<br />lifeExp: 59.62000<br />country: Iran<br />Continent: Asia","year: 1987<br />lifeExp: 63.04000<br />country: Iran<br />Continent: Asia","year: 1992<br />lifeExp: 65.74200<br />country: Iran<br />Continent: Asia","year: 1997<br />lifeExp: 68.04200<br />country: Iran<br />Continent: Asia","year: 2002<br />lifeExp: 69.45100<br />country: Iran<br />Continent: Asia","year: 2007<br />lifeExp: 70.96400<br />country: Iran<br />Continent: Asia",null,"year: 1952<br />lifeExp: 45.32000<br />country: Iraq<br />Continent: Asia","year: 1957<br />lifeExp: 48.43700<br />country: Iraq<br />Continent: Asia","year: 1962<br />lifeExp: 51.45700<br />country: Iraq<br />Continent: Asia","year: 1967<br />lifeExp: 54.45900<br />country: Iraq<br />Continent: Asia","year: 1972<br />lifeExp: 56.95000<br />country: Iraq<br />Continent: Asia","year: 1977<br />lifeExp: 60.41300<br />country: Iraq<br />Continent: Asia","year: 1982<br />lifeExp: 62.03800<br />country: Iraq<br />Continent: Asia","year: 1987<br />lifeExp: 65.04400<br />country: Iraq<br />Continent: Asia","year: 1992<br />lifeExp: 59.46100<br />country: Iraq<br />Continent: Asia","year: 1997<br />lifeExp: 58.81100<br />country: Iraq<br />Continent: Asia","year: 2002<br />lifeExp: 57.04600<br />country: Iraq<br />Continent: Asia","year: 2007<br />lifeExp: 59.54500<br />country: Iraq<br />Continent: Asia",null,"year: 1952<br />lifeExp: 65.39000<br />country: Israel<br />Continent: Asia","year: 1957<br />lifeExp: 67.84000<br />country: Israel<br />Continent: Asia","year: 1962<br />lifeExp: 69.39000<br />country: Israel<br />Continent: Asia","year: 1967<br />lifeExp: 70.75000<br />country: Israel<br />Continent: Asia","year: 1972<br />lifeExp: 71.63000<br />country: Israel<br />Continent: Asia","year: 1977<br />lifeExp: 73.06000<br />country: Israel<br />Continent: Asia","year: 1982<br />lifeExp: 74.45000<br />country: Israel<br />Continent: Asia","year: 1987<br />lifeExp: 75.60000<br />country: Israel<br />Continent: Asia","year: 1992<br />lifeExp: 76.93000<br />country: Israel<br />Continent: Asia","year: 1997<br />lifeExp: 78.26900<br />country: Israel<br />Continent: Asia","year: 2002<br />lifeExp: 79.69600<br />country: Israel<br />Continent: Asia","year: 2007<br />lifeExp: 80.74500<br />country: Israel<br />Continent: Asia",null,"year: 1952<br />lifeExp: 63.03000<br />country: Japan<br />Continent: Asia","year: 1957<br />lifeExp: 65.50000<br />country: Japan<br />Continent: Asia","year: 1962<br />lifeExp: 68.73000<br />country: Japan<br />Continent: Asia","year: 1967<br />lifeExp: 71.43000<br />country: Japan<br />Continent: Asia","year: 1972<br />lifeExp: 73.42000<br />country: Japan<br />Continent: Asia","year: 1977<br />lifeExp: 75.38000<br />country: Japan<br />Continent: Asia","year: 1982<br />lifeExp: 77.11000<br />country: Japan<br />Continent: Asia","year: 1987<br />lifeExp: 78.67000<br />country: Japan<br />Continent: Asia","year: 1992<br />lifeExp: 79.36000<br />country: Japan<br />Continent: Asia","year: 1997<br />lifeExp: 80.69000<br />country: Japan<br />Continent: Asia","year: 2002<br />lifeExp: 82.00000<br />country: Japan<br />Continent: Asia","year: 2007<br />lifeExp: 82.60300<br />country: Japan<br />Continent: Asia",null,"year: 1952<br />lifeExp: 43.15800<br />country: Jordan<br />Continent: Asia","year: 1957<br />lifeExp: 45.66900<br />country: Jordan<br />Continent: Asia","year: 1962<br />lifeExp: 48.12600<br />country: Jordan<br />Continent: Asia","year: 1967<br />lifeExp: 51.62900<br />country: Jordan<br />Continent: Asia","year: 1972<br />lifeExp: 56.52800<br />country: Jordan<br />Continent: Asia","year: 1977<br />lifeExp: 61.13400<br />country: Jordan<br />Continent: Asia","year: 1982<br />lifeExp: 63.73900<br />country: Jordan<br />Continent: Asia","year: 1987<br />lifeExp: 65.86900<br />country: Jordan<br />Continent: Asia","year: 1992<br />lifeExp: 68.01500<br />country: Jordan<br />Continent: Asia","year: 1997<br />lifeExp: 69.77200<br />country: Jordan<br />Continent: Asia","year: 2002<br />lifeExp: 71.26300<br />country: Jordan<br />Continent: Asia","year: 2007<br />lifeExp: 72.53500<br />country: Jordan<br />Continent: Asia",null,"year: 1952<br />lifeExp: 50.05600<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1957<br />lifeExp: 54.08100<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1962<br />lifeExp: 56.65600<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1967<br />lifeExp: 59.94200<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1972<br />lifeExp: 63.98300<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1977<br />lifeExp: 67.15900<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1982<br />lifeExp: 69.10000<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1987<br />lifeExp: 70.64700<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1992<br />lifeExp: 69.97800<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 1997<br />lifeExp: 67.72700<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 2002<br />lifeExp: 66.66200<br />country: Korea, Dem. Rep.<br />Continent: Asia","year: 2007<br />lifeExp: 67.29700<br />country: Korea, Dem. Rep.<br />Continent: Asia",null,"year: 1952<br />lifeExp: 47.45300<br />country: Korea, Rep.<br />Continent: Asia","year: 1957<br />lifeExp: 52.68100<br />country: Korea, Rep.<br />Continent: Asia","year: 1962<br />lifeExp: 55.29200<br />country: Korea, Rep.<br />Continent: Asia","year: 1967<br />lifeExp: 57.71600<br />country: Korea, Rep.<br />Continent: Asia","year: 1972<br />lifeExp: 62.61200<br />country: Korea, Rep.<br />Continent: Asia","year: 1977<br />lifeExp: 64.76600<br />country: Korea, Rep.<br />Continent: Asia","year: 1982<br />lifeExp: 67.12300<br />country: Korea, Rep.<br />Continent: Asia","year: 1987<br />lifeExp: 69.81000<br />country: Korea, Rep.<br />Continent: Asia","year: 1992<br />lifeExp: 72.24400<br />country: Korea, Rep.<br />Continent: Asia","year: 1997<br />lifeExp: 74.64700<br />country: Korea, Rep.<br />Continent: Asia","year: 2002<br />lifeExp: 77.04500<br />country: Korea, Rep.<br />Continent: Asia","year: 2007<br />lifeExp: 78.62300<br />country: Korea, Rep.<br />Continent: Asia",null,"year: 1952<br />lifeExp: 55.56500<br />country: Kuwait<br />Continent: Asia","year: 1957<br />lifeExp: 58.03300<br />country: Kuwait<br />Continent: Asia","year: 1962<br />lifeExp: 60.47000<br />country: Kuwait<br />Continent: Asia","year: 1967<br />lifeExp: 64.62400<br />country: Kuwait<br />Continent: Asia","year: 1972<br />lifeExp: 67.71200<br />country: Kuwait<br />Continent: Asia","year: 1977<br />lifeExp: 69.34300<br />country: Kuwait<br />Continent: Asia","year: 1982<br />lifeExp: 71.30900<br />country: Kuwait<br />Continent: Asia","year: 1987<br />lifeExp: 74.17400<br />country: Kuwait<br />Continent: Asia","year: 1992<br />lifeExp: 75.19000<br />country: Kuwait<br />Continent: Asia","year: 1997<br />lifeExp: 76.15600<br />country: Kuwait<br />Continent: Asia","year: 2002<br />lifeExp: 76.90400<br />country: Kuwait<br />Continent: Asia","year: 2007<br />lifeExp: 77.58800<br />country: Kuwait<br />Continent: Asia",null,"year: 1952<br />lifeExp: 55.92800<br />country: Lebanon<br />Continent: Asia","year: 1957<br />lifeExp: 59.48900<br />country: Lebanon<br />Continent: Asia","year: 1962<br />lifeExp: 62.09400<br />country: Lebanon<br />Continent: Asia","year: 1967<br />lifeExp: 63.87000<br />country: Lebanon<br />Continent: Asia","year: 1972<br />lifeExp: 65.42100<br />country: Lebanon<br />Continent: Asia","year: 1977<br />lifeExp: 66.09900<br />country: Lebanon<br />Continent: Asia","year: 1982<br />lifeExp: 66.98300<br />country: Lebanon<br />Continent: Asia","year: 1987<br />lifeExp: 67.92600<br />country: Lebanon<br />Continent: Asia","year: 1992<br />lifeExp: 69.29200<br />country: Lebanon<br />Continent: Asia","year: 1997<br />lifeExp: 70.26500<br />country: Lebanon<br />Continent: Asia","year: 2002<br />lifeExp: 71.02800<br />country: Lebanon<br />Continent: Asia","year: 2007<br />lifeExp: 71.99300<br />country: Lebanon<br />Continent: Asia",null,"year: 1952<br />lifeExp: 48.46300<br />country: Malaysia<br />Continent: Asia","year: 1957<br />lifeExp: 52.10200<br />country: Malaysia<br />Continent: Asia","year: 1962<br />lifeExp: 55.73700<br />country: Malaysia<br />Continent: Asia","year: 1967<br />lifeExp: 59.37100<br />country: Malaysia<br />Continent: Asia","year: 1972<br />lifeExp: 63.01000<br />country: Malaysia<br />Continent: Asia","year: 1977<br />lifeExp: 65.25600<br />country: Malaysia<br />Continent: Asia","year: 1982<br />lifeExp: 68.00000<br />country: Malaysia<br />Continent: Asia","year: 1987<br />lifeExp: 69.50000<br />country: Malaysia<br />Continent: Asia","year: 1992<br />lifeExp: 70.69300<br />country: Malaysia<br />Continent: Asia","year: 1997<br />lifeExp: 71.93800<br />country: Malaysia<br />Continent: Asia","year: 2002<br />lifeExp: 73.04400<br />country: Malaysia<br />Continent: Asia","year: 2007<br />lifeExp: 74.24100<br />country: Malaysia<br />Continent: Asia",null,"year: 1952<br />lifeExp: 42.24400<br />country: Mongolia<br />Continent: Asia","year: 1957<br />lifeExp: 45.24800<br />country: Mongolia<br />Continent: Asia","year: 1962<br />lifeExp: 48.25100<br />country: Mongolia<br />Continent: Asia","year: 1967<br />lifeExp: 51.25300<br />country: Mongolia<br />Continent: Asia","year: 1972<br />lifeExp: 53.75400<br />country: Mongolia<br />Continent: Asia","year: 1977<br />lifeExp: 55.49100<br />country: Mongolia<br />Continent: Asia","year: 1982<br />lifeExp: 57.48900<br />country: Mongolia<br />Continent: Asia","year: 1987<br />lifeExp: 60.22200<br />country: Mongolia<br />Continent: Asia","year: 1992<br />lifeExp: 61.27100<br />country: Mongolia<br />Continent: Asia","year: 1997<br />lifeExp: 63.62500<br />country: Mongolia<br />Continent: Asia","year: 2002<br />lifeExp: 65.03300<br />country: Mongolia<br />Continent: Asia","year: 2007<br />lifeExp: 66.80300<br />country: Mongolia<br />Continent: Asia",null,"year: 1952<br />lifeExp: 36.31900<br />country: Myanmar<br />Continent: Asia","year: 1957<br />lifeExp: 41.90500<br />country: Myanmar<br />Continent: Asia","year: 1962<br />lifeExp: 45.10800<br />country: Myanmar<br />Continent: Asia","year: 1967<br />lifeExp: 49.37900<br />country: Myanmar<br />Continent: Asia","year: 1972<br />lifeExp: 53.07000<br />country: Myanmar<br />Continent: Asia","year: 1977<br />lifeExp: 56.05900<br />country: Myanmar<br />Continent: Asia","year: 1982<br />lifeExp: 58.05600<br />country: Myanmar<br />Continent: Asia","year: 1987<br />lifeExp: 58.33900<br />country: Myanmar<br />Continent: Asia","year: 1992<br />lifeExp: 59.32000<br />country: Myanmar<br />Continent: Asia","year: 1997<br />lifeExp: 60.32800<br />country: Myanmar<br />Continent: Asia","year: 2002<br />lifeExp: 59.90800<br />country: Myanmar<br />Continent: Asia","year: 2007<br />lifeExp: 62.06900<br />country: Myanmar<br />Continent: Asia",null,"year: 1952<br />lifeExp: 36.15700<br />country: Nepal<br />Continent: Asia","year: 1957<br />lifeExp: 37.68600<br />country: Nepal<br />Continent: Asia","year: 1962<br />lifeExp: 39.39300<br />country: Nepal<br />Continent: Asia","year: 1967<br />lifeExp: 41.47200<br />country: Nepal<br />Continent: Asia","year: 1972<br />lifeExp: 43.97100<br />country: Nepal<br />Continent: Asia","year: 1977<br />lifeExp: 46.74800<br />country: Nepal<br />Continent: Asia","year: 1982<br />lifeExp: 49.59400<br />country: Nepal<br />Continent: Asia","year: 1987<br />lifeExp: 52.53700<br />country: Nepal<br />Continent: Asia","year: 1992<br />lifeExp: 55.72700<br />country: Nepal<br />Continent: Asia","year: 1997<br />lifeExp: 59.42600<br />country: Nepal<br />Continent: Asia","year: 2002<br />lifeExp: 61.34000<br />country: Nepal<br />Continent: Asia","year: 2007<br />lifeExp: 63.78500<br />country: Nepal<br />Continent: Asia",null,"year: 1952<br />lifeExp: 37.57800<br />country: Oman<br />Continent: Asia","year: 1957<br />lifeExp: 40.08000<br />country: Oman<br />Continent: Asia","year: 1962<br />lifeExp: 43.16500<br />country: Oman<br />Continent: Asia","year: 1967<br />lifeExp: 46.98800<br />country: Oman<br />Continent: Asia","year: 1972<br />lifeExp: 52.14300<br />country: Oman<br />Continent: Asia","year: 1977<br />lifeExp: 57.36700<br />country: Oman<br />Continent: Asia","year: 1982<br />lifeExp: 62.72800<br />country: Oman<br />Continent: Asia","year: 1987<br />lifeExp: 67.73400<br />country: Oman<br />Continent: Asia","year: 1992<br />lifeExp: 71.19700<br />country: Oman<br />Continent: Asia","year: 1997<br />lifeExp: 72.49900<br />country: Oman<br />Continent: Asia","year: 2002<br />lifeExp: 74.19300<br />country: Oman<br />Continent: Asia","year: 2007<br />lifeExp: 75.64000<br />country: Oman<br />Continent: Asia",null,"year: 1952<br />lifeExp: 43.43600<br />country: Pakistan<br />Continent: Asia","year: 1957<br />lifeExp: 45.55700<br />country: Pakistan<br />Continent: Asia","year: 1962<br />lifeExp: 47.67000<br />country: Pakistan<br />Continent: Asia","year: 1967<br />lifeExp: 49.80000<br />country: Pakistan<br />Continent: Asia","year: 1972<br />lifeExp: 51.92900<br />country: Pakistan<br />Continent: Asia","year: 1977<br />lifeExp: 54.04300<br />country: Pakistan<br />Continent: Asia","year: 1982<br />lifeExp: 56.15800<br />country: Pakistan<br />Continent: Asia","year: 1987<br />lifeExp: 58.24500<br />country: Pakistan<br />Continent: Asia","year: 1992<br />lifeExp: 60.83800<br />country: Pakistan<br />Continent: Asia","year: 1997<br />lifeExp: 61.81800<br />country: Pakistan<br />Continent: Asia","year: 2002<br />lifeExp: 63.61000<br />country: Pakistan<br />Continent: Asia","year: 2007<br />lifeExp: 65.48300<br />country: Pakistan<br />Continent: Asia",null,"year: 1952<br />lifeExp: 47.75200<br />country: Philippines<br />Continent: Asia","year: 1957<br />lifeExp: 51.33400<br />country: Philippines<br />Continent: Asia","year: 1962<br />lifeExp: 54.75700<br />country: Philippines<br />Continent: Asia","year: 1967<br />lifeExp: 56.39300<br />country: Philippines<br />Continent: Asia","year: 1972<br />lifeExp: 58.06500<br />country: Philippines<br />Continent: Asia","year: 1977<br />lifeExp: 60.06000<br />country: Philippines<br />Continent: Asia","year: 1982<br />lifeExp: 62.08200<br />country: Philippines<br />Continent: Asia","year: 1987<br />lifeExp: 64.15100<br />country: Philippines<br />Continent: Asia","year: 1992<br />lifeExp: 66.45800<br />country: Philippines<br />Continent: Asia","year: 1997<br />lifeExp: 68.56400<br />country: Philippines<br />Continent: Asia","year: 2002<br />lifeExp: 70.30300<br />country: Philippines<br />Continent: Asia","year: 2007<br />lifeExp: 71.68800<br />country: Philippines<br />Continent: Asia",null,"year: 1952<br />lifeExp: 39.87500<br />country: Saudi Arabia<br />Continent: Asia","year: 1957<br />lifeExp: 42.86800<br />country: Saudi Arabia<br />Continent: Asia","year: 1962<br />lifeExp: 45.91400<br />country: Saudi Arabia<br />Continent: Asia","year: 1967<br />lifeExp: 49.90100<br />country: Saudi Arabia<br />Continent: Asia","year: 1972<br />lifeExp: 53.88600<br />country: Saudi Arabia<br />Continent: Asia","year: 1977<br />lifeExp: 58.69000<br />country: Saudi Arabia<br />Continent: Asia","year: 1982<br />lifeExp: 63.01200<br />country: Saudi Arabia<br />Continent: Asia","year: 1987<br />lifeExp: 66.29500<br />country: Saudi Arabia<br />Continent: Asia","year: 1992<br />lifeExp: 68.76800<br />country: Saudi Arabia<br />Continent: Asia","year: 1997<br />lifeExp: 70.53300<br />country: Saudi Arabia<br />Continent: Asia","year: 2002<br />lifeExp: 71.62600<br />country: Saudi Arabia<br />Continent: Asia","year: 2007<br />lifeExp: 72.77700<br />country: Saudi Arabia<br />Continent: Asia",null,"year: 1952<br />lifeExp: 60.39600<br />country: Singapore<br />Continent: Asia","year: 1957<br />lifeExp: 63.17900<br />country: Singapore<br />Continent: Asia","year: 1962<br />lifeExp: 65.79800<br />country: Singapore<br />Continent: Asia","year: 1967<br />lifeExp: 67.94600<br />country: Singapore<br />Continent: Asia","year: 1972<br />lifeExp: 69.52100<br />country: Singapore<br />Continent: Asia","year: 1977<br />lifeExp: 70.79500<br />country: Singapore<br />Continent: Asia","year: 1982<br />lifeExp: 71.76000<br />country: Singapore<br />Continent: Asia","year: 1987<br />lifeExp: 73.56000<br />country: Singapore<br />Continent: Asia","year: 1992<br />lifeExp: 75.78800<br />country: Singapore<br />Continent: Asia","year: 1997<br />lifeExp: 77.15800<br />country: Singapore<br />Continent: Asia","year: 2002<br />lifeExp: 78.77000<br />country: Singapore<br />Continent: Asia","year: 2007<br />lifeExp: 79.97200<br />country: Singapore<br />Continent: Asia",null,"year: 1952<br />lifeExp: 57.59300<br />country: Sri Lanka<br />Continent: Asia","year: 1957<br />lifeExp: 61.45600<br />country: Sri Lanka<br />Continent: Asia","year: 1962<br />lifeExp: 62.19200<br />country: Sri Lanka<br />Continent: Asia","year: 1967<br />lifeExp: 64.26600<br />country: Sri Lanka<br />Continent: Asia","year: 1972<br />lifeExp: 65.04200<br />country: Sri Lanka<br />Continent: Asia","year: 1977<br />lifeExp: 65.94900<br />country: Sri Lanka<br />Continent: Asia","year: 1982<br />lifeExp: 68.75700<br />country: Sri Lanka<br />Continent: Asia","year: 1987<br />lifeExp: 69.01100<br />country: Sri Lanka<br />Continent: Asia","year: 1992<br />lifeExp: 70.37900<br />country: Sri Lanka<br />Continent: Asia","year: 1997<br />lifeExp: 70.45700<br />country: Sri Lanka<br />Continent: Asia","year: 2002<br />lifeExp: 70.81500<br />country: Sri Lanka<br />Continent: Asia","year: 2007<br />lifeExp: 72.39600<br />country: Sri Lanka<br />Continent: Asia",null,"year: 1952<br />lifeExp: 45.88300<br />country: Syria<br />Continent: Asia","year: 1957<br />lifeExp: 48.28400<br />country: Syria<br />Continent: Asia","year: 1962<br />lifeExp: 50.30500<br />country: Syria<br />Continent: Asia","year: 1967<br />lifeExp: 53.65500<br />country: Syria<br />Continent: Asia","year: 1972<br />lifeExp: 57.29600<br />country: Syria<br />Continent: Asia","year: 1977<br />lifeExp: 61.19500<br />country: Syria<br />Continent: Asia","year: 1982<br />lifeExp: 64.59000<br />country: Syria<br />Continent: Asia","year: 1987<br />lifeExp: 66.97400<br />country: Syria<br />Continent: Asia","year: 1992<br />lifeExp: 69.24900<br />country: Syria<br />Continent: Asia","year: 1997<br />lifeExp: 71.52700<br />country: Syria<br />Continent: Asia","year: 2002<br />lifeExp: 73.05300<br />country: Syria<br />Continent: Asia","year: 2007<br />lifeExp: 74.14300<br />country: Syria<br />Continent: Asia",null,"year: 1952<br />lifeExp: 58.50000<br />country: Taiwan<br />Continent: Asia","year: 1957<br />lifeExp: 62.40000<br />country: Taiwan<br />Continent: Asia","year: 1962<br />lifeExp: 65.20000<br />country: Taiwan<br />Continent: Asia","year: 1967<br />lifeExp: 67.50000<br />country: Taiwan<br />Continent: Asia","year: 1972<br />lifeExp: 69.39000<br />country: Taiwan<br />Continent: Asia","year: 1977<br />lifeExp: 70.59000<br />country: Taiwan<br />Continent: Asia","year: 1982<br />lifeExp: 72.16000<br />country: Taiwan<br />Continent: Asia","year: 1987<br />lifeExp: 73.40000<br />country: Taiwan<br />Continent: Asia","year: 1992<br />lifeExp: 74.26000<br />country: Taiwan<br />Continent: Asia","year: 1997<br />lifeExp: 75.25000<br />country: Taiwan<br />Continent: Asia","year: 2002<br />lifeExp: 76.99000<br />country: Taiwan<br />Continent: Asia","year: 2007<br />lifeExp: 78.40000<br />country: Taiwan<br />Continent: Asia",null,"year: 1952<br />lifeExp: 50.84800<br />country: Thailand<br />Continent: Asia","year: 1957<br />lifeExp: 53.63000<br />country: Thailand<br />Continent: Asia","year: 1962<br />lifeExp: 56.06100<br />country: Thailand<br />Continent: Asia","year: 1967<br />lifeExp: 58.28500<br />country: Thailand<br />Continent: Asia","year: 1972<br />lifeExp: 60.40500<br />country: Thailand<br />Continent: Asia","year: 1977<br />lifeExp: 62.49400<br />country: Thailand<br />Continent: Asia","year: 1982<br />lifeExp: 64.59700<br />country: Thailand<br />Continent: Asia","year: 1987<br />lifeExp: 66.08400<br />country: Thailand<br />Continent: Asia","year: 1992<br />lifeExp: 67.29800<br />country: Thailand<br />Continent: Asia","year: 1997<br />lifeExp: 67.52100<br />country: Thailand<br />Continent: Asia","year: 2002<br />lifeExp: 68.56400<br />country: Thailand<br />Continent: Asia","year: 2007<br />lifeExp: 70.61600<br />country: Thailand<br />Continent: Asia",null,"year: 1952<br />lifeExp: 40.41200<br />country: Vietnam<br />Continent: Asia","year: 1957<br />lifeExp: 42.88700<br />country: Vietnam<br />Continent: Asia","year: 1962<br />lifeExp: 45.36300<br />country: Vietnam<br />Continent: Asia","year: 1967<br />lifeExp: 47.83800<br />country: Vietnam<br />Continent: Asia","year: 1972<br />lifeExp: 50.25400<br />country: Vietnam<br />Continent: Asia","year: 1977<br />lifeExp: 55.76400<br />country: Vietnam<br />Continent: Asia","year: 1982<br />lifeExp: 58.81600<br />country: Vietnam<br />Continent: Asia","year: 1987<br />lifeExp: 62.82000<br />country: Vietnam<br />Continent: Asia","year: 1992<br />lifeExp: 67.66200<br />country: Vietnam<br />Continent: Asia","year: 1997<br />lifeExp: 70.67200<br />country: Vietnam<br />Continent: Asia","year: 2002<br />lifeExp: 73.01700<br />country: Vietnam<br />Continent: Asia","year: 2007<br />lifeExp: 74.24900<br />country: Vietnam<br />Continent: Asia",null,"year: 1952<br />lifeExp: 43.16000<br />country: West Bank and Gaza<br />Continent: Asia","year: 1957<br />lifeExp: 45.67100<br />country: West Bank and Gaza<br />Continent: Asia","year: 1962<br />lifeExp: 48.12700<br />country: West Bank and Gaza<br />Continent: Asia","year: 1967<br />lifeExp: 51.63100<br />country: West Bank and Gaza<br />Continent: Asia","year: 1972<br />lifeExp: 56.53200<br />country: West Bank and Gaza<br />Continent: Asia","year: 1977<br />lifeExp: 60.76500<br />country: West Bank and Gaza<br />Continent: Asia","year: 1982<br />lifeExp: 64.40600<br />country: West Bank and Gaza<br />Continent: Asia","year: 1987<br />lifeExp: 67.04600<br />country: West Bank and Gaza<br />Continent: Asia","year: 1992<br />lifeExp: 69.71800<br />country: West Bank and Gaza<br />Continent: Asia","year: 1997<br />lifeExp: 71.09600<br />country: West Bank and Gaza<br />Continent: Asia","year: 2002<br />lifeExp: 72.37000<br />country: West Bank and Gaza<br />Continent: Asia","year: 2007<br />lifeExp: 73.42200<br />country: West Bank and Gaza<br />Continent: Asia",null,"year: 1952<br />lifeExp: 32.54800<br />country: Yemen, Rep.<br />Continent: Asia","year: 1957<br />lifeExp: 33.97000<br />country: Yemen, Rep.<br />Continent: Asia","year: 1962<br />lifeExp: 35.18000<br />country: Yemen, Rep.<br />Continent: Asia","year: 1967<br />lifeExp: 36.98400<br />country: Yemen, Rep.<br />Continent: Asia","year: 1972<br />lifeExp: 39.84800<br />country: Yemen, Rep.<br />Continent: Asia","year: 1977<br />lifeExp: 44.17500<br />country: Yemen, Rep.<br />Continent: Asia","year: 1982<br />lifeExp: 49.11300<br />country: Yemen, Rep.<br />Continent: Asia","year: 1987<br />lifeExp: 52.92200<br />country: Yemen, Rep.<br />Continent: Asia","year: 1992<br />lifeExp: 55.59900<br />country: Yemen, Rep.<br />Continent: Asia","year: 1997<br />lifeExp: 58.02000<br />country: Yemen, Rep.<br />Continent: Asia","year: 2002<br />lifeExp: 60.30800<br />country: Yemen, Rep.<br />Continent: Asia","year: 2007<br />lifeExp: 62.69800<br />country: Yemen, Rep.<br />Continent: Asia"],"type":"scatter","mode":"lines","line":{"width":3.0236220472440949,"color":"rgba(70,130,180,0.6)","dash":"solid"},"hoveron":"points","name":"Asia","legendgroup":"Asia","showlegend":true,"xaxis":"x2","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":62.49232046492321,"r":9.2984640929846396,"b":28.825238688252387,"l":47.422166874221666},"paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":18.596928185969279},"title":{"text":"Life Expectancy by continent","font":{"color":"rgba(0,0,0,1)","family":"","size":22.316313823163139},"x":0,"xref":"paper"},"xaxis":{"domain":[0,0.49636778746367788],"automargin":true,"type":"linear","autorange":false,"range":[1949.25,2009.75],"tickmode":"array","ticktext":["1950","1960","1970","1980","1990","2000"],"tickvals":[1950,1960,1970,1980,1990,2000],"categoryorder":"array","categoryarray":["1950","1960","1970","1980","1990","2000"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":4.6492320464923198,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":14.877542548775427},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":"","hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[20.648800000000001,85.55319999999999],"tickmode":"array","ticktext":["40","60","80"],"tickvals":[40,60,80],"categoryorder":"array","categoryarray":["40","60","80"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":4.6492320464923198,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":14.877542548775427},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(235,235,235,1)","gridwidth":0.8453149175440583,"zeroline":false,"anchor":"x","title":"","hoverformat":".2f"},"annotations":[{"text":"Life expectancy","x":0,"y":0.5,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":18.596928185969279},"xref":"paper","yref":"paper","textangle":-90,"xanchor":"right","yanchor":"center","annotationType":"axis","xshift":-27.895392278953928},{"text":"Africa","x":0.24818389373183894,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(26,26,26,1)","family":"","size":14.877542548775427},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"center","yanchor":"bottom"},{"text":"Asia","x":0.75181610626816109,"y":1,"showarrow":false,"ax":0,"ay":0,"font":{"color":"rgba(26,26,26,1)","family":"","size":14.877542548775427},"xref":"paper","yref":"paper","textangle":-0,"xanchor":"center","yanchor":"bottom"}],"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","layer":"below","x0":0,"x1":0.49636778746367788,"y0":0,"y1":29.755085097550861,"yanchor":1,"ysizemode":"pixel"},{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","layer":"below","x0":0.50363221253632218,"x1":1,"y0":0,"y1":29.755085097550861,"yanchor":1,"ysizemode":"pixel"}],"xaxis2":{"type":"linear","autorange":false,"range":[1949.25,2009.75],"tickmode":"array","ticktext":["1950","1960","1970","1980","1990","2000"],"tickvals":[1950,1960,1970,1980,1990,2000],"categoryorder":"array","categoryarray":["1950","1960","1970","1980","1990","2000"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":4.6492320464923198,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":14.877542548775427},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":false,"domain":[0.50363221253632218,1],"gridcolor":null,"gridwidth":0,"zeroline":false,"anchor":"y","title":"","hoverformat":".2f"},"showlegend":false,"legend":{"bgcolor":null,"bordercolor":null,"borderwidth":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":14.877542548775427}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"5bfc1f605542":{"x":{},"y":{},"colour":{},"type":"scatter"}},"cur_data":"5bfc1f605542","visdat":{"5bfc1f605542":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section></section>
+<section>
+<section id="ask-a-question" class="title-slide slide level1 center">
+<h1>Ask a Question</h1>
+<p>How has a specific country (<em>Rwanda</em>) evolved?</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-16-1.png" width="960" class="r-stretch"></section>
+<section id="identify-patterns" class="slide level2">
+<h2>Identify patterns</h2>
+<p>“<em>Le gris est mon ami</em>”: Grey other lines as references</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-17-1.png" width="960" class="r-stretch"></section>
+<section id="use-transparency" class="slide level2">
+<h2>Use transparency</h2>
+<p>Overlapping transparent lines reveal patterns</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-18-1.png" width="960" class="r-stretch"></section>
+<section id="direct-labelling" class="slide level2">
+<h2>Direct Labelling</h2>
+<p>Provide labels close to information</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-19-1.png" width="960" class="r-stretch"></section>
+<section id="refine-and-annotate" class="slide level2">
+<h2>Refine and annotate</h2>
+<p>Titles and annotations should guide the reader and tell stories!</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-20-1.png" width="960" class="r-stretch"></section>
+<section id="use-anotations" class="slide level2">
+<h2>Use anotations</h2>
+<p>Context always help the reader</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-21-1.png" width="960" class="r-stretch"></section>
+<section id="provide-a-useful-title" class="slide level2">
+<h2>Provide a useful title</h2>
+<p>And mention source!</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-22-1.png" width="960" class="r-stretch"></section></section>
+<section>
+<section id="beforeafter" class="title-slide slide level1 center">
+<h1>Before/after</h1>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-23-1.png" width="960" class="r-stretch"></section>
+<section id="before" class="slide level2">
+<h2>Before</h2>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-24-1.png" width="960" class="r-stretch"></section>
+<section id="after" class="slide level2">
+<h2>After</h2>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-25-1.png" width="960" class="r-stretch"></section></section>
+<section>
+<section id="bonus-use-analytics-to-detect-stories" class="title-slide slide level1 center">
+<h1>Bonus: Use analytics to detect stories</h1>
+<p>Detecting trends &amp; highlighting countries</p>
+</section>
+<section id="identifying-shocks" class="slide level2">
+<h2>Identifying shocks</h2>
+<p>Use analytics to detect swift declines</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 30%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">country</th>
+<th style="text-align: left;">event_label</th>
+<th style="text-align: right;">prev_year</th>
+<th style="text-align: right;">prev_life</th>
+<th style="text-align: right;">year</th>
+<th style="text-align: right;">lifeExp</th>
+<th style="text-align: right;">delta_life</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Rwanda</td>
+<td style="text-align: left;">Rwanda (1987→1992)</td>
+<td style="text-align: right;">1987</td>
+<td style="text-align: right;">44.020</td>
+<td style="text-align: right;">1992</td>
+<td style="text-align: right;">23.599</td>
+<td style="text-align: right;">-20.421</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Zimbabwe</td>
+<td style="text-align: left;">Zimbabwe (1992→1997)</td>
+<td style="text-align: right;">1992</td>
+<td style="text-align: right;">60.377</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">46.809</td>
+<td style="text-align: right;">-13.568</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Lesotho</td>
+<td style="text-align: left;">Lesotho (1997→2002)</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">55.558</td>
+<td style="text-align: right;">2002</td>
+<td style="text-align: right;">44.593</td>
+<td style="text-align: right;">-10.965</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Swaziland</td>
+<td style="text-align: left;">Swaziland (1997→2002)</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">54.289</td>
+<td style="text-align: right;">2002</td>
+<td style="text-align: right;">43.869</td>
+<td style="text-align: right;">-10.420</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Botswana</td>
+<td style="text-align: left;">Botswana (1992→1997)</td>
+<td style="text-align: right;">1992</td>
+<td style="text-align: right;">62.745</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">52.556</td>
+<td style="text-align: right;">-10.189</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cambodia</td>
+<td style="text-align: left;">Cambodia (1972→1977)</td>
+<td style="text-align: right;">1972</td>
+<td style="text-align: right;">40.317</td>
+<td style="text-align: right;">1977</td>
+<td style="text-align: right;">31.220</td>
+<td style="text-align: right;">-9.097</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Namibia</td>
+<td style="text-align: left;">Namibia (1997→2002)</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">58.909</td>
+<td style="text-align: right;">2002</td>
+<td style="text-align: right;">51.479</td>
+<td style="text-align: right;">-7.430</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">South Africa</td>
+<td style="text-align: left;">South Africa (1997→2002)</td>
+<td style="text-align: right;">1997</td>
+<td style="text-align: right;">60.236</td>
+<td style="text-align: right;">2002</td>
+<td style="text-align: right;">53.365</td>
+<td style="text-align: right;">-6.871</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="higlight-shocks" class="slide level2">
+<h2>Higlight shocks</h2>
+<p>Select the most dramatic declines</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-31-1.png" width="960" class="r-stretch"></section>
+<section id="a-better-story" class="slide level2">
+<h2>A better story?</h2>
+<p>Now we have stories, on different continents…</p>
+
+<img data-src="Process-Lines_files/figure-revealjs/unnamed-chunk-33-1.png" width="960" class="r-stretch"></section>
+<section id="takeaways" class="slide level2">
+<h2>Takeaways</h2>
+<ul>
+<li>Remove unnecessary ink</li>
+<li>Too many colors (Color is not decoration)</li>
+<li>Simplify background</li>
+<li>Use grey</li>
+<li>Use small multiples</li>
+<li>Refine, refine</li>
+<li>Identify a question</li>
+<li>Direct labeling</li>
+<li>Use analytics!</li>
+</ul>
+</section></section>
+<section id="tell-the-story-not-the-data-set" class="title-slide slide level1 center">
+<h1>Tell the story, not the data set!</h1>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>Christophe Bontemps - SIAP</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="Process-Lines_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="Process-Lines_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="Process-Lines_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="Process-Lines_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+
+    <script>
+
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+
+      // slide changes (different for each slide format).
+
+      (function () {
+
+        // dispatch for htmlwidgets
+
+        function fireSlideEnter() {
+
+          const event = window.document.createEvent("Event");
+
+          event.initEvent("slideenter", true, true);
+
+          window.document.dispatchEvent(event);
+
+        }
+
+    
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+
+          fireSlideEnter();
+
+    
+
+          // dispatch for shiny
+
+          if (window.jQuery) {
+
+            if (previousSlide) {
+
+              window.jQuery(previousSlide).trigger("hidden");
+
+            }
+
+            if (currentSlide) {
+
+              window.jQuery(currentSlide).trigger("shown");
+
+            }
+
+          }
+
+        }
+
+    
+
+        // hookup for slidy
+
+        if (window.w3c_slidy) {
+
+          window.w3c_slidy.add_observer(function (slide_num) {
+
+            // slide_num starts at position 1
+
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+
+          });
+
+        }
+
+    
+
+      })();
+
+    </script>
+
+    
+
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
