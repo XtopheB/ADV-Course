@@ -9,6 +9,7 @@ format:
   revealjs:
     theme: solarized
     css: myReveal.css
+    embed-resources: true
     slide-number: true
     footer: "Christophe Bontemps - SIAP "
     transition: fade
