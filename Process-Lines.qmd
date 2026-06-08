@@ -875,13 +875,15 @@ ggplot() +
 
 ## Takeaways
 
+
 :::: {.columns}
 
 ::: {.column width="49%"}
 - Remove unnecessary ink
 - Simplify background
 - Use colors wisely \
- (*color is not decoration*) 
+ (*color is not decoration*)
+- Simplify background
 - Grey is my friend
 :::
 
@@ -899,7 +901,7 @@ ggplot() +
 
 ::::
 
-# Show the story, not the data set!
+# Show the story, <br> not (only) the data!
 
 
 
