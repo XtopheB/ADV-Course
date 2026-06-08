@@ -74,7 +74,6 @@
 }
 
 
-
 /* -----------------------------
    OPTIONAL: soften code blocks (NOT Used here)
    ----------------------------- */
@@ -100,6 +99,13 @@
   pointer-events: none;
 }
 
+/* Add a vertical line between 2 columns    
 
 
+.reveal .columns .column + .column {
+  border-left: 2px solid #268bd2;
+  padding-left: 1em;
+}
+
+*/
 
