@@ -227,7 +227,7 @@ ggplot(df,
 ```
 
 
-# Highlight Regions 
+## Highlight Regions 
 
 Use color to encode information (from data).
 
@@ -256,7 +256,7 @@ ggplot() +
 p_color
 ```
 ## Be inclusive
-About 7% of men are colorblind.  They see this:
+About 7% of men will see this:
 ```{r}
 p_color  +  scale_colour_manual(values = MyPalette_colourblind) 
 ```
@@ -325,7 +325,7 @@ ggplot() +
 
 ## Use interactivity 
 
-Helps identifying, not delivering a message
+Helps identifying but **not** delivering a message
 
 ```{r interactive}
 p <- df %>%
@@ -425,8 +425,8 @@ ggplot() +
     panel.grid.major.x = element_blank()
   ) +
   labs(
-    title = paste0(focus_country," Compared with Other Countries"),
-    subtitle = "All countries shown as contextual references",
+    title = paste0(focus_country," life expectancy"),
+    subtitle = "Asia Pacific countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
@@ -464,8 +464,8 @@ ggplot() +
     panel.grid.major.x = element_blank()
   ) +
   labs(
-    title = paste0(focus_country," Compared with Other Countries"),
-    subtitle = "All countries shown as contextual references",
+    title = paste0(focus_country," life expectancy"),
+    subtitle = "Asia Pacific countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
@@ -525,17 +525,17 @@ ggplot() +
   ) +
 
   labs(
-    title = paste0(focus_country," Compared with Other Countries"),
-    subtitle = "Other countries provide context",
+    title = paste0(focus_country," life expectancy"),
+    subtitle = "Asia Pacific countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
 ```
 
 
-##  Refine and annotate  
+##  Refine, refine, refine 
 
-Titles and annotations should guide the reader and tell stories!  
+Change typo, size, line, tetx....  
 
 ```{r}
 focus_last <-
@@ -588,18 +588,17 @@ p_focus <- ggplot() +
   ) +
 
   labs(
-    title = paste0(focus_country," Compared with other Countries"),
-    #title = paste0( focus_country,"'s Life Expectancy is back to pre-war levels"),
-    subtitle = "Compared with all countries in the dataset",
+    title = paste0(focus_country," life expectancy"),
+    subtitle = "Asia Pacific countries in grey",
     x = NULL,
-    y = "Years"
+     y = "Life expectancy"
   )
 p_focus
 ```
 
 ## Use anotations
 
-Context always help the reader
+Context helps the reader
 
 ```{r}
 p_Annotate <- p_focus + 
@@ -876,17 +875,31 @@ ggplot() +
 
 ## Takeaways
 
-- Remove unnecessary ink
-- Too many colors (Color is not decoration)
-- Simplify background
-- Use grey
-- Use small multiples
-- Refine, refine
-- Identify a question
-- Direct labeling
-- Use analytics! 
+:::: {.columns}
 
-# Tell the story, not the data set!
+::: {.column width="49%"}
+- Remove unnecessary ink
+- Simplify background
+- Use colors wisely \
+ (*color is not decoration*) 
+- Grey is my friend
+:::
+
+::: {.column width="2%"}
+<div style="border-left: 2px solid #268bd2; height: 100%;"></div>
+:::
+
+::: {.column width="49%"}
+- Use small multiples
+- Refine, refine, refine
+- Identify a question
+- Use labels, context, annotations
+- Use analytics! 
+:::
+
+::::
+
+# Show the story, not the data set!
 
 
 
