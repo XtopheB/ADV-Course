@@ -1,12 +1,16 @@
 ---
 title:  "From Clutter to Clarity: Improving a Time Series Chart"
 subtitle: " A step-by-step demo"
-author: "Christophe Bontemps (SIAP)"
+author:
+  - name:  "Christophe Bontemps (SIAP)"
+    affiliation:  "![](Images/escap_siap_logo.png){width=150px} "
+
 format:
   revealjs:
     theme: solarized
     css: myReveal.css
     slide-number: true
+    footer: "Christophe Bontemps - SIAP "
     transition: fade
     center: false
     progress: true
@@ -33,16 +37,36 @@ library(kableExtra)
 library(gridExtra)
 library(patchwork)
 
-df_full <- gapminder
+df_full <- gapminder %>%
+  rename(Continent = continent)
 
 ```
 
 
 ```{r}
+# MyPalette <- c(
+#   "Africa" = "#2A9D8F",
+#   "Asia" = "#E9C46A"
+# )
+
+
 MyPalette <- c(
-  "Africa" = "#2A9D8F",
-  "Asia" = "#E9C46A"
+  "Africa" = "#9A6B00" ,   
+  "Asia"   = "#4A9A4A"    
 )
+
+# Approximate as seen under Protanopia / Deuteranopia:
+MyPalette_colourblind <- c(
+  "Africa" = "#8B8B1A",   # olive
+  "Asia"   = "#8A8A1B"    # virtually identical olive
+)
+
+# My Inclusive palette
+MyPalette_inclusive <- c(
+  "Africa" = "#D55E00", 
+  "Asia"   = "steelblue"   
+)
+
 ```
 
 
@@ -50,8 +74,11 @@ MyPalette <- c(
 
 ```{r}
 df <- df_full %>%
-  filter(continent =="Asia" | continent == "Africa")
+  filter(Continent =="Asia" | Continent == "Africa")
+```
 
+
+```{r}
 p_Excel <-  df%>%
 ggplot() +
  aes(year,
@@ -175,7 +202,7 @@ ggplot(df,
 
 ## Remove Borders & Grids
 
-Focus attention on the data.
+Focus attention on the data, not on the grid.
 
 ```{r}
 ggplot(df,
@@ -199,21 +226,22 @@ ggplot(df,
 ```
 
 
-# Highlight Regions not Countries
+# Highlight Regions 
 
-Color now carries information.
+Use color to encode information (from data).
 
 ```{r}
-df %>%
+p_color <- df %>%
 ggplot() +
        aes(year,
            lifeExp,
            group = country,
-           colour = continent) +
+           colour = Continent) +
   geom_line(linewidth = 0.8, alpha = 1) +
   scale_colour_manual(values = MyPalette) +
   labs(
     title = "Life Expectancy by Country",
+    subtitle = "For Africa and Asia",
     x = NULL,
     y = "Life expectancy"
   ) +
@@ -223,7 +251,21 @@ ggplot() +
     panel.grid.minor = element_blank(),
     panel.grid.major.x = element_blank()
   ) 
+
+p_color
 ```
+## Be inclusive
+About 7% of men are colorblind.  They see this:
+```{r}
+p_color  +  scale_colour_manual(values = MyPalette_colourblind) 
+```
+## Be inclusive
+Use a color blind friendly palette. 
+
+```{r}
+p_color  +  scale_colour_manual(values = MyPalette_inclusive) 
+```
+
 
 
 ## Also using "small multiple" graphics
@@ -236,12 +278,12 @@ ggplot() +
        aes(year,
            lifeExp,
            group = country,
-           colour = continent) +
+           colour = Continent) +
   geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = MyPalette) +
-  facet_wrap(vars(continent)) +
+  scale_colour_manual(values = MyPalette_inclusive) +
+  facet_wrap(vars(Continent)) +
   labs(
-    title = "Life Expectancy by continent",
+    title = "Life Expectancy by Continent",
     x = NULL,
     y = "Life expectancy"
   ) +
@@ -263,10 +305,10 @@ ggplot() +
        aes(year,
            lifeExp,
            group = country,
-           colour = continent) +
+           colour = Continent) +
   geom_line(linewidth = 0.8) +
-  scale_colour_manual(values = MyPalette) +
-  facet_wrap(vars(continent)) +
+  scale_colour_manual(values = MyPalette_inclusive) +
+  facet_wrap(vars(Continent)) +
   labs(
     title = "Life Expectancy by continent",
     x = NULL,
@@ -290,10 +332,10 @@ ggplot() +
        aes(year,
            lifeExp,
            group = country,
-           colour = continent) +
+           colour = Continent) +
   geom_line(linewidth = 0.8, alpha = 0.6) +
-  facet_wrap(vars(continent)) +
-  scale_colour_manual(values = MyPalette) +
+  facet_wrap(vars(Continent)) +
+  scale_colour_manual(values = MyPalette_inclusive) +
   labs(
     title = "Life Expectancy by continent",
     subtitle = "Interactive version",
@@ -619,7 +661,7 @@ Detecting trends & highlighting countries
 
 Shocks <- df %>%
   arrange(country, year) %>%
-  group_by(country, continent) %>%
+  group_by(country, Continent) %>%
   mutate(year_lag = lag(year),
          life_lag = lag(lifeExp),
          delta_years = year - year_lag,
@@ -630,7 +672,7 @@ Shocks <- df %>%
     delta_years <= 5,      # at most 5-year gap
     delta_life <= -2       # drop of at least 2 years
   ) %>%
-  arrange(country, continent, year, lifeExp, delta_years, delta_life)
+  arrange(country, Continent, year, lifeExp, delta_years, delta_life)
 
 # Shocks
 ```
@@ -655,7 +697,7 @@ df <-df %>%
 ```{r}
 shock_events <- df %>%
   arrange(country, year) %>%
-  group_by(country, continent) %>%
+  group_by(country, Continent) %>%
   mutate(
     prev_year = lag(year),
     prev_life = lag(lifeExp),
@@ -756,7 +798,7 @@ p
 
 ## A better story? 
 
-Now we have stories, on different continents..
+Now we have stories, on different continents...
 
 ```{r}
 shock_countries <- shock_events %>%
@@ -783,10 +825,10 @@ ggplot() +
   geom_line(
     data = df %>% 
       filter(country %in% shock_countries),
-    aes(year, lifeExp, group = country, colour = continent),
+    aes(year, lifeExp, group = country, colour = Continent),
     linewidth = 0.5
   ) +
-  scale_colour_manual(values = MyPalette, drop = FALSE) +
+  scale_colour_manual(values = MyPalette_inclusive, drop = FALSE) +
 
   # 3. Shock segments (event-level emphasis)
   geom_segment(
@@ -842,7 +884,8 @@ ggplot() +
 - Identify a question
 - Direct labeling
 - Use analytics! 
-- Tell the story, not the data set!
+
+# Tell the story, not the data set!
 
 
 
