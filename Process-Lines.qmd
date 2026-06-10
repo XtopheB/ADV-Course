@@ -426,7 +426,7 @@ ggplot() +
   ) +
   labs(
     title = paste0(focus_country," life expectancy"),
-    subtitle = "Asia Pacific countries in grey",
+    subtitle = "Other countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
@@ -465,7 +465,7 @@ ggplot() +
   ) +
   labs(
     title = paste0(focus_country," life expectancy"),
-    subtitle = "Asia Pacific countries in grey",
+    subtitle = "Other countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
@@ -526,7 +526,7 @@ ggplot() +
 
   labs(
     title = paste0(focus_country," life expectancy"),
-    subtitle = "Asia Pacific countries in grey",
+    subtitle = "Other countries in grey",
     x = NULL,
     y = "Life expectancy"
   )
@@ -741,7 +741,6 @@ top_shocks %>%
 
 Select the most dramatic declines
 
-
 ```{r}
 
 # Base plot: all trajectories in background
@@ -750,8 +749,9 @@ p <- ggplot(df,
   geom_line(
     colour = "grey85",
     alpha = 0.4,
-    linewidth = 0.5
-  )
+    linewidth = 0.6
+  )+
+  ylim(10, 85) 
 
 ## Adding segments with decreasing LE
 p <- p +
@@ -818,8 +818,9 @@ ggplot() +
     aes(year, lifeExp, group = country),
     colour = "grey85",
     alpha = 0.5,
-    linewidth = 0.5
+    linewidth = 0.6
   ) +
+  ylim(10, 85) +
 
   # 2. Highlight FULL trajectories of shock countries
   geom_line(
@@ -865,8 +866,8 @@ ggplot() +
   ) +
 
   labs(
-    title = "Life Expectancy Shock Events",
-    subtitle = "Many countries still experience sharp declines",
+    title = "An encouraging global positive trend",
+    subtitle = "Many countries still experience sharp declines, particularly in Africa",
     caption= " Source: Gapminder (2026)",
     x = NULL,
     y = "Life expectancy"
