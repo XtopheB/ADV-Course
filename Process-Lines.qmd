@@ -535,7 +535,7 @@ ggplot() +
 
 ##  Refine, refine, refine 
 
-Change typo, size, line, tetx....  
+Refine style: Text, fonts, size ....  
 
 ```{r}
 focus_last <-
@@ -719,7 +719,7 @@ shock_events <- df %>%
 
 
 
-## Identifying shocks
+## Identifying other stories
 
 Use analytics to detect swift declines
 
@@ -867,7 +867,7 @@ ggplot() +
 
   labs(
     title = "An encouraging global positive trend",
-    subtitle = "Many countries still experience sharp declines, particularly in Africa",
+    subtitle = "Many countries experienced swift declines in the past, particularly in Africa",
     caption= " Source: Gapminder (2026)",
     x = NULL,
     y = "Life expectancy"
