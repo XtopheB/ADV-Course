@@ -890,8 +890,9 @@ ggplot() +
 - Simplify background
 - Use colors wisely \
  (*color is not decoration*)
-- Simplify background
 - Grey is my friend
+- Use small multiples
+
 :::
 
 ::: {.column width="2%"}
@@ -899,11 +900,12 @@ ggplot() +
 :::
 
 ::: {.column width="49%"}
-- Use small multiples
+
 - Refine, refine, refine
 - Identify a question
 - Use labels, context, annotations
 - Use analytics! 
+- Provide a message
 :::
 
 ::::
