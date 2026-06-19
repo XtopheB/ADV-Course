@@ -261,7 +261,7 @@ About 7% of men will see this:
 p_color  +  scale_colour_manual(values = MyPalette_colourblind) 
 ```
 ## Be inclusive
-Use a color blind friendly palette. 
+Use a **colorblind** friendly palette. 
 
 ```{r}
 p_color  +  scale_colour_manual(values = MyPalette_inclusive) 
@@ -269,9 +269,9 @@ p_color  +  scale_colour_manual(values = MyPalette_inclusive)
 
 
 
-## Also using "small multiple" graphics
+## Use "small multiple" graphics
 
-Less lines is more information
+Split the chart to reveal information
 
 ```{r}
 df %>%
