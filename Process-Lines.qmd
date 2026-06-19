@@ -352,12 +352,18 @@ ggplot() +
 
 if (knitr::is_html_output()) {
 
-  plotly::ggplotly(p)
+plotly::ggplotly(p) |>
+    plotly::layout(
+      autosize = FALSE,
+      width = 850,
+      height = 480
+    )
 
 } else {
 
   p
 }
+
 ```
 
 
@@ -589,7 +595,7 @@ p_focus <- ggplot() +
 
   labs(
     title = paste0(focus_country," life expectancy"),
-    subtitle = "Asia Pacific countries in grey",
+    subtitle = "Other countries in grey",
     x = NULL,
      y = "Life expectancy"
   )
@@ -781,7 +787,7 @@ p <- p +
   force = 1
 ) +
   labs(
-    title = "Life Expectancy Shock Events",
+    title = "Life Expectancy declines",
     subtitle = "Highlighted segments with 2–5 year drops",
     x = NULL,
     y = "Life expectancy"
@@ -866,9 +872,9 @@ ggplot() +
   ) +
 
   labs(
-    title = "An encouraging global positive trend",
+    title = "Life expectancy over time: An encouraging global positive trend",
     subtitle = "Many countries experienced swift declines in the past, particularly in Africa",
-    caption= " Source: Gapminder (2026)",
+    caption= "Africa and Asia countries (grey) - Data: Gapminder (2026)",
     x = NULL,
     y = "Life expectancy"
   )
