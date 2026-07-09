@@ -20,7 +20,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8f7f4;color:#2c2c2
 .method-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .pill{font-size:10px;padding:2px 7px;border-radius:10px;background:#f1efe8;color:#5f5e5a;border:1px solid #d3d1c7}
 .pill strong{color:#2c2c2a}
-#toggle-btn{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid #d3d1c7;background:transparent;color:#888780;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:2px}
+#toggle-btn{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid #d3d1c7;background:transparent;color:#ff6a80;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:2px}
 #toggle-btn:hover{background:#f1efe8}
 header{padding:12px 20px 10px;border-bottom:1px solid #e0ddd8;background:#fff;display:flex;align-items:baseline;gap:12px;flex-shrink:0}
 header h1{font-size:15px;font-weight:600;color:#1a1a18}
@@ -56,7 +56,7 @@ input[type=range]{flex:1;accent-color:#2c2c2a}
 <header>
   <h1>France — Population by Departement</h1>
   <span>INSEE 2023 · 96 metropolitan departments</span>
-  <button id="toggle-btn" onclick="toggleExplainer()"> <b>Hide guide</b></button>
+  <button id="toggle-btn" onclick="toggleExplainer()"> Hide guide</button>
 </header>
 
 <div id="explainer">
@@ -74,11 +74,11 @@ input[type=range]{flex:1;accent-color:#2c2c2a}
 
   <div class="expl-block">
     <h2>🎛️ How to use it</h2>
-    <p><strong>1.</strong> Select a classification method below — watch how the map and legend change instantly.<br>
-    <strong>2.</strong> Adjust the number of classes (3–8) with the slider.<br>
-    <strong>3.</strong> Hover over any department to see its exact population and class.</p>
+    <p><strong>1. Select a classification method below</strong> — watch how the map and legend change instantly.<br>
+    <strong>2. Adjust the number of classes </strong> with the slider- Visualize the impact on the map.<br>
+    <strong>3. Observe how the distribution of classes changes</strong> - Visualize the legend and histogram.</p>
     <div class="method-pills">
-      <span class="pill"><strong>Equal interval</strong> — fixed-width bins</span>
+      <span class="pill"><strong>Equal interval</strong> — fixed-width bins from min to max </span>
       <span class="pill"><strong>Quantile</strong> — equal count per class</span>
       <span class="pill"><strong>Jenks</strong> — minimises within-class variance</span>
       <span class="pill"><strong>Std deviation</strong> — distance from the mean</span>
