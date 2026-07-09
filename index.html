@@ -3,12 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>France — Population by Département</title>
+<title>France — Population by Departement</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#f8f7f4;color:#2c2c2a;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* Explanation panel */
+#explainer{background:#fff;border-bottom:1px solid #e0ddd8;padding:14px 20px;flex-shrink:0;display:flex;gap:32px;align-items:flex-start}
+#explainer.hidden{display:none}
+.expl-block{flex:1;min-width:0}
+.expl-block h2{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#2c2c2a;margin-bottom:5px}
+.expl-block p{font-size:12px;color:#5f5e5a;line-height:1.65;margin-bottom:4px}
+.expl-block p:last-child{margin-bottom:0}
+.expl-block strong{color:#2c2c2a;font-weight:600}
+.method-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pill{font-size:10px;padding:2px 7px;border-radius:10px;background:#f1efe8;color:#5f5e5a;border:1px solid #d3d1c7}
+.pill strong{color:#2c2c2a}
+#toggle-btn{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid #d3d1c7;background:transparent;color:#888780;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:2px}
+#toggle-btn:hover{background:#f1efe8}
 header{padding:12px 20px 10px;border-bottom:1px solid #e0ddd8;background:#fff;display:flex;align-items:baseline;gap:12px;flex-shrink:0}
 header h1{font-size:15px;font-weight:600;color:#1a1a18}
 header span{font-size:12px;color:#888780}
@@ -43,13 +56,43 @@ input[type=range]{flex:1;accent-color:#2c2c2a}
 <header>
   <h1>France — Population by Departement</h1>
   <span>INSEE 2023 · 96 metropolitan departments</span>
+  <button id="toggle-btn" onclick="toggleExplainer()"> <b>Hide guide</b></button>
 </header>
+
+<div id="explainer">
+  <div class="expl-block">
+    <h2>📖 What this tool shows</h2>
+    <p>This interactive map colours each of France's <strong>96 metropolitan departments</strong> according to its total population (INSEE 2023). The same data can look <strong>dramatically different</strong> depending on how you divide it into classes — that is the point of this exercise.</p>
+    <p>Use the <strong>histogram</strong> on the right to see how the population is distributed across departments, and how each method cuts that distribution into groups.</p>
+  </div>
+
+  <div class="expl-block">
+    <h2>⚠️ Why classification matters</h2>
+    <p>A choropleth map does not show raw data — it shows <strong>which class</strong> a value falls into. Changing the method can completely reverse the visual message: a department that looks "high" under one scheme may appear "average" under another, <em>with identical data</em>.</p>
+    <p>This is one of the most common sources of <strong>misleading maps</strong> in official statistics and journalism.</p>
+  </div>
+
+  <div class="expl-block">
+    <h2>🎛️ How to use it</h2>
+    <p><strong>1.</strong> Select a classification method below — watch how the map and legend change instantly.<br>
+    <strong>2.</strong> Adjust the number of classes (3–8) with the slider.<br>
+    <strong>3.</strong> Hover over any department to see its exact population and class.</p>
+    <div class="method-pills">
+      <span class="pill"><strong>Equal interval</strong> — fixed-width bins</span>
+      <span class="pill"><strong>Quantile</strong> — equal count per class</span>
+      <span class="pill"><strong>Jenks</strong> — minimises within-class variance</span>
+      <span class="pill"><strong>Std deviation</strong> — distance from the mean</span>
+      <span class="pill"><strong>Logarithmic</strong> — compresses skewed distributions</span>
+      <span class="pill"><strong>Head/Tails</strong> — iterative mean splits for heavy tails</span>
+    </div>
+  </div>
+</div>
+
 <div id="main">
   <div id="mapcol"><svg id="map" role="img" aria-label="Choropleth map of France departments colored by population"></svg></div>
   <div id="sidebar">
     <div>
-      <div class="slabel">Classification method </br>
-      <b>Change methods and nb of classes to see the map change</b></div>
+      <div class="slabel">Classification method</div>
       <div class="tabs">
         <button class="tab on" data-m="equal">Equal interval</button>
         <button class="tab" data-m="quantile">Quantile</button>
@@ -64,18 +107,20 @@ input[type=range]{flex:1;accent-color:#2c2c2a}
       <input type="range" id="ns" min="3" max="8" value="5" step="1">
       <span id="nv">5</span>
     </div>
-   <div class="box">
-      <div class="slabel">Population distribution & colors</div>
-      <div id="hist-wrap">
-        <canvas id="hc" role="img" aria-label="Histogram of department populations"></canvas>
-      </div>
-    </div>
-     <div class="box">
+
+    <div class="box">
       <div class="slabel">Legend</div>
       <!-- Horizontal color bar -->
       <div id="legbar-wrap">
         <div id="legbar"></div>
         <div id="legticks"></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="slabel">Population distribution</div>
+      <div id="hist-wrap">
+        <canvas id="hc" role="img" aria-label="Histogram of department populations"></canvas>
       </div>
     </div>
 
@@ -257,6 +302,13 @@ function renderHist(){
     svg.selectAll('path.dep').attr('d',path);
   });
 })();
+
+function toggleExplainer(){
+  const el=document.getElementById('explainer');
+  const btn=document.getElementById('toggle-btn');
+  el.classList.toggle('hidden');
+  btn.textContent=el.classList.contains('hidden')?'Show guide':'Hide guide';
+}
 
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',function(){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
