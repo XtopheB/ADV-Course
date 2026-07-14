@@ -1,0 +1,291 @@
+---
+title: "Who Holds the Seats? Women in Local Government, Worldwide and in the Pacific"
+subtitle: "A scrollytelling exercise on classification choices in choropleth mapping"
+format:
+  closeread-html:
+    remove-header-space: true
+    cr-section:
+      layout: overlay-center
+    cr-style:
+      narrative-background-color-overlay: "rgba(255,255,255,0.90)"
+      narrative-text-color-overlay: "#1a1a1a"
+      narrative-overlay-max-width: 460px
+      narrative-border-radius: 10px
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+library(scales)
+
+# Read the data prepared by R/00_prepare_data.R. Run that script first if
+# this file doesn't exist yet.
+prepped <- readRDS("data/local_gov_women_clean.rds")
+
+# Read the data prepared by R/00_prepare_data.R. Run that script first if
+# this file doesn't exist yet.
+prepped <- readRDS("data/local_gov_women_clean.rds")
+
+map_data     <- prepped$map_data
+pacific_iso3 <- prepped$pacific_iso3
+
+# Shared color scale -------------------------------------------------------
+# Diverging around 30%, a commonly cited benchmark for the "critical mass"
+# threshold in gender and representation literature. Adjust `threshold`
+# below if you'd like to teach against a different reference point (e.g.
+# 50% for full parity).
+
+threshold <- 30
+
+fill_scale <- scale_fill_gradient2(
+  name     = "Seats held\nby women (%)",
+  low      = "#B2182B",
+  mid      = "#F7F7F7",
+  high     = "#2166AC",
+  midpoint = threshold,
+  na.value = "grey85",
+  limits   = c(0, 100),
+  labels   = label_number(suffix = "%")
+)
+
+map_theme <- theme_void(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    plot.caption    = element_text(size = 9, color = "grey40", hjust = 0)
+  )
+
+n_reported <- sum(map_data$status == "reported", na.rm = TRUE)
+
+# ---- Regional summary data ------------------------------------------------
+
+regional_data <- map_data %>%
+  sf::st_drop_geometry() %>%
+  filter(status == "reported", !is.na(subregion)) %>%
+  mutate(
+    is_pacific_subregion = subregion %in% c("Melanesia", "Micronesia", "Polynesia")
+  )
+
+subregion_order <- regional_data %>%
+  group_by(subregion) %>%
+  summarize(median_value = median(value, na.rm = TRUE)) %>%
+  arrange(median_value) %>%
+  pull(subregion)
+
+regional_data <- regional_data %>%
+  mutate(subregion = factor(subregion, levels = subregion_order))
+
+# ---- Labels baked into the single map for the Pacific zoom ----------------
+# These are small at the global view and only become legible once the
+# pan/zoom focus effects below scale the map up around the Pacific.
+#
+# Every country here sits between roughly 140 and 180 degrees E, so we
+# stay on the standard -180/180 map and never need to touch the
+# antimeridian at all.
+
+lowest_iso3    <- c("FSM", "KIR", "VUT", "TUV", "MHL")
+highlight_iso3 <- c(lowest_iso3, "FJI", "NCL")
+
+label_points <- map_data %>%
+  filter(iso3 %in% highlight_iso3, status == "reported") %>%
+  # st_point_on_surface (rather than st_centroid) guarantees a point that
+  # actually falls on the country's own polygon. This matters here because
+  # Kiribati's territory is split across three island groups spanning
+  # roughly -150 to 173 degrees — a plain centroid could land in open
+  # ocean, or even outside the Pacific crop entirely.
+  mutate(anchor = sf::st_point_on_surface(geometry)) %>%
+  mutate(
+    lon = sf::st_coordinates(anchor)[, 1],
+    lat = sf::st_coordinates(anchor)[, 2]
+  ) %>%
+  sf::st_drop_geometry() %>%
+  mutate(is_lowest = iso3 %in% lowest_iso3)
+
+# Kiribati specifically: its largest island by area, Kiritimati, is out in
+# the Line Islands (~-157), far from the Gilbert Islands group (~173 E)
+# where the capital, Tarawa, sits. Anchor its label at Tarawa by hand so
+# it lands inside the Pacific crop instead of wherever st_point_on_surface
+# happens to pick.
+label_points <- label_points %>%
+  mutate(
+    lon = ifelse(iso3 == "KIR", 173.0, lon),
+    lat = ifelse(iso3 == "KIR", 1.4, lat)
+  )
+
+# ---- Full-map extent, used to work out pan-to percentages -----------------
+# coord_sf below is fixed at these limits for every version of the map, so
+# the percentages calculated here stay valid across triggers. This is the
+# plain, standard -180/180 world map.
+world_xlim <- c(-180, 180)
+world_ylim <- c(-60, 85)
+world_cx   <- mean(world_xlim)
+world_cy   <- mean(world_ylim)
+
+# Target center for the Pacific zoom. Chosen to sit inside the cluster of
+# countries we highlight (roughly 140-180 E), which stays on one side of
+# the antimeridian on purpose.
+pacific_cx <- 162
+pacific_cy <- -8
+
+pan_x_pct <- round(100 * (world_cx - pacific_cx) / diff(world_xlim), 1)
+pan_y_pct <- round(100 * (world_cy - pacific_cy) / diff(world_ylim), 1)
+```
+
+Local government is often the level closest to people's daily lives — and
+in most countries, women remain a minority of the elected officials who
+run it. SDG indicator 5.5.1b tracks the share of seats held by women in
+local deliberative bodies. This page walks through what that indicator
+looks like globally, then zooms into the Pacific, where several of the
+lowest values in the dataset are found.
+
+::: {.callout-note}
+**For the classification-methods lesson:** as you scroll, notice how the
+same underlying numbers can look quite different depending on where you
+place the color break (here, at 30%). Try changing `threshold` in the
+setup chunk to 50% and re-rendering to see how the map's story shifts.
+:::
+
+:::{.cr-section}
+
+Across the `r n_reported` countries with reported data, the share of
+women in local government ranges from under 2% to over 50%. @cr-map
+
+:::{#cr-map}
+```{r}
+#| label: world-map
+#| fig-width: 10
+#| fig-height: 6.5
+ggplot(map_data) +
+  geom_sf(aes(fill = value), color = "white", linewidth = 0.08) +
+  geom_text(
+    data = label_points,
+    aes(x = lon, y = lat, label = admin, fontface = ifelse(is_lowest, "bold", "plain")),
+    size = 2.1, color = "grey15", check_overlap = TRUE
+  ) +
+  # datum = NA turns off coord_sf's automatic lat/long graticule. Without
+  # it, the graticule's default break algorithm can misbehave on the
+  # unusual 0-360 xlim used here (needed for the Pacific-centered shift)
+  # and render as long horizontal stripes across the map.
+  coord_sf(xlim = world_xlim, ylim = world_ylim, expand = FALSE, datum = NA) +
+  fill_scale +
+  map_theme
+```
+:::
+
+The world map uses a **diverging classification centered on
+`r threshold`%**: countries below that line shade toward red, countries
+above shade toward blue. Grey means no elected local government body, or
+no data reported. This single choice already does a lot of storytelling
+— a different center would draw the eye somewhere else entirely.
+
+No single global pattern jumps out immediately — high and low values are
+scattered across regions rather than clustered in one place. @cr-regional
+
+:::{#cr-regional}
+```{r}
+#| label: regional-chart
+#| fig-width: 8
+#| fig-height: 7.5
+ggplot(regional_data, aes(x = value, y = subregion)) +
+  geom_vline(xintercept = threshold, linetype = "dashed", color = "grey50") +
+  geom_point(
+    aes(color = is_pacific_subregion),
+    size = 2.6, alpha = 0.85
+  ) +
+  stat_summary(
+    fun = median, geom = "point", shape = 18, size = 4, color = "black"
+  ) +
+  scale_color_manual(
+    values = c(`TRUE` = "#B2182B", `FALSE` = "grey55"),
+    guide  = "none"
+  ) +
+  scale_x_continuous(labels = label_number(suffix = "%"), limits = c(0, 100)) +
+  labs(x = "Seats held by women (%)", y = NULL) +
+  theme_minimal(base_size = 13) +
+  theme(plot.caption = element_text(size = 9, color = "grey40", hjust = 0))
+```
+:::
+
+Ordering subregions by their median value (black diamonds) shows that
+the Pacific groupings — Melanesia, Micronesia, and Polynesia, highlighted
+in red — sit toward the lower end of the distribution.
+
+Let's zoom in, right on the map itself. [@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="3.2"}
+
+Reported values across the Pacific island countries and territories in
+this dataset span from about 1.5% to 47%. Samoa, Tonga, and American
+Samoa report no elected local government body at all, so they're greyed
+out rather than colored. [@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="4.5"}
+
+Micronesia (1.5%), Kiribati (7.3%), Vanuatu (10.1%), Tuvalu (12.5%), and
+the Marshall Islands (15.9%) report some of the lowest shares in the
+entire dataset — now legible as the map zooms in. Fiji (35.8%) and New
+Caledonia (47.2%) sit at the other end of the regional range, a reminder
+that "the Pacific" is not one story, but many.
+[@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="5.5"}
+
+Zooming back out: this pattern is one piece of a much bigger picture.
+@cr-map
+
+:::
+
+## Discussion prompt
+
+For the Moodle exercise: ask participants to identify one country whose
+color would change categories if the classification break moved from 30%
+to 50%. Then ask what argument they would make for using one threshold
+over the other in a report aimed at policymakers versus one aimed at
+the general public.
+
+::: {.callout-tip}
+**Rendering this document:** run `R/00_prepare_data.R` once to produce
+`data/local_gov_women_clean.rds`, then render `index.qmd` as usual
+(`quarto render index.qmd`). You'll need the closeread extension
+installed in this directory (`quarto add qmd-lab/closeread`) and the R
+packages listed at the top of the setup chunk, plus `rnaturalearth`,
+`rnaturalearthdata`, and `countrycode` for the data prep script.
+:::
+
+::: {.callout-important}
+**About the pan-to/scale-by numbers above:** I calculated `pan_x_pct` and
+`pan_y_pct` from the map's plotted extent and the Pacific's approximate
+center, but I haven't been able to render this document myself to check
+them, since I don't have R or Quarto available where I built this. Use
+`quarto preview index.qmd` (it live-reloads as you save) and expect to
+nudge the `scale-by` values and the two percentages by eye — a few tries
+is normal for this effect. If the zoom keeps landing off-center, the
+likely culprit is `world_xlim`/`world_ylim` or `pacific_cx`/`pacific_cy`
+in the setup chunk not quite matching what actually gets plotted; adjust
+those and the percentages will update automatically since they're
+computed, not hard-coded.
+:::
+
+::: {.callout-important}
+**About the stripe artifacts you saw:** those came from trying to
+recenter the whole world map around the Pacific (longitude-shifting so
+it wouldn't be split at the edges). That approach is genuinely fiddly in
+`sf` — countries whose polygons already cross the antimeridian in the
+source data (Russia, Fiji) don't shift cleanly, and produce exactly that
+kind of artifact. This draft no longer does that at all: it's back to
+the plain, standard -180/180 world map, and the Pacific zoom is done
+with a CSS pan/scale effect on a region (roughly 140-180 degrees E) that
+never crosses the antimeridian in the first place. `coord_sf(..., datum = NA)`
+is still in place too — that turns off `coord_sf`'s automatic lat/long
+graticule, which is good practice regardless and rules out a second
+possible source of stray lines.
+
+One casualty of simplifying this way: Kiribati's Line Islands, far to
+the east, won't appear on the zoomed Pacific view — only its main
+Gilbert Islands group will, which is why Kiribati's label is anchored
+manually near Tarawa (the capital) in the setup chunk rather than
+computed automatically.
+:::
+:::
