@@ -218,7 +218,8 @@ provides a regional focus and **reveals some patterns**, while highlighting the 
 
 Let's put a window around Asia and the Pacific specifically — the region
 this course is built around.
-[@cr-regional]{pan-to="0%,`r regional_pan_y_pct`%" scale-by="`r regional_scale_by`"}
+[@cr-regional]{pan-to="0%,50%" scale-by="2"}
+
 
 That band covers everywhere from Central Asia to the Pacific islands, and
 it already hints at how wide the spread within the region is — we'll see
