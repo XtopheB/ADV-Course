@@ -75,8 +75,7 @@ map_data <- world %>%
 
 # ---- 5. Define the Pacific subset ----------------------------------------
 # Pacific Island Countries and Territories, using the SPC/PIC convention.
-# Listed explicitly (rather than derived from a region field) so it's easy
-# to check and adjust which entities count as "Pacific" for the story.
+
 
 pacific_iso3 <- c(
   "FJI", # Fiji
@@ -106,22 +105,6 @@ map_data <- map_data %>%
   mutate(is_pacific = iso3 %in% pacific_iso3)
 
 # ---- 6. Save cleaned data for index.qmd -----------------------------------
-#
-# NOTE ON THE ANTIMERIDIAN: an earlier version of this script tried to
-# recenter the whole world map on the Pacific (shifting longitudes to a
-# 0-360 range) so the Pacific wouldn't be split at the map's edges. That
-# introduced more problems than it solved (stray polygon artifacts from
-# countries like Russia and Fiji that already cross the antimeridian in
-# the source data). It's also unnecessary for this story: every country
-# we zoom into and label sits between about 140 degrees E and 180 degrees
-# E — comfortably on one side of the antimeridian — so a plain, standard
-# -180/180 world map works fine. index.qmd zooms into that region with a
-# CSS pan/scale effect on the ordinary map image, not by re-projecting the
-# data. The only casualty is Kiribati, whose Line Islands sit far to the
-# east (around -150) separate from its main Gilbert Islands group (around
-# 173 E, where its capital and presumably its local government data are)
-# — index.qmd places Kiribati's label manually near the Gilbert Islands
-# rather than at its computed centroid, for exactly this reason.
 
 dir.create("data", showWarnings = FALSE)
 saveRDS(
