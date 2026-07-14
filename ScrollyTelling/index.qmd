@@ -216,9 +216,10 @@ Ordering **subregions** by their median value (cross), and coloring
 each country with the same red-to-blue spread
 provides a regional focus and **reveals some patterns**, while highlighting the diversity within subregions .@cr-regional
 
-Let's put a window around Asia and the Pacific specifically — the region
-this course is built around.
-[@cr-regional]{pan-to="0%,50%" scale-by="2"}
+Let's focus on the upper part of the table specifically.
+[@cr-regional]{pan-to="0%,50%" scale-by="1.5"}
+
+Even in regions with a good proportion of women in local governmental bodies, the diversity of situations is striking. 
 
 
 That band covers everywhere from Central Asia to the Pacific islands, and
