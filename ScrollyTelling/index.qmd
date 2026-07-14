@@ -125,8 +125,8 @@ map_pan_pct <- function(cx, cy) {
 }
 
 africa_pan       <- map_pan_pct(cx = 17,  cy = 2)   # centered roughly on Central/East Africa
-asia_pacific_pan <- map_pan_pct(cx = 115, cy = 15)  # wide shot: South Asia through the western Pacific
-pacific_pan      <- map_pan_pct(cx = 162, cy = -8)  # tight shot: the Pacific island countries
+asia_pacific_pan <- map_pan_pct(cx = 200, cy = 15)  # wide shot: South Asia through the western Pacific
+pacific_pan      <- map_pan_pct(cx = 300, cy = 2)  # tight shot: the Pacific island countries
 
 # ---- Point chart pan/zoom target ----------------------------------------
 
@@ -220,17 +220,16 @@ Let's go back to the map and have a closer look by region. [@cr-regional]{pan-to
 Let's start with **Africa** first.
 @cr-map
 
-Zooming into **Africa**: Benin (3.5%) and Ghana (3.8%) rank among the lowest anywhere
-in the dataset, while Rwanda (43.6%), Namibia (44.9%), Senegal (47.2%),
-and Tunisia (48.5%) sit close to parity.
+Zooming into Africa: **Benin** (3.5%) and **Ghana** (3.8%) rank among the lowest anywhere
+in the dataset, while **Rwanda** (43.6%), **Namibia** (44.9%) and **Senegal** (47.2%),
+sit close to parity.
 
 Eight African countries in this
 dataset — including Egypt, Somalia, and Sudan — report no elected local
 government body at all, shown here in grey.
 [@cr-map]{pan-to="`r africa_pan$x`%,`r africa_pan$y`%" scale-by="2.6"}
 
-Now let's turn to Asia and the Pacific together — not just the Pacific
-islands, but the wider region.
+Now let's turn to **Asia and the Pacific**, home of ESCAP.
 [@cr-map]{pan-to="`r asia_pacific_pan$x`%,`r asia_pacific_pan$y`%" scale-by="1.7"}
 
 This region holds both ends of the entire dataset. Oman (0.8%) and Saudi
@@ -238,24 +237,19 @@ Arabia (1.2%) report the two lowest shares recorded anywhere, while India
 (44.4%) and Nepal (41.3%) sit close to parity — both countries legally
 reserve a share of local council seats for women, a policy choice with a
 visible effect on the map.
-[@cr-map]{pan-to="`r asia_pacific_pan$x`%,`r asia_pacific_pan$y`%" scale-by="1.7"}
 
-Let's zoom in a second time, further into the Pacific specifically.
-[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="3.2"}
 
-Reported values across the Pacific island countries and territories in
-this dataset span from about 1.5% to 47%. Samoa, Tonga, and American
-Samoa report no elected local government body at all, so they're greyed
-out rather than colored. [@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="4.5"}
+Let's zoom in a second time, further into **the Pacific** specifically.
+[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="3"}
 
-Micronesia (1.5%), Kiribati (7.3%), Vanuatu (10.1%), Tuvalu (12.5%), and
-the Marshall Islands (15.9%) report some of the lowest shares in the
-entire dataset — now legible as the map zooms in. Fiji (35.8%) and New
-Caledonia (47.2%) sit at the other end of the regional range, a reminder
+
+**Micronesia** (1.5%), **Kiribati (7.3%)** and **Vanuatu** (10.1%) report some of the lowest shares in the entire dataset.
+
+**Fiji** (35.8%) and **New Caledonia** (47.2%) sit at the other end of the regional range, a reminder
 that "the Pacific" is not one story, but many.
-[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="5.5"}
 
-Zooming back out: this pattern is one piece of a much bigger picture.
+
+Zooming back to the map highlights the difficulty of exploring this information only through a map where countries with large areas are largely over represented.
 @cr-map
 
 :::
