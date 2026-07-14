@@ -31,10 +31,6 @@ library(scales)
 # this file doesn't exist yet.
 prepped <- readRDS("data/local_gov_women_clean.rds")
 
-# Read the data prepared by R/00_prepare_data.R. Run that script first if
-# this file doesn't exist yet.
-prepped <- readRDS("data/local_gov_women_clean.rds")
-
 map_data     <- prepped$map_data
 pacific_iso3 <- prepped$pacific_iso3
 
@@ -43,19 +39,32 @@ pacific_iso3 <- prepped$pacific_iso3
 # threshold in gender and representation literature. Adjust `threshold`
 # below if you'd like to teach against a different reference point (e.g.
 # 50% for full parity).
+#
+# The map (a fill) and the regional chart (a color) both use this same
+# palette, so we define the shared parameters once and build both scales
+# from them — that way a color change never has to be made twice.
 
 threshold <- 30
 
-fill_scale <- scale_fill_gradient2(
-  name     = "Seats held\nby women (%)",
+diverging_palette <- list(
   low      = "#B2182B",
   mid      = "#F7F7F7",
   high     = "#2166AC",
   midpoint = threshold,
-  na.value = "grey85",
-  limits   = c(0, 100),
-  labels   = label_number(suffix = "%")
+  limits   = c(0, 100)
 )
+
+fill_scale <- do.call(scale_fill_gradient2, c(diverging_palette, list(
+  name     = "Seats held\nby women (%)",
+  na.value = "grey85",
+  labels   = label_number(suffix = "%")
+)))
+
+color_scale <- do.call(scale_color_gradient2, c(diverging_palette, list(
+  name     = "Seats held\nby women (%)",
+  na.value = "grey60",
+  labels   = label_number(suffix = "%")
+)))
 
 map_theme <- theme_void(base_size = 13) +
   theme(
@@ -69,10 +78,7 @@ n_reported <- sum(map_data$status == "reported", na.rm = TRUE)
 
 regional_data <- map_data %>%
   sf::st_drop_geometry() %>%
-  filter(status == "reported", !is.na(subregion)) %>%
-  mutate(
-    is_pacific_subregion = subregion %in% c("Melanesia", "Micronesia", "Polynesia")
-  )
+  filter(status == "reported", !is.na(subregion))
 
 subregion_order <- regional_data %>%
   group_by(subregion) %>%
@@ -82,6 +88,16 @@ subregion_order <- regional_data %>%
 
 regional_data <- regional_data %>%
   mutate(subregion = factor(subregion, levels = subregion_order))
+
+# Which subregions count as "Asia-Pacific" for the focus window on the
+# regional chart. This follows the broad ESCAP sense of the term (Asia
+# plus the Pacific) rather than just the Pacific islands. Adjust this list
+# if your course defines the region differently (e.g. whether to include
+# Western Asia, or Australia and New Zealand).
+asia_pacific_subregions <- c(
+  "Central Asia", "Eastern Asia", "South-Eastern Asia", "Southern Asia",
+  "Melanesia", "Micronesia", "Polynesia", "Australia and New Zealand"
+)
 
 # ---- Labels baked into the single map for the Pacific zoom ----------------
 # These are small at the global view and only become legible once the
@@ -120,7 +136,7 @@ label_points <- label_points %>%
     lat = ifelse(iso3 == "KIR", 1.4, lat)
   )
 
-# ---- Full-map extent, used to work out pan-to percentages -----------------
+# ---- Map pan/zoom targets --------------------------------------------------
 # coord_sf below is fixed at these limits for every version of the map, so
 # the percentages calculated here stay valid across triggers. This is the
 # plain, standard -180/180 world map.
@@ -129,22 +145,41 @@ world_ylim <- c(-60, 85)
 world_cx   <- mean(world_xlim)
 world_cy   <- mean(world_ylim)
 
-# Target center for the Pacific zoom. Chosen to sit inside the cluster of
-# countries we highlight (roughly 140-180 E), which stays on one side of
-# the antimeridian on purpose.
-pacific_cx <- 162
-pacific_cy <- -8
+# A small helper so every zoom target is calculated the same way, instead
+# of repeating this arithmetic for Africa, Asia-Pacific, and the Pacific.
+map_pan_pct <- function(cx, cy) {
+  list(
+    x = round(100 * (world_cx - cx) / diff(world_xlim), 1),
+    y = round(100 * (world_cy - cy) / diff(world_ylim), 1)
+  )
+}
 
-pan_x_pct <- round(100 * (world_cx - pacific_cx) / diff(world_xlim), 1)
-pan_y_pct <- round(100 * (world_cy - pacific_cy) / diff(world_ylim), 1)
+africa_pan       <- map_pan_pct(cx = 17,  cy = 2)   # centered roughly on Central/East Africa
+asia_pacific_pan <- map_pan_pct(cx = 115, cy = 15)  # wide shot: South Asia through the western Pacific
+pacific_pan      <- map_pan_pct(cx = 162, cy = -8)  # tight shot: the Pacific island countries
+
+# ---- Regional chart pan/zoom target ----------------------------------------
+# The chart's y-axis is the subregion factor, plotted at integer positions
+# 1..n in the order of subregion_order (lowest median at the bottom). We
+# find where the Asia-Pacific subregions fall in that ordering so the
+# focus window lands on the right band of rows, whatever that order turns
+# out to be once real data is plotted.
+n_subregions      <- length(subregion_order)
+asia_pacific_ranks <- which(subregion_order %in% asia_pacific_subregions)
+regional_focus_cy  <- mean(range(asia_pacific_ranks))
+regional_focus_span <- diff(range(asia_pacific_ranks)) + 1
+
+regional_pan_y_pct  <- round(100 * ((n_subregions + 1) / 2 - regional_focus_cy) / n_subregions, 1)
+regional_scale_by   <- round(n_subregions / regional_focus_span, 1)
 ```
 
 Local government is often the level closest to people's daily lives — and
 in most countries, women remain a minority of the elected officials who
 run it. SDG indicator 5.5.1b tracks the share of seats held by women in
 local deliberative bodies. This page walks through what that indicator
-looks like globally, then zooms into the Pacific, where several of the
-lowest values in the dataset are found.
+looks like globally, then zooms first into Africa and then into Asia and
+the Pacific, before settling on the Pacific island countries, where
+several of the lowest values in the dataset are found.
 
 ::: {.callout-note}
 **For the classification-methods lesson:** as you scroll, notice how the
@@ -170,10 +205,9 @@ ggplot(map_data) +
     aes(x = lon, y = lat, label = admin, fontface = ifelse(is_lowest, "bold", "plain")),
     size = 2.1, color = "grey15", check_overlap = TRUE
   ) +
-  # datum = NA turns off coord_sf's automatic lat/long graticule. Without
-  # it, the graticule's default break algorithm can misbehave on the
-  # unusual 0-360 xlim used here (needed for the Pacific-centered shift)
-  # and render as long horizontal stripes across the map.
+  # datum = NA turns off coord_sf's automatic lat/long graticule — good
+  # hygiene generally, and rules out graticule breaks as a source of any
+  # stray lines.
   coord_sf(xlim = world_xlim, ylim = world_ylim, expand = FALSE, datum = NA) +
   fill_scale +
   map_theme
@@ -196,41 +230,69 @@ scattered across regions rather than clustered in one place. @cr-regional
 #| fig-height: 7.5
 ggplot(regional_data, aes(x = value, y = subregion)) +
   geom_vline(xintercept = threshold, linetype = "dashed", color = "grey50") +
-  geom_point(
-    aes(color = is_pacific_subregion),
-    size = 2.6, alpha = 0.85
-  ) +
+  geom_point(aes(color = value), size = 2.6, alpha = 0.9) +
   stat_summary(
-    fun = median, geom = "point", shape = 18, size = 4, color = "black"
+    fun = median, geom = "point", shape = 18, size = 4, color = "grey20"
   ) +
-  scale_color_manual(
-    values = c(`TRUE` = "#B2182B", `FALSE` = "grey55"),
-    guide  = "none"
-  ) +
+  color_scale +
   scale_x_continuous(labels = label_number(suffix = "%"), limits = c(0, 100)) +
   labs(x = "Seats held by women (%)", y = NULL) +
   theme_minimal(base_size = 13) +
-  theme(plot.caption = element_text(size = 9, color = "grey40", hjust = 0))
+  theme(
+    legend.position = "bottom",
+    plot.caption    = element_text(size = 9, color = "grey40", hjust = 0)
+  )
 ```
 :::
 
-Ordering subregions by their median value (black diamonds) shows that
-the Pacific groupings — Melanesia, Micronesia, and Polynesia, highlighted
-in red — sit toward the lower end of the distribution.
+Ordering subregions by their median value (grey diamonds), and coloring
+each country the same way as the map, shows the same red-to-blue spread
+playing out region by region rather than country by country.
 
-Let's zoom in, right on the map itself. [@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="3.2"}
+Let's put a window around Asia and the Pacific specifically — the region
+this course is built around.
+[@cr-regional]{pan-to="0%,`r regional_pan_y_pct`%" scale-by="`r regional_scale_by`"}
+
+That band covers everywhere from Central Asia to the Pacific islands, and
+it already hints at how wide the spread within the region is — we'll see
+exactly how wide once we get to the map. [@cr-regional]{pan-to="0%,`r regional_pan_y_pct`%" scale-by="`r regional_scale_by`"}
+
+Let's go back to the map, starting with a different region first.
+@cr-map
+
+Zooming into Africa: reported values here span almost the entire range on
+their own. Benin (3.5%) and Ghana (3.8%) rank among the lowest anywhere
+in the dataset, while Rwanda (43.6%), Namibia (44.9%), Senegal (47.2%),
+and Tunisia (48.5%) sit close to parity. Eight African countries in this
+dataset — including Egypt, Somalia, and Sudan — report no elected local
+government body at all, shown here in grey.
+[@cr-map]{pan-to="`r africa_pan$x`%,`r africa_pan$y`%" scale-by="2.6"}
+
+Now let's turn to Asia and the Pacific together — not just the Pacific
+islands, but the wider region.
+[@cr-map]{pan-to="`r asia_pacific_pan$x`%,`r asia_pacific_pan$y`%" scale-by="1.7"}
+
+This region holds both ends of the entire dataset. Oman (0.8%) and Saudi
+Arabia (1.2%) report the two lowest shares recorded anywhere, while India
+(44.4%) and Nepal (41.3%) sit close to parity — both countries legally
+reserve a share of local council seats for women, a policy choice with a
+visible effect on the map.
+[@cr-map]{pan-to="`r asia_pacific_pan$x`%,`r asia_pacific_pan$y`%" scale-by="1.7"}
+
+Let's zoom in a second time, further into the Pacific specifically.
+[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="3.2"}
 
 Reported values across the Pacific island countries and territories in
 this dataset span from about 1.5% to 47%. Samoa, Tonga, and American
 Samoa report no elected local government body at all, so they're greyed
-out rather than colored. [@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="4.5"}
+out rather than colored. [@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="4.5"}
 
 Micronesia (1.5%), Kiribati (7.3%), Vanuatu (10.1%), Tuvalu (12.5%), and
 the Marshall Islands (15.9%) report some of the lowest shares in the
 entire dataset — now legible as the map zooms in. Fiji (35.8%) and New
 Caledonia (47.2%) sit at the other end of the regional range, a reminder
 that "the Pacific" is not one story, but many.
-[@cr-map]{pan-to="`r pan_x_pct`%,`r pan_y_pct`%" scale-by="5.5"}
+[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="5.5"}
 
 Zooming back out: this pattern is one piece of a much bigger picture.
 @cr-map
@@ -255,37 +317,13 @@ packages listed at the top of the setup chunk, plus `rnaturalearth`,
 :::
 
 ::: {.callout-important}
-**About the pan-to/scale-by numbers above:** I calculated `pan_x_pct` and
-`pan_y_pct` from the map's plotted extent and the Pacific's approximate
-center, but I haven't been able to render this document myself to check
-them, since I don't have R or Quarto available where I built this. Use
-`quarto preview index.qmd` (it live-reloads as you save) and expect to
-nudge the `scale-by` values and the two percentages by eye — a few tries
-is normal for this effect. If the zoom keeps landing off-center, the
-likely culprit is `world_xlim`/`world_ylim` or `pacific_cx`/`pacific_cy`
-in the setup chunk not quite matching what actually gets plotted; adjust
-those and the percentages will update automatically since they're
-computed, not hard-coded.
-:::
-
-::: {.callout-important}
-**About the stripe artifacts you saw:** those came from trying to
-recenter the whole world map around the Pacific (longitude-shifting so
-it wouldn't be split at the edges). That approach is genuinely fiddly in
-`sf` — countries whose polygons already cross the antimeridian in the
-source data (Russia, Fiji) don't shift cleanly, and produce exactly that
-kind of artifact. This draft no longer does that at all: it's back to
-the plain, standard -180/180 world map, and the Pacific zoom is done
-with a CSS pan/scale effect on a region (roughly 140-180 degrees E) that
-never crosses the antimeridian in the first place. `coord_sf(..., datum = NA)`
-is still in place too — that turns off `coord_sf`'s automatic lat/long
-graticule, which is good practice regardless and rules out a second
-possible source of stray lines.
-
-One casualty of simplifying this way: Kiribati's Line Islands, far to
-the east, won't appear on the zoomed Pacific view — only its main
-Gilbert Islands group will, which is why Kiribati's label is anchored
-manually near Tarawa (the capital) in the setup chunk rather than
-computed automatically.
-:::
+**About the pan-to/scale-by numbers:** all of them — `africa_pan`,
+`asia_pacific_pan`, `pacific_pan` for the map, and `regional_pan_y_pct`/
+`regional_scale_by` for the chart — are calculated in the setup chunk
+from approximate region centers, not verified against a real render.
+Use `quarto preview index.qmd` (live reload) and nudge the `cx`/`cy`
+values passed to `map_pan_pct()` and the `scale-by` numbers in the
+narrative triggers until each zoom lands where you want it. Because
+they're computed rather than hard-coded, adjusting a center updates
+every trigger that uses it automatically.
 :::
