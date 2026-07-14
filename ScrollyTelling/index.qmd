@@ -19,9 +19,7 @@ execute:
   message: false
 ---
 
-```{r}
-#| label: setup
-
+```{r, setup}
 library(sf)
 library(dplyr)
 library(ggplot2)
@@ -84,12 +82,6 @@ subregion_order <- regional_data %>%
 regional_data <- regional_data %>%
   mutate(subregion = factor(subregion, levels = subregion_order))
 
-# "Asia-Pacific" Defintition.
-
-asia_pacific_subregions <- c(
-  "Central Asia", "Eastern Asia", "South-Eastern Asia", "Southern Asia",
-  "Melanesia", "Micronesia", "Polynesia", "Australia and New Zealand"
-)
 
 # ---- Samll Islands   for the Pacific zoom ----------------
 
@@ -139,9 +131,10 @@ pacific_pan      <- map_pan_pct(cx = 162, cy = -8)  # tight shot: the Pacific is
 # ---- Point chart pan/zoom target ----------------------------------------
 
 n_subregions      <- length(subregion_order)
-asia_pacific_ranks <- which(subregion_order %in% asia_pacific_subregions)
-regional_focus_cy  <- mean(range(asia_pacific_ranks))
-regional_focus_span <- diff(range(asia_pacific_ranks)) + 1
+melanesia_rank <- which(subregion_order == "Melanesia")
+
+regional_focus_cy   <- mean(c(1, melanesia_rank))
+regional_focus_span <- melanesia_rank
 
 regional_pan_y_pct  <- round(100 * ((n_subregions + 1) / 2 - regional_focus_cy) / n_subregions, 1)
 regional_scale_by   <- round(n_subregions / regional_focus_span, 1)
@@ -214,25 +207,24 @@ ggplot(regional_data, aes(x = value, y = subregion)) +
 
 Ordering **subregions** by their median value (cross), and coloring
 each country with the same red-to-blue spread
-provides a regional focus and **reveals some patterns**, while highlighting the diversity within subregions .@cr-regional
+provides a regional focus and **reveals some patterns**, while highlighting the **diversity** within subregions. @cr-regional
 
 Let's focus on the upper part of the table specifically.
 [@cr-regional]{pan-to="0%,50%" scale-by="1.5"}
 
-Even in regions with a good proportion of women in local governmental bodies, the diversity of situations is striking. 
+Even in regions with a good proportion of women in local governmental bodies, the **diversity** of values is striking (*e.g.* Melanesia). 
 
 
-That band covers everywhere from Central Asia to the Pacific islands, and
-it already hints at how wide the spread within the region is — we'll see
-exactly how wide once we get to the map. [@cr-regional]{pan-to="0%,`r regional_pan_y_pct`%" scale-by="`r regional_scale_by`"}
+Let's go back to the map and have a closer look by region. [@cr-regional]{pan-to="0%,`r regional_pan_y_pct`%" scale-by="`r regional_scale_by`"}
 
-Let's go back to the map, starting with a different region first.
+Let's start with **Africa** first.
 @cr-map
 
-Zooming into Africa: reported values here span almost the entire range on
-their own. Benin (3.5%) and Ghana (3.8%) rank among the lowest anywhere
+Zooming into **Africa**: Benin (3.5%) and Ghana (3.8%) rank among the lowest anywhere
 in the dataset, while Rwanda (43.6%), Namibia (44.9%), Senegal (47.2%),
-and Tunisia (48.5%) sit close to parity. Eight African countries in this
+and Tunisia (48.5%) sit close to parity.
+
+Eight African countries in this
 dataset — including Egypt, Somalia, and Sudan — report no elected local
 government body at all, shown here in grey.
 [@cr-map]{pan-to="`r africa_pan$x`%,`r africa_pan$y`%" scale-by="2.6"}
