@@ -85,7 +85,7 @@ regional_data <- regional_data %>%
 
 # ---- Samll Islands   for the Pacific zoom ----------------
 
-lowest_iso3    <- c("FSM", "KIR", "VUT", "TUV", "MHL")
+lowest_iso3    <- c( "KIR", "VUT")
 highlight_iso3 <- c(lowest_iso3, "FJI", "NCL")
 
 label_points <- map_data %>%
@@ -157,13 +157,13 @@ ggplot(map_data) +
   geom_sf(aes(fill = value), color = "white", linewidth = 0.08) +
   geom_text(
     data = label_points,
-    aes(x = lon, y = lat, label = admin, fontface = ifelse(is_lowest, "bold", "plain")),
+    aes(x = lon, y = lat, label = admin, fontface =  "bold"),
     size = 2.1, color = "grey15", check_overlap = TRUE
   ) +
   # datum = NA turns off coord_sf's automatic lat/long graticule — good
   # hygiene generally, and rules out graticule breaks as a source of any
   # stray lines.
-  coord_sf(xlim = world_xlim, ylim = world_ylim, expand = FALSE, datum = NA) +
+  coord_sf(xlim = world_xlim, ylim = world_ylim, expand = FALSE) +
   fill_scale +
   map_theme
 ```
@@ -179,9 +179,9 @@ This single choice already does a lot of storytelling:
 
 
 No single global pattern jumps out immediately — high and low values are
-scattered across regions rather than clustered in one place. 
+scattered across regions rather than clustered in one place. @cr-regional
 
-Let's do something else. @cr-regional
+Let's do something else. 
 
 :::{#cr-regional}
 ```{r}
@@ -222,25 +222,25 @@ Let's start with **Africa** first.
 
 Zooming into Africa: **Benin** (3.5%) and **Ghana** (3.8%) rank among the lowest anywhere
 in the dataset, while **Rwanda** (43.6%), **Namibia** (44.9%) and **Senegal** (47.2%),
-sit close to parity.
+sit close to parity. [@cr-map]{pan-to="`r africa_pan$x`%,`r africa_pan$y`%" scale-by="2.6"}
 
 Eight African countries in this
 dataset — including Egypt, Somalia, and Sudan — report no elected local
 government body at all, shown here in grey.
-[@cr-map]{pan-to="`r africa_pan$x`%,`r africa_pan$y`%" scale-by="2.6"}
+
 
 Now let's turn to **Asia and the Pacific**, home of ESCAP.
 [@cr-map]{pan-to="`r asia_pacific_pan$x`%,`r asia_pacific_pan$y`%" scale-by="1.7"}
 
-This region holds both ends of the entire dataset. Oman (0.8%) and Saudi
-Arabia (1.2%) report the two lowest shares recorded anywhere, while India
-(44.4%) and Nepal (41.3%) sit close to parity — both countries legally
-reserve a share of local council seats for women, a policy choice with a
+This region holds both ends of the entire dataset. **Oman** (0.8%) and **Saudi
+Arabia** (1.2%) report the two lowest shares recorded, while **India**
+(44.4%) and **Nepal** (41.3%) sit close to parity. A policy choice with a
 visible effect on the map.
 
 
 Let's zoom in a second time, further into **the Pacific** specifically.
-[@cr-map]{pan-to="`r pacific_pan$x`%,`r pacific_pan$y`%" scale-by="3"}
+[@cr-map]{pan-to="-150%, -2%" scale-by="4"}
+
 
 
 **Micronesia** (1.5%), **Kiribati (7.3%)** and **Vanuatu** (10.1%) report some of the lowest shares in the entire dataset.
