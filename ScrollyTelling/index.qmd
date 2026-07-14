@@ -140,6 +140,15 @@ regional_pan_y_pct  <- round(100 * ((n_subregions + 1) / 2 - regional_focus_cy) 
 regional_scale_by   <- round(n_subregions / regional_focus_span, 1)
 ```
 
+# Scrollytelling with maps
+
+*Christophe Bontemps (SIAP)*
+
+*Scrollytelling* combines narrative text with interactive maps to reveal information progressively as the reader scrolls. By synchronizing map movements and visual changes with the story, it helps audiences explore complex geographic data in a clear and engaging way.
+
+In this demo, we will see how map-based scrollytelling can guide readers through a complex choropleth map representing Women in local governments all over the world, highlighting key locations and insights step by step, region by region. 
+
+> Just scroll down!
 
 
 :::{.cr-section}
@@ -157,7 +166,7 @@ ggplot(map_data) +
   geom_sf(aes(fill = value), color = "white", linewidth = 0.08) +
   geom_text(
     data = label_points,
-    aes(x = lon, y = lat, label = admin, fontface =  "bold"),
+    aes(x = lon, y = lat+3, label = admin, fontface =  "bold"),
     size = 2.1, color = "grey15", check_overlap = TRUE
   ) +
   # datum = NA turns off coord_sf's automatic lat/long graticule — good
@@ -254,31 +263,9 @@ Zooming back to the map highlights the difficulty of exploring this information 
 
 :::
 
-## Discussion prompt
+# To conclude
+Scrollytelling maps offer a powerful way to combine narrative, data, and geography into a single interactive experience. By synchronizing movements on a map (zooming, panning, highlighting) with explanatory text, they guide readers through complex spatial information in a clear and engaging way.
 
-For the Moodle exercise: ask participants to identify one country whose
-color would change categories if the classification break moved from 30%
-to 50%. Then ask what argument they would make for using one threshold
-over the other in a report aimed at policymakers versus one aimed at
-the general public.
+Effective scrollytelling is not simply about adding animation. Rather, it is about using animation and data visualization to support a compelling narrative, draw attention to key insights, and help the audience develop a deeper understanding of the information being presented.
 
-::: {.callout-tip}
-**Rendering this document:** run `R/00_prepare_data.R` once to produce
-`data/local_gov_women_clean.rds`, then render `index.qmd` as usual
-(`quarto render index.qmd`). You'll need the closeread extension
-installed in this directory (`quarto add qmd-lab/closeread`) and the R
-packages listed at the top of the setup chunk, plus `rnaturalearth`,
-`rnaturalearthdata`, and `countrycode` for the data prep script.
-:::
 
-::: {.callout-important}
-**About the pan-to/scale-by numbers:** all of them — `africa_pan`,
-`asia_pacific_pan`, `pacific_pan` for the map, and `regional_pan_y_pct`/
-`regional_scale_by` for the chart — are calculated in the setup chunk
-from approximate region centers, not verified against a real render.
-Use `quarto preview index.qmd` (live reload) and nudge the `cx`/`cy`
-values passed to `map_pan_pct()` and the `scale-by` numbers in the
-narrative triggers until each zoom lands where you want it. Because
-they're computed rather than hard-coded, adjusting a center updates
-every trigger that uses it automatically.
-:::
