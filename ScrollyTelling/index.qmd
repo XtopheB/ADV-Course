@@ -277,6 +277,8 @@ that "the Pacific" is not one story, but many.
 Zooming back to the map highlights the difficulty of exploring this information only through a map where countries with large areas are largely over represented.
 @cr-map
 
+This is the most important limitation of Choropleth maps. Interactivity here helps reading and highlighting countries with low rates, and thus telling a story, but would not help in exploring the data and finding these stories. 
+
 :::
 
 # To conclude

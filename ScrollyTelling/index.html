@@ -3870,9 +3870,9 @@ display: none;
       <!-- user-provided yaml closeread style options -->
       <style>
 :root {
+--cr-narrative-text-color-overlay: #1a1a1a;
 --cr-narrative-overlay-max-width: 460px;
 --cr-narrative-border-radius: 10px;
---cr-narrative-text-color-overlay: #1a1a1a;
 --cr-narrative-background-color-overlay: rgba(255,255,255,0.90);
 --cr-section-background-color: white;
 }
@@ -3947,7 +3947,7 @@ object-fit: cover;
 <p>Ordering <strong>subregions</strong> by their median value (cross), and coloring each country with the same red-to-blue spread provides a regional focus and <strong>reveals some patterns</strong>, while highlighting the <strong>diversity</strong> within subregions.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-scale-by="1.5" data-pan-to="0%,50%" data-focus-on="cr-regional">
+<div class="trigger new-trigger" data-focus-on="cr-regional" data-scale-by="1.5" data-pan-to="0%,50%">
 <div class="narrative">
 <p>Let’s focus on the upper part of the table specifically. </p>
 </div>
@@ -3957,7 +3957,7 @@ object-fit: cover;
 <p>Even in regions with a good proportion of women in local governmental bodies, the <strong>diversity</strong> of values is striking (<em>e.g.</em> Melanesia).</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-scale-by="1.1" data-pan-to="0%,6.5%" data-focus-on="cr-regional">
+<div class="trigger new-trigger" data-focus-on="cr-regional" data-scale-by="1.1" data-pan-to="0%,6.5%">
 <div class="narrative">
 <p>Let’s go back to the map and have a closer look by region.</p>
 </div>
@@ -3967,7 +3967,7 @@ object-fit: cover;
 <p>Let’s start with <strong>Africa</strong> first. </p>
 </div>
 </div>
-<div class="trigger new-trigger" data-scale-by="2.6" data-pan-to="-4.7%,7.2%" data-focus-on="cr-map">
+<div class="trigger new-trigger" data-focus-on="cr-map" data-scale-by="2.6" data-pan-to="-4.7%,7.2%">
 <div class="narrative">
 <p>Zooming into Africa: <strong>Benin</strong> (3.5%) and <strong>Ghana</strong> (3.8%) rank among the lowest anywhere in the dataset, while <strong>Rwanda</strong> (43.6%), <strong>Namibia</strong> (44.9%) and <strong>Senegal</strong> (47.2%), sit close to parity.</p>
 </div>
@@ -3977,7 +3977,7 @@ object-fit: cover;
 <p>Eight African countries in this dataset — including Egypt, Somalia, and Sudan — report no elected local government body at all, shown here in grey.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-scale-by="1.7" data-pan-to="-55.6%,-1.7%" data-focus-on="cr-map">
+<div class="trigger new-trigger" data-focus-on="cr-map" data-scale-by="1.7" data-pan-to="-55.6%,-1.7%">
 <div class="narrative">
 <p>Now let’s turn to <strong>Asia and the Pacific</strong>, home of ESCAP. </p>
 </div>
@@ -3987,7 +3987,7 @@ object-fit: cover;
 <p>This region holds both ends of the entire dataset. <strong>Oman</strong> (0.8%) and <strong>Saudi Arabia</strong> (1.2%) report the two lowest shares recorded, while <strong>India</strong> (44.4%) and <strong>Nepal</strong> (41.3%) sit close to parity. A policy choice with a visible effect on the map.</p>
 </div>
 </div>
-<div class="trigger new-trigger" data-scale-by="4" data-pan-to="-150%, -2%" data-focus-on="cr-map">
+<div class="trigger new-trigger" data-focus-on="cr-map" data-scale-by="4" data-pan-to="-150%, -2%">
 <div class="narrative">
 <p>Let’s zoom in a second time, further into <strong>the Pacific</strong> specifically. </p>
 </div>
@@ -4005,6 +4005,11 @@ object-fit: cover;
 <div class="trigger new-trigger" data-focus-on="cr-map">
 <div class="narrative">
 <p>Zooming back to the map highlights the difficulty of exploring this information only through a map where countries with large areas are largely over represented. </p>
+</div>
+</div>
+<div class="trigger">
+<div class="narrative">
+<p>This is the most important limitation of Choropleth maps. Interactivity here helps reading and highlighting countries with low rates, and thus telling a story, but would not help in exploring the data and finding these stories.</p>
 </div>
 </div>
 </div>
