@@ -10,6 +10,7 @@ format:
     cr-style:
       narrative-background-color-overlay: "rgba(255,255,255,0.90)"
       narrative-text-color-overlay: "#1a1a1a"
+      section-background-color: "white"
       narrative-overlay-max-width: 460px
       narrative-border-radius: 10px
     embed-resources: true
@@ -19,7 +20,22 @@ execute:
   message: false
 ---
 
-```{r, setup}
+
+
+```{=html}
+<style>
+/* Changed the map sticky (#cr-map) defaults to object-fit: to avoid grey bars on the side */
+#cr-map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+</style>
+```
+
+```{r}
+#| label: setup
+
 library(sf)
 library(dplyr)
 library(ggplot2)
@@ -144,9 +160,9 @@ regional_scale_by   <- round(n_subregions / regional_focus_span, 1)
 
 *Christophe Bontemps (SIAP)*
 
-*Scrollytelling* combines narrative text with interactive maps to reveal information progressively as the reader scrolls. By synchronizing map movements and visual changes with the story, it helps audiences explore complex geographic data in a clear and engaging way.
+***Scrollytelling*** combines narrative text with interactive maps to reveal information progressively as the reader scrolls. By synchronizing map movements and visual changes with the story, it helps audiences explore complex geographic data in a clear and engaging way.
 
-In this demo, we will see how map-based scrollytelling can guide readers through a complex choropleth map representing Women in local governments all over the world, highlighting key locations and insights step by step, region by region. 
+In this demo, we will see how scrollytelling can guide readers through a complex choropleth map representing Women in local governments all over the world, highlighting key locations and insights step by step, region by region. 
 
 > Just scroll down!
 
@@ -160,8 +176,8 @@ women in local government ranges from under **2%** to over **50%**. @cr-map
 :::{#cr-map}
 ```{r}
 #| label: world-map
-#| fig-width: 15
-#| fig-height: 8.5
+#| fig-width: 14
+#| fig-height: 6.5
 ggplot(map_data) +
   geom_sf(aes(fill = value), color = "white", linewidth = 0.08) +
   geom_text(
@@ -264,7 +280,7 @@ Zooming back to the map highlights the difficulty of exploring this information 
 :::
 
 # To conclude
-Scrollytelling maps offer a powerful way to combine narrative, data, and geography into a single interactive experience. By synchronizing movements on a map (zooming, panning, highlighting) with explanatory text, they guide readers through complex spatial information in a clear and engaging way.
+Scrollytelling with maps offer a powerful way to combine narrative, data, and geography into a single interactive experience. By synchronizing movements on a map (zooming, panning, highlighting) with explanatory text, they guide readers through complex spatial information in a clear and engaging way.
 
 Effective scrollytelling is not simply about adding animation. Rather, it is about using animation and data visualization to support a compelling narrative, draw attention to key insights, and help the audience develop a deeper understanding of the information being presented.
 

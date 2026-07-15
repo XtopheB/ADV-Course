@@ -3,11 +3,13 @@
 .Rhistory
 .RData
 .Ruserdata
+
 # *.html
 *.md
 *.Rproj
 *.pdf
 # Specific
+
 LineUncertainty_cache
 LineUncertainty_files
 report_files
