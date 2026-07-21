@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redesign the Chart — Inclusive Data Viz Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF8F3;
+    --ink:#1C2029;
+    --ink-soft:#5B6270;
+    --rule:#D9D4C7;
+    --fail:#B5432D;
+    --fail-bg:#F4E3DE;
+    --pass:#2F6F62;
+    --pass-bg:#E1EBE6;
+    --warn:#C98A2B;
+    --panel:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    padding:28px 20px 48px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Source Serif 4', serif;
+    font-weight:600;
+    font-size:28px;
+    margin:0 0 8px;
+    letter-spacing:-.01em;
+  }
+  .intro{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    max-width:660px;
+    line-height:1.55;
+    margin:0 0 26px;
+  }
+  .indicator-tag{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    background:var(--ink);
+    color:var(--paper);
+    padding:3px 8px;
+    border-radius:3px;
+    margin-bottom:14px;
+  }
+
+  .stage{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-bottom:22px;
+  }
+  @media (max-width:720px){ .stage{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:18px 20px 20px;
+  }
+  .panel-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .panel-label span.tag-before{color:var(--fail);}
+  .panel-label span.tag-after{color:var(--pass);}
+
+  svg{display:block;}
+  .chart-title{
+    font-family:'Source Serif 4', serif;
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 2px;
+    min-height:38px;
+  }
+  .chart-sub{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+  }
+
+  .controls{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:18px 20px 20px;
+    margin-bottom:22px;
+  }
+  .controls h2{
+    font-family:'Source Serif 4', serif;
+    font-size:16px;
+    margin:0 0 14px;
+  }
+  .control-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px 24px;
+  }
+  @media (max-width:640px){ .control-grid{grid-template-columns:1fr;} }
+  .control{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .control.full{grid-column:1 / -1;}
+  .control label{
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink);
+  }
+  .control .help{
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .row{display:flex; align-items:center; gap:10px;}
+  input[type=color]{
+    width:38px;height:30px;border:1px solid var(--rule);border-radius:4px;padding:0;background:none;cursor:pointer;
+  }
+  .swatch-text{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+  input[type=range]{width:100%;accent-color:var(--ink);}
+  select{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    padding:6px 8px;
+    border:1px solid var(--rule);
+    border-radius:4px;
+    background:var(--paper);
+    color:var(--ink);
+    width:100%;
+  }
+  .custom-pickers{
+    display:none;
+    gap:16px;
+    margin-top:8px;
+  }
+  .custom-pickers.show{display:flex;}
+  .toggle-btn{
+    display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;user-select:none;
+  }
+  .toggle-track{
+    width:36px;height:20px;border-radius:10px;background:var(--rule);position:relative;transition:background .15s;flex-shrink:0;
+  }
+  .toggle-track.on{background:var(--pass);}
+  .toggle-thumb{
+    position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;
+    box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .toggle-track.on .toggle-thumb{left:18px;}
+
+  .lower{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:720px){ .lower{grid-template-columns:1fr;} }
+
+  .rubric{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:18px 20px 18px;
+  }
+  .rubric h2{
+    font-family:'Source Serif 4', serif;
+    font-size:16px;
+    margin:0 0 12px;
+  }
+  .check{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:9px 0;
+    border-top:1px solid var(--rule);
+    font-size:13px;
+  }
+  .check:first-of-type{border-top:none;}
+  .check-icon{
+    width:18px;height:18px;flex-shrink:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;margin-top:1px;
+  }
+  .check-icon.pass{background:var(--pass-bg);color:var(--pass);}
+  .check-icon.fail{background:var(--fail-bg);color:var(--fail);}
+  .check-text b{display:block;font-weight:600;margin-bottom:1px;}
+  .check-text span{color:var(--ink-soft);font-size:12px;}
+
+  .gauge-panel{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:18px 20px 20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .gauge-panel h2{
+    font-family:'Source Serif 4', serif;
+    font-size:16px;
+    margin:0 0 8px;
+    align-self:flex-start;
+  }
+  .score-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:34px;
+    font-weight:500;
+    margin:6px 0 2px;
+  }
+  .score-label{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .footer-note{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:22px;
+    line-height:1.5;
+    border-top:1px solid var(--rule);
+    padding-top:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Inclusive Data Viz Practice · ~12 min</p>
+  <h1>Redesign the Chart</h1>
+  <p class="intro">Below is a real pattern found across SDG reporting: a chart that encodes gender through color, iconography and wording, not just through data. Adjust the controls until every rubric check on the right passes.</p>
+  <div class="indicator-tag">SDG 5.5.1(b) · SG_GEN_LOCGELS — Local government seats</div>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="panel-label"><span class="tag-before">Before — as published</span><span></span></div>
+      <p class="chart-title" id="before-title"></p>
+      <p class="chart-sub">Reference version, not editable</p>
+      <svg id="chart-before" viewBox="0 0 300 200" width="100%" height="200"></svg>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span class="tag-after">Your redesign</span><span id="live-tag" style="color:var(--fail)">fixing…</span></div>
+      <p class="chart-title" id="after-title"></p>
+      <p class="chart-sub">Edit the controls below</p>
+      <svg id="chart-after" viewBox="0 0 300 200" width="100%" height="200"></svg>
+    </div>
+  </div>
+
+  <div class="controls">
+    <h2>Controls</h2>
+    <div class="control-grid">
+      <div class="control full">
+        <label for="titleSelect">Chart title</label>
+        <select id="titleSelect"></select>
+      </div>
+      <div class="control">
+        <label for="paletteSelect">Colour palette</label>
+        <select id="paletteSelect"></select>
+        <div class="custom-pickers" id="customPickers">
+          <div class="control">
+            <label for="colorMen">Colour — Men</label>
+            <div class="row">
+              <input type="color" id="colorMen" value="#3b5fd9">
+              <span class="swatch-text" id="colorMenHex">#3B5FD9</span>
+            </div>
+          </div>
+          <div class="control">
+            <label for="colorWomen">Colour — Women</label>
+            <div class="row">
+              <input type="color" id="colorWomen" value="#ff6fae">
+              <span class="swatch-text" id="colorWomenHex">#FF6FAE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="control">
+        <label for="iconSet">Pictogram set</label>
+        <select id="iconSet"></select>
+      </div>
+      <div class="control">
+        <label for="fontSize">Label &amp; legend size (<span id="fontSizeVal">9</span>px)</label>
+        <input type="range" id="fontSize" min="8" max="20" step="1" value="9">
+      </div>
+      <div class="control">
+        <label>Show legend</label>
+        <div class="toggle-btn" id="legendToggle">
+          <div class="toggle-track on"><div class="toggle-thumb"></div></div>
+          <span id="legendState">On</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lower">
+    <div class="rubric">
+      <h2>Inclusive design checklist</h2>
+      <div id="checklist"></div>
+    </div>
+    <div class="gauge-panel">
+      <h2>Bias score</h2>
+      <svg id="gauge" viewBox="0 0 200 120" width="180" height="108"></svg>
+      <div class="score-num" id="scoreNum">0%</div>
+      <div class="score-label" id="scoreLabel">Needs work</div>
+    </div>
+  </div>
+
+  <p class="footer-note">Why this matters: colour, iconography and wording are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, or a headline that treats one sex as the norm and the other as the exception — all assert something the underlying indicator never claimed. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p>
+</div>
+
+<script>
+// men listed first throughout, including the biased reference
+const data = [
+  {key:'men', label:'Men', value:0.79},
+  {key:'women', label:'Women', value:0.21}
+];
+
+const palettes = [
+  {id:'stereotyped', label:'Pink & blue (stereotyped)', men:'#3b5fd9', women:'#ff6fae', custom:false},
+  {id:'greyaccent', label:'Grey + accent (men grey, women in colour) — recommended', men:'#8a8f98', women:'#2f6f62', custom:false},
+  {id:'okabeito', label:'Colourblind-safe pair (Okabe–Ito)', men:'#0072B2', women:'#E69F00', custom:false},
+  {id:'custom', label:'Custom (pick your own)', men:'#3b5fd9', women:'#ff6fae', custom:true}
+];
+
+const iconSets = [
+  {id:'stereotyped', label:'Gendered icons (woman + child / man + briefcase)'},
+  {id:'neutral', label:'Identical human figure for both'},
+  {id:'seat', label:'Seat icon (matches "local government seats")'},
+  {id:'abstract', label:'Abstract mark (no human figure)'}
+];
+
+const titles = [
+  {id:'neutral', text:'Local government seats, by sex', neutral:true},
+  {id:'mild', text:"The gender gap in local politics: how far behind are women?", neutral:false},
+  {id:'severe', text:'Men in charge: the truth about women in local government', neutral:false},
+  {id:'deficit', text:"Men's continued grip on local council seats", neutral:false}
+];
+
+const state = {
+  paletteId: 'stereotyped',
+  colorMen: '#3b5fd9',
+  colorWomen: '#ff6fae',
+  fontSize: 9,
+  iconSetId: 'stereotyped',
+  titleId: 'mild',
+  legend: true
+};
+
+function populateSelect(id, items, valueKey){
+  const sel = document.getElementById(id);
+  sel.innerHTML = '';
+  items.forEach(it=>{
+    const opt = document.createElement('option');
+    opt.value = it.id;
+    opt.textContent = valueKey ? it[valueKey] : it.label;
+    sel.appendChild(opt);
+  });
+}
+populateSelect('paletteSelect', palettes);
+populateSelect('iconSet', iconSets);
+populateSelect('titleSelect', titles, 'text');
+document.getElementById('paletteSelect').value = state.paletteId;
+document.getElementById('iconSet').value = state.iconSetId;
+document.getElementById('titleSelect').value = state.titleId;
+
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16);
+  return {r:(num>>16)&255, g:(num>>8)&255, b:num&255};
+}
+function luminance(hex){
+  const c = hexToRgb(hex);
+  const a = [c.r,c.g,c.b].map(v=>{
+    v/=255;
+    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+  });
+  return 0.2126*a[0] + 0.7152*a[1] + 0.0722*a[2];
+}
+function contrastRatio(hex1, hex2){
+  const L1 = luminance(hex1), L2 = luminance(hex2);
+  const lighter = Math.max(L1,L2), darker = Math.min(L1,L2);
+  return (lighter+0.05)/(darker+0.05);
+}
+function simulateDeuteranopia(hex){
+  const {r,g,b} = hexToRgb(hex);
+  const R = 0.625*r + 0.375*g + 0*b;
+  const G = 0.7*r + 0.3*g + 0*b;
+  const B = 0*r + 0.3*g + 0.7*b;
+  return {r:R,g:G,b:B};
+}
+function colorDistance(rgb1, rgb2){
+  return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2)+Math.pow(rgb1.g-rgb2.g,2)+Math.pow(rgb1.b-rgb2.b,2));
+}
+function hexToHsl(hex){
+  let {r,g,b} = hexToRgb(hex);
+  r/=255; g/=255; b/=255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max+min)/2;
+  if(max === min){ h = 0; s = 0; }
+  else {
+    const d = max-min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max){
+      case r: h = (g-b)/d + (g<b?6:0); break;
+      case g: h = (b-r)/d + 2; break;
+      case b: h = (r-g)/d + 4; break;
+    }
+    h *= 60;
+  }
+  return {h,s,l};
+}
+function isPinkish(hex){
+  const {h,s} = hexToHsl(hex);
+  return s > 0.25 && (h >= 300 && h <= 350);
+}
+function isBluish(hex){
+  const {h,s} = hexToHsl(hex);
+  return s > 0.2 && (h >= 195 && h <= 250);
+}
+
+function drawIcon(svgParent, x, y, scale, color, iconSetId, role){
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('transform', `translate(${x},${y}) scale(${scale})`);
+
+  if(iconSetId === 'abstract'){
+    const shape = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    shape.setAttribute('cx',0); shape.setAttribute('cy',0); shape.setAttribute('r',9);
+    shape.setAttribute('fill', color);
+    g.appendChild(shape);
+    svgParent.appendChild(g);
+    return;
+  }
+
+  if(iconSetId === 'seat'){
+    // simple chair/seat pictogram, identical for both categories
+    const seat = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    seat.setAttribute('x',-9); seat.setAttribute('y',-2); seat.setAttribute('width',18); seat.setAttribute('height',6);
+    seat.setAttribute('rx',1); seat.setAttribute('fill', color);
+    g.appendChild(seat);
+    const back = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    back.setAttribute('x',-9); back.setAttribute('y',-16); back.setAttribute('width',5); back.setAttribute('height',14);
+    back.setAttribute('rx',1); back.setAttribute('fill', color);
+    g.appendChild(back);
+    const leg1 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    leg1.setAttribute('x',-7); leg1.setAttribute('y',4); leg1.setAttribute('width',3); leg1.setAttribute('height',9);
+    leg1.setAttribute('fill', color);
+    g.appendChild(leg1);
+    const leg2 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    leg2.setAttribute('x',5); leg2.setAttribute('y',4); leg2.setAttribute('width',3); leg2.setAttribute('height',9);
+    leg2.setAttribute('fill', color);
+    g.appendChild(leg2);
+    svgParent.appendChild(g);
+    return;
+  }
+
+  const head = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  head.setAttribute('cx',0); head.setAttribute('cy',-14); head.setAttribute('r',6);
+  head.setAttribute('fill',color);
+  g.appendChild(head);
+
+  if(iconSetId === 'neutral'){
+    const body = document.createElementNS('http://www.w3.org/2000/svg','path');
+    body.setAttribute('d','M -9,10 L -7,-6 L 7,-6 L 9,10 Z');
+    body.setAttribute('fill', color);
+    g.appendChild(body);
+  } else if(iconSetId === 'stereotyped' && role === 'women'){
+    const skirt = document.createElementNS('http://www.w3.org/2000/svg','path');
+    skirt.setAttribute('d','M -6,-6 L 6,-6 L 12,10 L -12,10 Z');
+    skirt.setAttribute('fill', color);
+    g.appendChild(skirt);
+    const childHead = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    childHead.setAttribute('cx',13); childHead.setAttribute('cy',3); childHead.setAttribute('r',3);
+    childHead.setAttribute('fill', color); childHead.setAttribute('opacity','0.6');
+    g.appendChild(childHead);
+    const childBody = document.createElementNS('http://www.w3.org/2000/svg','path');
+    childBody.setAttribute('d','M 9,11 L 11,6 L 17,6 L 18,11 Z');
+    childBody.setAttribute('fill', color); childBody.setAttribute('opacity','0.6');
+    g.appendChild(childBody);
+  } else if(iconSetId === 'stereotyped' && role === 'men'){
+    const body = document.createElementNS('http://www.w3.org/2000/svg','path');
+    body.setAttribute('d','M -8,10 L -7,-6 L 7,-6 L 8,10 Z');
+    body.setAttribute('fill', color);
+    g.appendChild(body);
+    const tie = document.createElementNS('http://www.w3.org/2000/svg','path');
+    tie.setAttribute('d','M -1.5,-6 L 1.5,-6 L 2.5,4 L 0,8 L -2.5,4 Z');
+    tie.setAttribute('fill', '#ffffff'); tie.setAttribute('opacity','0.85');
+    g.appendChild(tie);
+    const briefcase = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    briefcase.setAttribute('x',9); briefcase.setAttribute('y',3); briefcase.setAttribute('width',9); briefcase.setAttribute('height',7);
+    briefcase.setAttribute('rx',1);
+    briefcase.setAttribute('fill', color); briefcase.setAttribute('opacity','0.6');
+    g.appendChild(briefcase);
+  }
+  svgParent.appendChild(g);
+}
+
+function buildChart(svgId, opts){
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+  const chartTop = 20, chartBottom = 150, chartLeft = 30, chartRight = 270;
+  const barWidth = 60;
+
+  data.forEach((d, i) => {
+    const x = chartLeft + i * ((chartRight-chartLeft)/2) + 30;
+    const barH = (chartBottom - chartTop) * d.value;
+    const y = chartBottom - barH;
+    const color = d.key === 'women' ? opts.colorWomen : opts.colorMen;
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x - barWidth/2);
+    rect.setAttribute('y', y);
+    rect.setAttribute('width', barWidth);
+    rect.setAttribute('height', barH);
+    rect.setAttribute('fill', color);
+    rect.setAttribute('rx', 2);
+    svg.appendChild(rect);
+
+    const valLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    valLabel.setAttribute('x', x);
+    valLabel.setAttribute('y', y - 6);
+    valLabel.setAttribute('text-anchor','middle');
+    valLabel.setAttribute('font-size', opts.fontSize);
+    valLabel.setAttribute('font-family','IBM Plex Mono, monospace');
+    valLabel.setAttribute('fill', '#1C2029');
+    valLabel.textContent = Math.round(d.value*100) + '%';
+    svg.appendChild(valLabel);
+
+    const catLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    catLabel.setAttribute('x', x);
+    catLabel.setAttribute('y', chartBottom + 16);
+    catLabel.setAttribute('text-anchor','middle');
+    catLabel.setAttribute('font-size', opts.fontSize);
+    catLabel.setAttribute('font-family','IBM Plex Sans, sans-serif');
+    catLabel.setAttribute('fill', '#5B6270');
+    catLabel.textContent = d.label;
+    svg.appendChild(catLabel);
+
+    if(opts.showIcons){
+      drawIcon(svg, x, y - 22, 0.55, color, opts.iconSetId, d.key);
+    }
+  });
+
+  const base = document.createElementNS('http://www.w3.org/2000/svg','line');
+  base.setAttribute('x1', chartLeft); base.setAttribute('x2', chartRight);
+  base.setAttribute('y1', chartBottom); base.setAttribute('y2', chartBottom);
+  base.setAttribute('stroke', '#D9D4C7');
+  svg.appendChild(base);
+
+  if(opts.showLegend){
+    const legendY = 12;
+    [{c:opts.colorMen,l:'Men'},{c:opts.colorWomen,l:'Women'}].forEach((item, i)=>{
+      const lx = 30 + i*110;
+      const sw = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      sw.setAttribute('x', lx); sw.setAttribute('y', legendY-8); sw.setAttribute('width',10); sw.setAttribute('height',10);
+      sw.setAttribute('fill', item.c);
+      svg.appendChild(sw);
+      const lt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lt.setAttribute('x', lx+14); lt.setAttribute('y', legendY+1);
+      lt.setAttribute('font-size', Math.max(opts.fontSize,9));
+      lt.setAttribute('font-family','IBM Plex Sans, sans-serif');
+      lt.setAttribute('fill','#1C2029');
+      lt.textContent = item.l;
+      svg.appendChild(lt);
+    });
+  }
+}
+
+function polarToCartesian(cx, cy, r, angleDeg){
+  const a = (angleDeg-90) * Math.PI/180;
+  return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) };
+}
+function describeArc(cx, cy, r, startAngle, endAngle){
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`;
+}
+function drawGauge(score){
+  const svg = document.getElementById('gauge');
+  svg.innerHTML = '';
+  const cx = 100, cy = 100, r = 80;
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','path');
+  bg.setAttribute('d', describeArc(cx,cy,r,-180,0));
+  bg.setAttribute('stroke', '#D9D4C7');
+  bg.setAttribute('stroke-width','14');
+  bg.setAttribute('fill','none');
+  svg.appendChild(bg);
+
+  const angle = -180 + (score/100)*180;
+  const fg = document.createElementNS('http://www.w3.org/2000/svg','path');
+  fg.setAttribute('d', describeArc(cx,cy,r,-180,angle));
+  let color = '#B5432D';
+  if(score >= 85) color = '#2F6F62';
+  else if(score >= 45) color = '#C98A2B';
+  fg.setAttribute('stroke', color);
+  fg.setAttribute('stroke-width','14');
+  fg.setAttribute('fill','none');
+  fg.setAttribute('stroke-linecap','round');
+  svg.appendChild(fg);
+}
+
+function render(){
+  const beforeTitle = titles.find(t=>t.id==='severe');
+  document.getElementById('before-title').textContent = beforeTitle.text;
+
+  buildChart('chart-before', {
+    colorWomen:'#ff6fae', colorMen:'#3b5fd9', fontSize:8, iconSetId:'stereotyped', showIcons:true, showLegend:false
+  });
+  buildChart('chart-after', {
+    colorWomen: state.colorWomen, colorMen: state.colorMen, fontSize: state.fontSize,
+    iconSetId: state.iconSetId, showIcons:true, showLegend: state.legend
+  });
+
+  const selectedTitle = titles.find(t=>t.id===state.titleId);
+  document.getElementById('after-title').textContent = selectedTitle.text;
+
+  const contrastMen = contrastRatio(state.colorMen, '#FAF8F3');
+  const contrastWomen = contrastRatio(state.colorWomen, '#FAF8F3');
+  const contrastPass = contrastMen >= 2.2 && contrastWomen >= 2.2;
+
+  const cbMen = simulateDeuteranopia(state.colorMen);
+  const cbWomen = simulateDeuteranopia(state.colorWomen);
+  const cbDist = colorDistance(cbMen, cbWomen);
+  const colorblindPass = cbDist >= 60;
+
+  const colorStereotypePass = !(isPinkish(state.colorWomen) && isBluish(state.colorMen));
+
+  const iconPass = state.iconSetId !== 'stereotyped';
+  const fontPass = state.fontSize >= 11;
+  const titlePass = selectedTitle.neutral;
+
+  const checks = [
+    {ok:colorStereotypePass, title:'Colour doesn\u2019t encode a gender stereotype', detail: colorStereotypePass ? 'Palette doesn\u2019t rely on the pink = woman / blue = man convention.' : 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype, not a data-driven choice.'},
+    {ok:contrastPass, title:'Sufficient contrast against background', detail:`Both bar colours are visible against the page (weakest ratio: ${Math.min(contrastMen,contrastWomen).toFixed(1)}:1).`},
+    {ok:colorblindPass, title:'Distinguishable for colourblind readers', detail:`Simulated deuteranopia colour distance: ${cbDist.toFixed(0)} (need \u2265 60).`},
+    {ok:iconPass, title:'Icons carry no gender stereotype', detail: iconPass ? 'Pictograms don\u2019t assign different roles by sex.' : "Icons currently encode caregiving vs. career roles that aren't in the data."},
+    {ok:fontPass, title:'Legible label size', detail:`Labels set to ${state.fontSize}px (minimum recommended: 11px).`},
+    {ok:titlePass, title:'Neutral, non-sensationalised title', detail: titlePass ? 'Title states the indicator without loaded framing.' : 'Title frames one sex as the norm and the other as a deviation, or uses charged language.'}
+  ];
+
+  const list = document.getElementById('checklist');
+  list.innerHTML = '';
+  checks.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'check';
+    row.innerHTML = `<div class="check-icon ${c.ok ? 'pass':'fail'}">${c.ok ? '\u2713' : '!'}</div>
+      <div class="check-text"><b>${c.title}</b><span>${c.detail}</span></div>`;
+    list.appendChild(row);
+  });
+
+  const passCount = checks.filter(c=>c.ok).length;
+  const score = Math.round((passCount/checks.length)*100);
+  drawGauge(score);
+  document.getElementById('scoreNum').textContent = score + '%';
+  const scoreLabel = document.getElementById('scoreLabel');
+  const liveTag = document.getElementById('live-tag');
+  if(score === 100){
+    scoreLabel.textContent = 'All checks passed';
+    liveTag.textContent = 'fixed';
+    liveTag.style.color = 'var(--pass)';
+  } else if(score >= 50){
+    scoreLabel.textContent = 'Getting there';
+    liveTag.textContent = 'fixing\u2026';
+    liveTag.style.color = 'var(--warn)';
+  } else {
+    scoreLabel.textContent = 'Needs work';
+    liveTag.textContent = 'unfixed';
+    liveTag.style.color = 'var(--fail)';
+  }
+}
+
+document.getElementById('paletteSelect').addEventListener('change', e=>{
+  const p = palettes.find(x=>x.id===e.target.value);
+  state.paletteId = p.id;
+  const customWrap = document.getElementById('customPickers');
+  if(p.custom){
+    customWrap.classList.add('show');
+  } else {
+    customWrap.classList.remove('show');
+    state.colorMen = p.men;
+    state.colorWomen = p.women;
+    document.getElementById('colorMen').value = p.men;
+    document.getElementById('colorWomen').value = p.women;
+    document.getElementById('colorMenHex').textContent = p.men.toUpperCase();
+    document.getElementById('colorWomenHex').textContent = p.women.toUpperCase();
+  }
+  render();
+});
+document.getElementById('colorMen').addEventListener('input', e=>{
+  state.colorMen = e.target.value;
+  document.getElementById('colorMenHex').textContent = e.target.value.toUpperCase();
+  render();
+});
+document.getElementById('colorWomen').addEventListener('input', e=>{
+  state.colorWomen = e.target.value;
+  document.getElementById('colorWomenHex').textContent = e.target.value.toUpperCase();
+  render();
+});
+document.getElementById('iconSet').addEventListener('change', e=>{
+  state.iconSetId = e.target.value;
+  render();
+});
+document.getElementById('titleSelect').addEventListener('change', e=>{
+  state.titleId = e.target.value;
+  render();
+});
+document.getElementById('fontSize').addEventListener('input', e=>{
+  state.fontSize = parseInt(e.target.value,10);
+  document.getElementById('fontSizeVal').textContent = state.fontSize;
+  render();
+});
+document.getElementById('legendToggle').addEventListener('click', ()=>{
+  state.legend = !state.legend;
+  const track = document.querySelector('#legendToggle .toggle-track');
+  track.classList.toggle('on', state.legend);
+  document.getElementById('legendState').textContent = state.legend ? 'On' : 'Off';
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
