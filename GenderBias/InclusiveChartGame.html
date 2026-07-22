@@ -242,11 +242,25 @@
     border-top:1px solid var(--rule);
     padding-top:14px;
   }
+
+  /* icon-silhouette pictogram chart */
+  .silo-legend{
+    display:flex;gap:20px;justify-content:center;margin-bottom:10px;font-size:12px;color:var(--ink-soft);
+  }
+  .silo-legend-item{display:flex;align-items:center;gap:6px;}
+  .silo-legend-swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .silo-row{
+    display:flex;justify-content:center;align-items:flex-end;gap:48px;height:210px;
+  }
+  .silo-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .silo-value{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);}
+  .silo-icon-wrap{position:relative;}
+  .silo-cat-label{font-size:12px;color:var(--ink-soft);}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">Inclusive Data Viz Practice · ~1-2 min</p>
+  <p class="eyebrow">Inclusive Data Viz Practice · ~12 min</p>
   <h1>Redesign the Chart</h1>
   <p class="intro">Below is a real pattern found across SDG reporting: a chart that encodes gender through color, iconography and wording, not just through data. Adjust the controls until every rubric check on the right passes.</p>
   <div class="indicator-tag">SDG 5.5.1(b) · SG_GEN_LOCGELS — Local government seats</div>
@@ -255,14 +269,15 @@
     <div class="panel">
       <div class="panel-label"><span class="tag-before">Before — as published</span><span></span></div>
       <p class="chart-title" id="before-title"></p>
-      <p class="chart-sub">Reference version, not editable</p>
-      <svg id="chart-before" viewBox="0 0 300 200" width="100%" height="200"></svg>
+      <p class="chart-sub">Reference version, not editable — icon-silhouette pictogram</p>
+      <div id="chart-before" class="silo-chart"></div>
     </div>
     <div class="panel">
       <div class="panel-label"><span class="tag-after">Your redesign</span><span id="live-tag" style="color:var(--fail)">fixing…</span></div>
       <p class="chart-title" id="after-title"></p>
-      <p class="chart-sub">Edit the controls below</p>
-      <svg id="chart-after" viewBox="0 0 300 200" width="100%" height="200"></svg>
+      <p class="chart-sub" id="after-sub">Edit the controls below</p>
+      <svg id="chart-after-bars" viewBox="0 0 300 200" width="100%" height="200"></svg>
+      <div id="chart-after-silo" class="silo-chart" style="display:none;"></div>
     </div>
   </div>
 
@@ -272,6 +287,10 @@
       <div class="control full">
         <label for="titleSelect">Chart title</label>
         <select id="titleSelect"></select>
+      </div>
+      <div class="control full">
+        <label for="pictogramChoice">Pictogram / chart style</label>
+        <select id="pictogramChoice"></select>
       </div>
       <div class="control">
         <label for="paletteSelect">Colour palette</label>
@@ -294,10 +313,6 @@
         </div>
       </div>
       <div class="control">
-        <label for="iconSet">Pictogram set</label>
-        <select id="iconSet"></select>
-      </div>
-      <div class="control">
         <label for="fontSize">Label &amp; legend size (<span id="fontSizeVal">9</span>px)</label>
         <input type="range" id="fontSize" min="8" max="20" step="1" value="9">
       </div>
@@ -306,6 +321,13 @@
         <div class="toggle-btn" id="legendToggle">
           <div class="toggle-track on"><div class="toggle-thumb"></div></div>
           <span id="legendState">On</span>
+        </div>
+      </div>
+      <div class="control">
+        <label>Order — women first</label>
+        <div class="toggle-btn" id="orderToggle">
+          <div class="toggle-track" id="orderTrack"><div class="toggle-thumb"></div></div>
+          <span id="orderState">Off (men first)</span>
         </div>
       </div>
     </div>
@@ -324,35 +346,53 @@
     </div>
   </div>
 
-  <p class="footer-note">Why this matters: colour, iconography and wording are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, or a headline that treats one sex as the norm and the other as the exception — all assert something the underlying indicator never claimed. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p>
+  <p class="footer-note">Why this matters: colour, iconography, wording and even ordering are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, a headline that treats one sex as the norm and the other as the exception, or always listing one category first — all assert something the underlying indicator never claimed. Note also that filling a human silhouette to represent a share (as in the reference, left) is itself a design choice worth discussing: it can make a statistic feel more human, but it also risks presenting the body itself as the unit of measurement. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p>
 </div>
 
 <script>
 // men listed first throughout, including the biased reference
 const data = [
-  {key:'men', label:'Men', value:0.79},
-  {key:'women', label:'Women', value:0.21}
+  {key:'men', label:'Men', value:0.65},
+  {key:'women', label:'Women', value:0.35}
 ];
 
 const palettes = [
-  {id:'stereotyped', label:'Pink & blue (stereotyped)', men:'#3b5fd9', women:'#ff6fae', custom:false},
-  {id:'greyaccent', label:'Grey + accent (men grey, women in colour) — recommended', men:'#8a8f98', women:'#2f6f62', custom:false},
+  {id:'stereotyped', label:'Pink & blue', men:'#3b5fd9', women:'#ff6fae', custom:false},
+  {id:'greyaccent', label:'Grey + accent (men grey, women in colour)', men:'#8a8f98', women:'#2f6f62', custom:false},
   {id:'okabeito', label:'Colourblind-safe pair (Okabe–Ito)', men:'#0072B2', women:'#E69F00', custom:false},
   {id:'custom', label:'Custom (pick your own)', men:'#3b5fd9', women:'#ff6fae', custom:true}
 ];
 
-const iconSets = [
-  {id:'stereotyped', label:'Gendered icons (woman + child / man + briefcase)'},
-  {id:'neutral', label:'Identical human figure for both'},
-  {id:'seat', label:'Seat icon (matches "local government seats")'},
-  {id:'abstract', label:'Abstract mark (no human figure)'}
+// Icons embedded inline as SVG path data (Font Awesome Free, CC BY 4.0) — no external font/network dependency
+const ICONS = {
+  'user-nurse': {viewBox:'0 0 448 512', path:'M96 128l0-57.8c0-13.3 8.3-25.3 20.8-30l96-36c7.2-2.7 15.2-2.7 22.5 0l96 36c12.5 4.7 20.8 16.6 20.8 30l0 57.8-.3 0c.2 2.6 .3 5.3 .3 8l0 40c0 70.7-57.3 128-128 128s-128-57.3-128-128l0-40c0-2.7 .1-5.4 .3-8l-.3 0zm48 48c0 44.2 35.8 80 80 80s80-35.8 80-80l0-16-160 0 0 16zM111.9 327.7c10.5-3.4 21.8 .4 29.4 8.5l71 75.5c6.3 6.7 17 6.7 23.3 0l71-75.5c7.6-8.1 18.9-11.9 29.4-8.5C401 348.6 448 409.4 448 481.3c0 17-13.8 30.7-30.7 30.7L30.7 512C13.8 512 0 498.2 0 481.3c0-71.9 47-132.7 111.9-153.6zM208 48l0 16-16 0c-4.4 0-8 3.6-8 8l0 16c0 4.4 3.6 8 8 8l16 0 0 16c0 4.4 3.6 8 8 8l16 0c4.4 0 8-3.6 8-8l0-16 16 0c4.4 0 8-3.6 8-8l0-16c0-4.4-3.6-8-8-8l-16 0 0-16c0-4.4-3.6-8-8-8l-16 0c-4.4 0-8 3.6-8 8z'},
+  'person': {viewBox:'0 0 320 512', path:'M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304l0 128c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-223.1L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6l29.7 0c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9 232 480c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-128-16 0z'},
+  'person-dress': {viewBox:'0 0 320 512', path:'M160 0a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM88 384l-17.8 0c-10.9 0-18.6-10.7-15.2-21.1L93.3 248.1 59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l53.6-89.2c20.3-33.7 56.7-54.3 96-54.3l11.6 0c39.3 0 75.7 20.6 96 54.3l53.6 89.2c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9l-33.9-56.3L265 362.9c3.5 10.4-4.3 21.1-15.2 21.1L232 384l0 96c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-96-16 0 0 96c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-96z'},
+  'user-doctor': {viewBox:'0 0 448 512', path:'M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-96 55.2C54 332.9 0 401.3 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7c0-81-54-149.4-128-171.1l0 50.8c27.6 7.1 48 32.2 48 62l0 40c0 8.8-7.2 16-16 16l-16 0c-8.8 0-16-7.2-16-16s7.2-16 16-16l0-24c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 24c8.8 0 16 7.2 16 16s-7.2 16-16 16l-16 0c-8.8 0-16-7.2-16-16l0-40c0-29.8 20.4-54.9 48-62l0-57.1c-6-.6-12.1-.9-18.3-.9l-91.4 0c-6.2 0-12.3 .3-18.3 .9l0 65.4c23.1 6.9 40 28.3 40 53.7c0 30.9-25.1 56-56 56s-56-25.1-56-56c0-25.4 16.9-46.8 40-53.7l0-59.1zM144 448a24 24 0 1 0 0-48 24 24 0 1 0 0 48z'}
+};
+function iconMarkup(icon, color){
+  if(icon.path) return `<path d="${icon.path}" fill="${color}"/>`;
+  return icon.shapes.map(s=>{
+    const attrs = Object.entries(s.attrs).map(([k,v])=>`${k}="${v}"`).join(' ');
+    const fill = s.accent ? '#ffffff' : color;
+    const opacity = s.accent ? 'opacity="0.9"' : '';
+    return `<${s.tag} ${attrs} fill="${fill}" ${opacity}/>`;
+  }).join('');
+}
+
+const pictogramChoices = [
+  {id:'silhouette-occupation', label:'Nurse silhouette vs Doctor silhouette', style:'silhouette', icon:{men:'user-doctor', women:'user-nurse'}},
+  {id:'silhouette-neutral', label:'Women silhouette vs Men silhouette', style:'silhouette', icon:{men:'person', women:'person-dress'}},
+  {id:'bars', label:'Bars', style:'bars', icon:null},
+  {id:'bars-icon', label:'Bars with women/men silhouette on top', style:'bars', icon:{men:'person', women:'person-dress'}}
 ];
+function getPictogramChoice(id){ return pictogramChoices.find(c=>c.id===id); }
 
 const titles = [
-  {id:'neutral', text:'Local government seats, by sex', neutral:true},
-  {id:'mild', text:"The gender gap in local politics: how far behind are women?", neutral:false},
-  {id:'severe', text:'Men in charge: the truth about women in local government', neutral:false},
-  {id:'deficit', text:"Men's continued grip on local council seats", neutral:false}
+  {id:'plain', text:'Local government seats, by sex', good:false},
+  {id:'engaging1', text:'Meet the women reshaping local government', good:true},
+  {id:'severe', text:'Men in charge: the truth about women in local government', good:false},
+  {id:'engaging2', text:"Women's growing voice in local councils", good:true}
 ];
 
 const state = {
@@ -360,9 +400,10 @@ const state = {
   colorMen: '#3b5fd9',
   colorWomen: '#ff6fae',
   fontSize: 9,
-  iconSetId: 'stereotyped',
-  titleId: 'mild',
-  legend: true
+  pictogramChoiceId: 'silhouette-occupation',
+  titleId: 'severe',
+  legend: true,
+  womenFirst: false
 };
 
 function populateSelect(id, items, valueKey){
@@ -376,10 +417,10 @@ function populateSelect(id, items, valueKey){
   });
 }
 populateSelect('paletteSelect', palettes);
-populateSelect('iconSet', iconSets);
+populateSelect('pictogramChoice', pictogramChoices);
 populateSelect('titleSelect', titles, 'text');
 document.getElementById('paletteSelect').value = state.paletteId;
-document.getElementById('iconSet').value = state.iconSetId;
+document.getElementById('pictogramChoice').value = state.pictogramChoiceId;
 document.getElementById('titleSelect').value = state.titleId;
 
 function hexToRgb(hex){
@@ -437,90 +478,30 @@ function isBluish(hex){
   const {h,s} = hexToHsl(hex);
   return s > 0.2 && (h >= 195 && h <= 250);
 }
-
-function drawIcon(svgParent, x, y, scale, color, iconSetId, role){
-  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-  g.setAttribute('transform', `translate(${x},${y}) scale(${scale})`);
-
-  if(iconSetId === 'abstract'){
-    const shape = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    shape.setAttribute('cx',0); shape.setAttribute('cy',0); shape.setAttribute('r',9);
-    shape.setAttribute('fill', color);
-    g.appendChild(shape);
-    svgParent.appendChild(g);
-    return;
-  }
-
-  if(iconSetId === 'seat'){
-    // simple chair/seat pictogram, identical for both categories
-    const seat = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    seat.setAttribute('x',-9); seat.setAttribute('y',-2); seat.setAttribute('width',18); seat.setAttribute('height',6);
-    seat.setAttribute('rx',1); seat.setAttribute('fill', color);
-    g.appendChild(seat);
-    const back = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    back.setAttribute('x',-9); back.setAttribute('y',-16); back.setAttribute('width',5); back.setAttribute('height',14);
-    back.setAttribute('rx',1); back.setAttribute('fill', color);
-    g.appendChild(back);
-    const leg1 = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    leg1.setAttribute('x',-7); leg1.setAttribute('y',4); leg1.setAttribute('width',3); leg1.setAttribute('height',9);
-    leg1.setAttribute('fill', color);
-    g.appendChild(leg1);
-    const leg2 = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    leg2.setAttribute('x',5); leg2.setAttribute('y',4); leg2.setAttribute('width',3); leg2.setAttribute('height',9);
-    leg2.setAttribute('fill', color);
-    g.appendChild(leg2);
-    svgParent.appendChild(g);
-    return;
-  }
-
-  const head = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  head.setAttribute('cx',0); head.setAttribute('cy',-14); head.setAttribute('r',6);
-  head.setAttribute('fill',color);
-  g.appendChild(head);
-
-  if(iconSetId === 'neutral'){
-    const body = document.createElementNS('http://www.w3.org/2000/svg','path');
-    body.setAttribute('d','M -9,10 L -7,-6 L 7,-6 L 9,10 Z');
-    body.setAttribute('fill', color);
-    g.appendChild(body);
-  } else if(iconSetId === 'stereotyped' && role === 'women'){
-    const skirt = document.createElementNS('http://www.w3.org/2000/svg','path');
-    skirt.setAttribute('d','M -6,-6 L 6,-6 L 12,10 L -12,10 Z');
-    skirt.setAttribute('fill', color);
-    g.appendChild(skirt);
-    const childHead = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    childHead.setAttribute('cx',13); childHead.setAttribute('cy',3); childHead.setAttribute('r',3);
-    childHead.setAttribute('fill', color); childHead.setAttribute('opacity','0.6');
-    g.appendChild(childHead);
-    const childBody = document.createElementNS('http://www.w3.org/2000/svg','path');
-    childBody.setAttribute('d','M 9,11 L 11,6 L 17,6 L 18,11 Z');
-    childBody.setAttribute('fill', color); childBody.setAttribute('opacity','0.6');
-    g.appendChild(childBody);
-  } else if(iconSetId === 'stereotyped' && role === 'men'){
-    const body = document.createElementNS('http://www.w3.org/2000/svg','path');
-    body.setAttribute('d','M -8,10 L -7,-6 L 7,-6 L 8,10 Z');
-    body.setAttribute('fill', color);
-    g.appendChild(body);
-    const tie = document.createElementNS('http://www.w3.org/2000/svg','path');
-    tie.setAttribute('d','M -1.5,-6 L 1.5,-6 L 2.5,4 L 0,8 L -2.5,4 Z');
-    tie.setAttribute('fill', '#ffffff'); tie.setAttribute('opacity','0.85');
-    g.appendChild(tie);
-    const briefcase = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    briefcase.setAttribute('x',9); briefcase.setAttribute('y',3); briefcase.setAttribute('width',9); briefcase.setAttribute('height',7);
-    briefcase.setAttribute('rx',1);
-    briefcase.setAttribute('fill', color); briefcase.setAttribute('opacity','0.6');
-    g.appendChild(briefcase);
-  }
-  svgParent.appendChild(g);
+// --- Bars chart (SVG), icon rendered as a nested inline <svg> (no external font needed) ---
+function drawIcon(svgParent, x, y, color, iconKey){
+  const icon = ICONS[iconKey];
+  const size = 34;
+  const nested = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  nested.setAttribute('x', x - size/2);
+  nested.setAttribute('y', y - size);
+  nested.setAttribute('width', size);
+  nested.setAttribute('height', size);
+  nested.setAttribute('viewBox', icon.viewBox);
+  nested.innerHTML = iconMarkup(icon, color);
+  svgParent.appendChild(nested);
 }
 
 function buildChart(svgId, opts){
   const svg = document.getElementById(svgId);
   svg.innerHTML = '';
-  const chartTop = 20, chartBottom = 150, chartLeft = 30, chartRight = 270;
+  const chartTop = 55, chartBottom = 150, chartLeft = 30, chartRight = 270;
   const barWidth = 60;
+  const BAR_ICON_SIZE = 34;
+  const order = opts.order || ['men','women'];
+  const orderedData = order.map(key => data.find(d=>d.key===key));
 
-  data.forEach((d, i) => {
+  orderedData.forEach((d, i) => {
     const x = chartLeft + i * ((chartRight-chartLeft)/2) + 30;
     const barH = (chartBottom - chartTop) * d.value;
     const y = chartBottom - barH;
@@ -537,7 +518,7 @@ function buildChart(svgId, opts){
 
     const valLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
     valLabel.setAttribute('x', x);
-    valLabel.setAttribute('y', y - 6);
+    valLabel.setAttribute('y', y - BAR_ICON_SIZE - 6);
     valLabel.setAttribute('text-anchor','middle');
     valLabel.setAttribute('font-size', opts.fontSize);
     valLabel.setAttribute('font-family','IBM Plex Mono, monospace');
@@ -555,8 +536,8 @@ function buildChart(svgId, opts){
     catLabel.textContent = d.label;
     svg.appendChild(catLabel);
 
-    if(opts.showIcons){
-      drawIcon(svg, x, y - 22, 0.55, color, opts.iconSetId, d.key);
+    if(opts.iconMap){
+      drawIcon(svg, x, y, color, opts.iconMap[d.key]);
     }
   });
 
@@ -568,7 +549,8 @@ function buildChart(svgId, opts){
 
   if(opts.showLegend){
     const legendY = 12;
-    [{c:opts.colorMen,l:'Men'},{c:opts.colorWomen,l:'Women'}].forEach((item, i)=>{
+    const legendItems = order.map(key => key==='men' ? {c:opts.colorMen,l:'Men'} : {c:opts.colorWomen,l:'Women'});
+    legendItems.forEach((item, i)=>{
       const lx = 30 + i*110;
       const sw = document.createElementNS('http://www.w3.org/2000/svg','rect');
       sw.setAttribute('x', lx); sw.setAttribute('y', legendY-8); sw.setAttribute('width',10); sw.setAttribute('height',10);
@@ -583,6 +565,44 @@ function buildChart(svgId, opts){
       svg.appendChild(lt);
     });
   }
+}
+
+// --- Icon-silhouette pictogram chart (HTML/CSS): the icon's SIZE scales with the value, bottom-anchored ---
+function buildSilhouette(containerId, opts){
+  const container = document.getElementById(containerId);
+  const order = opts.order || ['men','women'];
+  const orderedData = order.map(key => data.find(d=>d.key===key));
+  const maxHeight = 170; // px, represents 100%
+
+  let legendHtml = '';
+  if(opts.showLegend){
+    legendHtml = '<div class="silo-legend">' + orderedData.map(d=>{
+      const color = d.key==='women' ? opts.colorWomen : opts.colorMen;
+      return `<span class="silo-legend-item"><span class="silo-legend-swatch" style="background:${color}"></span>${d.label}</span>`;
+    }).join('') + '</div>';
+  }
+
+  const colsHtml = orderedData.map(d=>{
+    const color = d.key==='women' ? opts.colorWomen : opts.colorMen;
+    const iconKey = opts.iconMap[d.key];
+    const icon = ICONS[iconKey];
+    const [, , vbW, vbH] = icon.viewBox.split(' ').map(Number);
+    const aspect = vbW / vbH;
+    const maxWidth = maxHeight * aspect;
+    const valueHeight = maxHeight * d.value;
+    const valueWidth = valueHeight * aspect;
+    const pct = Math.round(d.value*100);
+    return `
+      <div class="silo-col">
+        <div class="silo-value" style="font-size:${Math.max(opts.fontSize,11)}px">${pct}%</div>
+        <div class="silo-icon-wrap" style="width:${maxWidth}px;height:${maxHeight}px;">
+          <svg viewBox="${icon.viewBox}" style="width:${valueWidth}px;height:${valueHeight}px;position:absolute;bottom:0;left:50%;transform:translateX(-50%);">${iconMarkup(icon,color)}</svg>
+        </div>
+        <div class="silo-cat-label" style="font-size:${opts.fontSize}px">${d.label}</div>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = legendHtml + `<div class="silo-row">${colsHtml}</div>`;
 }
 
 function polarToCartesian(cx, cy, r, angleDeg){
@@ -620,16 +640,28 @@ function drawGauge(score){
 }
 
 function render(){
-  const beforeTitle = titles.find(t=>t.id==='severe');
+  const beforeTitle = titles.find(t=>t.id==='plain');
   document.getElementById('before-title').textContent = beforeTitle.text;
 
-  buildChart('chart-before', {
-    colorWomen:'#ff6fae', colorMen:'#3b5fd9', fontSize:8, iconSetId:'stereotyped', showIcons:true, showLegend:false
+  buildSilhouette('chart-before', {
+    colorWomen:'#ff6fae', colorMen:'#3b5fd9', fontSize:9,
+    iconMap:{men:'person', women:'person-dress'}, showLegend:true, order:['men','women']
   });
-  buildChart('chart-after', {
+
+  const choice = getPictogramChoice(state.pictogramChoiceId);
+  const afterOrder = state.womenFirst ? ['women','men'] : ['men','women'];
+  const afterOpts = {
     colorWomen: state.colorWomen, colorMen: state.colorMen, fontSize: state.fontSize,
-    iconSetId: state.iconSetId, showIcons:true, showLegend: state.legend
-  });
+    iconMap: choice.icon, showLegend: state.legend, order: afterOrder
+  };
+  document.getElementById('chart-after-bars').style.display = choice.style === 'bars' ? 'block' : 'none';
+  document.getElementById('chart-after-silo').style.display = choice.style === 'silhouette' ? 'block' : 'none';
+  if(choice.style === 'bars'){
+    buildChart('chart-after-bars', afterOpts);
+  } else {
+    buildSilhouette('chart-after-silo', afterOpts);
+  }
+  document.getElementById('after-sub').textContent = 'Edit the controls below \u2014 ' + choice.label.toLowerCase();
 
   const selectedTitle = titles.find(t=>t.id===state.titleId);
   document.getElementById('after-title').textContent = selectedTitle.text;
@@ -645,17 +677,19 @@ function render(){
 
   const colorStereotypePass = !(isPinkish(state.colorWomen) && isBluish(state.colorMen));
 
-  const iconPass = state.iconSetId !== 'stereotyped';
+  const iconPass = state.pictogramChoiceId !== 'silhouette-occupation';
   const fontPass = state.fontSize >= 11;
-  const titlePass = selectedTitle.neutral;
+  const titlePass = selectedTitle.good;
+  const orderPass = state.womenFirst === true;
 
   const checks = [
     {ok:colorStereotypePass, title:'Colour doesn\u2019t encode a gender stereotype', detail: colorStereotypePass ? 'Palette doesn\u2019t rely on the pink = woman / blue = man convention.' : 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype, not a data-driven choice.'},
     {ok:contrastPass, title:'Sufficient contrast against background', detail:`Both bar colours are visible against the page (weakest ratio: ${Math.min(contrastMen,contrastWomen).toFixed(1)}:1).`},
     {ok:colorblindPass, title:'Distinguishable for colourblind readers', detail:`Simulated deuteranopia colour distance: ${cbDist.toFixed(0)} (need \u2265 60).`},
-    {ok:iconPass, title:'Icons carry no gender stereotype', detail: iconPass ? 'Pictograms don\u2019t assign different roles by sex.' : "Icons currently encode caregiving vs. career roles that aren't in the data."},
+    {ok:iconPass, title:'Icons carry no gender stereotype', detail: iconPass ? 'Pictograms don\u2019t assign different occupations by sex.' : 'A nurse icon for women and a doctor icon for men encode caregiving vs. authority roles that aren\u2019t in the data.'},
     {ok:fontPass, title:'Legible label size', detail:`Labels set to ${state.fontSize}px (minimum recommended: 11px).`},
-    {ok:titlePass, title:'Neutral, non-sensationalised title', detail: titlePass ? 'Title states the indicator without loaded framing.' : 'Title frames one sex as the norm and the other as a deviation, or uses charged language.'}
+    {ok:titlePass, title:'Engaging, non-stigmatising title', detail: titlePass ? 'Title draws readers in and centres women\u2019s participation without shaming either sex.' : 'Title is either too flat to engage readers or frames one sex as the norm and the other as a deviation.'},
+    {ok:orderPass, title:'Under-represented group listed first', detail: orderPass ? 'Women (the smaller share) are shown first, rather than defaulting to men.' : 'Men are listed first by default \u2014 try the \u201cwomen first\u201d order switch.'}
   ];
 
   const list = document.getElementById('checklist');
@@ -716,8 +750,8 @@ document.getElementById('colorWomen').addEventListener('input', e=>{
   document.getElementById('colorWomenHex').textContent = e.target.value.toUpperCase();
   render();
 });
-document.getElementById('iconSet').addEventListener('change', e=>{
-  state.iconSetId = e.target.value;
+document.getElementById('pictogramChoice').addEventListener('change', e=>{
+  state.pictogramChoiceId = e.target.value;
   render();
 });
 document.getElementById('titleSelect').addEventListener('change', e=>{
@@ -734,6 +768,12 @@ document.getElementById('legendToggle').addEventListener('click', ()=>{
   const track = document.querySelector('#legendToggle .toggle-track');
   track.classList.toggle('on', state.legend);
   document.getElementById('legendState').textContent = state.legend ? 'On' : 'Off';
+  render();
+});
+document.getElementById('orderToggle').addEventListener('click', ()=>{
+  state.womenFirst = !state.womenFirst;
+  document.getElementById('orderTrack').classList.toggle('on', state.womenFirst);
+  document.getElementById('orderState').textContent = state.womenFirst ? 'On (women first)' : 'Off (men first)';
   render();
 });
 
