@@ -268,10 +268,12 @@
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">Inclusive Data Viz Practice · ~12 min</p>
+  <p class="eyebrow">Dataviz Practice · ~1-2 min</p>
   <h1>Redesign the Chart</h1>
-  <p class="intro">Below is a real pattern found across SDG reporting: a chart that encodes gender through color, iconography and wording, not just through data. Adjust the controls until every rubric check on the right passes.</p>
-  <div class="indicator-tag">SDG 5.5.1(b) · SG_GEN_LOCGELS — Local government seats</div>
+  <p class="intro">Below is a real pattern found across SDG reporting: a chart that encodes gender through color, iconography
+  and wording, not just through data.
+  Adjust the controls (Palette, title,  Pictogram, Title, ..) and improve your score. The checklist will help refine your choices.</p>
+  <div class="indicator-tag">SDG 5.5.1(b) — Local government seats</div>
 
   <div class="stage">
     <div class="panel">
@@ -347,7 +349,7 @@
       <div id="checklist"></div>
     </div>
     <div class="gauge-panel">
-      <h2>Dataviz score <span style="font-weight:400;font-size:11px;color:var(--ink-soft);">(inclusivity, readability, bias)</span></h2>
+      <h2>Dataviz score </br> <span style="font-weight:400;font-size:11px;color:var(--ink-soft);">(inclusivity, readability, bias)</span></h2>
       <svg id="gauge" viewBox="0 0 200 120" width="180" height="108"></svg>
       <div class="score-num" id="scoreNum">0%</div>
       <div class="score-label" id="scoreLabel">Needs work</div>
@@ -366,8 +368,8 @@ const data = [
 
 const palettes = [
   {id:'stereotyped', label:'Pink & blue', men:'#3b5fd9', women:'#ff6fae', custom:false},
-  {id:'greyaccent', label:'Grey + accent (men grey, women in colour)', men:'#8a8f98', women:'#2f6f62', custom:false},
-  {id:'okabeito', label:'Colourblind-safe pair (Okabe–Ito)', men:'#0072B2', women:'#E69F00', custom:false},
+  {id:'greyaccent', label:'Grey & Purple', men:'#8a8f98', women:'#6C3BAA', custom:false},
+  {id:'okabeito', label:'Blue & Orange', men:'#0072B2', women:'#E69F00', custom:false},
   {id:'custom', label:'Custom (pick your own)', men:'#3b5fd9', women:'#ff6fae', custom:true}
 ];
 
