@@ -236,12 +236,19 @@
     margin-bottom:4px;
   }
   .footer-note{
-    font-size:11.5px;
+    font-size:14px;
     color:var(--ink-soft);
     margin-top:22px;
-    line-height:1.5;
+    line-height:1.6;
     border-top:1px solid var(--rule);
     padding-top:14px;
+  }
+  .footer-note h3{
+    font-family:'Source Serif 4', serif;
+    font-size:19px;
+    font-weight:600;
+    color:var(--ink);
+    margin:0 0 8px;
   }
 
   /* icon-silhouette pictogram chart */
@@ -336,18 +343,18 @@
 
   <div class="lower">
     <div class="rubric">
-      <h2>Inclusive design checklist</h2>
+      <h2>Good Design Checklist</h2>
       <div id="checklist"></div>
     </div>
     <div class="gauge-panel">
-      <h2>Bias score</h2>
+      <h2>Dataviz score <span style="font-weight:400;font-size:11px;color:var(--ink-soft);">(inclusivity, readability, bias)</span></h2>
       <svg id="gauge" viewBox="0 0 200 120" width="180" height="108"></svg>
       <div class="score-num" id="scoreNum">0%</div>
       <div class="score-label" id="scoreLabel">Needs work</div>
     </div>
   </div>
 
-  <p class="footer-note">Why this matters: colour, iconography, wording and even ordering are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, a headline that treats one sex as the norm and the other as the exception, or always listing one category first — all assert something the underlying indicator never claimed. Note also that filling a human silhouette to represent a share (as in the reference, left) is itself a design choice worth discussing: it can make a statistic feel more human, but it also risks presenting the body itself as the unit of measurement. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p>
+  <div class="footer-note"><h3>Key Takeaway</h3><p style="margin:0;">Why this matters: colour, iconography, wording and even ordering are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, a headline that treats one sex as the norm and the other as the exception, or always listing one category first — all assert something the underlying indicator never claimed. Note also that filling a human silhouette to represent a share (as in the reference, left) is itself a design choice worth discussing: it can make a statistic feel more human, but it also risks presenting the body itself as the unit of measurement. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p></div>
 </div>
 
 <script>
@@ -475,13 +482,18 @@ function contrastRatio(hex1, hex2){
 }
 function simulateDeuteranopia(hex){
   const {r,g,b} = hexToRgb(hex);
-  const R = 0.625*r + 0.375*g + 0*b;
-  const G = 0.7*r + 0.3*g + 0*b;
-  const B = 0*r + 0.3*g + 0.7*b;
-  return {r:R,g:G,b:B};
+  // Machado, Oliveira & Fairchild (2009) deuteranopia matrix, calibrated for direct use on sRGB
+  const R = 0.367*r + 0.861*g - 0.228*b;
+  const G = 0.280*r + 0.673*g + 0.047*b;
+  const B = -0.012*r + 0.043*g + 0.969*b;
+  return {r:Math.max(0,Math.min(255,R)), g:Math.max(0,Math.min(255,G)), b:Math.max(0,Math.min(255,B))};
 }
 function colorDistance(rgb1, rgb2){
-  return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2)+Math.pow(rgb1.g-rgb2.g,2)+Math.pow(rgb1.b-rgb2.b,2));
+  // "redmean" perceptually-weighted distance — a much closer approximation of perceived
+  // colour difference than plain Euclidean RGB distance, which under-penalises red/green confusion
+  const rmean = (rgb1.r + rgb2.r) / 2;
+  const dr = rgb1.r - rgb2.r, dg = rgb1.g - rgb2.g, db = rgb1.b - rgb2.b;
+  return Math.sqrt((2 + rmean/256)*dr*dr + 4*dg*dg + (2 + (255-rmean)/256)*db*db);
 }
 function hexToHsl(hex){
   let {r,g,b} = hexToRgb(hex);
@@ -662,9 +674,9 @@ function drawGauge(score){
   const angle = -180 + (score/100)*180;
   const fg = document.createElementNS('http://www.w3.org/2000/svg','path');
   fg.setAttribute('d', describeArc(cx,cy,r,-180,angle));
-  let color = '#2F6F62';
-  if(score >= 50) color = '#B5432D';
-  else if(score >= 20) color = '#C98A2B';
+  let color = '#B5432D';
+  if(score >= 70) color = '#2F6F62';
+  else if(score > 20) color = '#C98A2B';
   fg.setAttribute('stroke', color);
   fg.setAttribute('stroke-width','14');
   fg.setAttribute('fill','none');
@@ -702,7 +714,7 @@ function render(){
   const cbMen = simulateDeuteranopia(state.colorMen);
   const cbWomen = simulateDeuteranopia(state.colorWomen);
   const cbDist = colorDistance(cbMen, cbWomen);
-  const colorblindGood = cbDist >= 60;
+  const colorblindGood = cbDist >= 120;
 
   const paletteStereotyped = isPinkish(state.colorWomen) && isBluish(state.colorMen);
 
@@ -713,7 +725,8 @@ function render(){
     : state.pictogramChoiceId === 'silhouette-occupation' ? 20
     : 8; // bars-icon or silhouette-neutral
   const paletteDelta = paletteStereotyped ? 20 : -10;
-  const colorblindDelta = colorblindGood ? -8 : 5;
+  // graduated: near-identical colours (low distance) are penalised hard, not just flatly
+  const colorblindDelta = Math.max(-8, Math.min(15, -8 + (120 - cbDist) * 0.5));
   const orderDelta = state.womenFirst ? -3 : 0;
   const fontDelta = state.fontSize >= 11 ? -5 : 0;
 
@@ -725,7 +738,7 @@ function render(){
       : state.pictogramChoiceId==='silhouette-occupation' ? 'A man-with-a-tie stereotype vs. a nurse icon still encodes career/authority vs. caregiving roles by sex, even without an explicit occupation label \u2014 a strong bias increase.'
       : 'Any human silhouette (even a neutral one) still adds some gendered body imagery compared to plain bars.'},
     {delta:paletteDelta, title:'Colour palette', detail: paletteStereotyped ? 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype that increases bias.' : 'A palette that doesn\u2019t rely on pink/blue reduces bias.'},
-    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Distinguishable \u2014 reduces bias a bit further.' : 'Too similar for colourblind readers \u2014 adds a little bias.'}`},
+    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Clearly distinguishable \u2014 reduces bias further.' : cbDist < 50 ? 'Colours look nearly identical to colourblind readers \u2014 a significant bias increase.' : 'Too similar for colourblind readers \u2014 adds bias.'}`},
     {delta:orderDelta, title:'Order', detail: state.womenFirst ? 'Listing women (the smaller share) first reduces bias slightly.' : 'Men are listed first by default \u2014 has a small bias cost.'},
     {delta:fontDelta, title:'Label size', detail: `Labels set to ${state.fontSize}px. ${state.fontSize>=11 ? 'Legible size reduces bias slightly.' : 'Below 11px is harder to read, a small bias cost.'}`}
   ];
@@ -734,7 +747,7 @@ function render(){
   list.innerHTML = '';
   rows.forEach(r=>{
     const cls = r.delta > 0 ? 'fail' : (r.delta < 0 ? 'pass' : 'neutral');
-    const icon = r.delta > 0 ? '\u25b2' : (r.delta < 0 ? '\u25bc' : '\u2013');
+    const icon = r.delta > 0 ? '\u25bc' : (r.delta < 0 ? '\u25b2' : '\u2013');
     const row = document.createElement('div');
     row.className = 'check';
     row.innerHTML = `<div class="check-icon ${cls}">${icon}</div>
@@ -742,21 +755,22 @@ function render(){
     list.appendChild(row);
   });
 
-  const score = Math.max(0, Math.min(100, Math.round(BASE_BIAS + titleDelta + iconDelta + paletteDelta + colorblindDelta + orderDelta + fontDelta)));
+  const biasTotal = BASE_BIAS + titleDelta + iconDelta + paletteDelta + colorblindDelta + orderDelta + fontDelta;
+  const score = Math.max(0, Math.min(100, Math.round(100 - biasTotal)));
   drawGauge(score);
   document.getElementById('scoreNum').textContent = score + '%';
   const scoreLabel = document.getElementById('scoreLabel');
   const liveTag = document.getElementById('live-tag');
-  if(score <= 10){
-    scoreLabel.textContent = 'Bias minimised';
+  if(score >= 90){
+    scoreLabel.textContent = 'Excellent, inclusive design';
     liveTag.textContent = 'fixed';
     liveTag.style.color = 'var(--pass)';
-  } else if(score <= 50){
+  } else if(score >= 50){
     scoreLabel.textContent = 'Getting there';
     liveTag.textContent = 'fixing\u2026';
     liveTag.style.color = 'var(--warn)';
   } else {
-    scoreLabel.textContent = 'High bias';
+    scoreLabel.textContent = 'Needs work';
     liveTag.textContent = 'unfixed';
     liveTag.style.color = 'var(--fail)';
   }
