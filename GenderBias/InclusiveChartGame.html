@@ -356,7 +356,13 @@
     </div>
   </div>
 
-  <div class="footer-note"><h3>Key Takeaway</h3><p style="margin:0;">Why this matters: colour, iconography, wording and even ordering are all data too. A palette that maps "women" to pink and "men" to blue, icons that show women only with children and men only with briefcases, a headline that treats one sex as the norm and the other as the exception, or always listing one category first — all assert something the underlying indicator never claimed. Note also that filling a human silhouette to represent a share (as in the reference, left) is itself a design choice worth discussing: it can make a statistic feel more human, but it also risks presenting the body itself as the unit of measurement. A neutral, colourblind-safe, legible design lets the numbers make the argument instead of the imagery.</p></div>
+  <div class="footer-note"><h3>Key Takeaway</h3><p style="margin:0;">Why this matters: Data visualization is not only about
+  displaying numbers. Colours, icons, wording, ordering and visual metaphors all convey information and can influence
+  interpretation. Mapping women to pink and men to blue, using stereotypical icons, treating one group as the default,
+  or always listing one category first introduces messages that are absent from the data. Even representing a percentage
+  by filling a human silhouette is a design choice: it can make the statistic more relatable, but it may also shift attention
+  from the measure to the person. Good data visualization minimizes these unintended messages, allowing the data—not the
+  design—to tell the story.</p></div>
 </div>
 
 <script>
@@ -733,16 +739,16 @@ function render(){
   const fontDelta = state.fontSize >= 11 ? -5 : 0;
 
   const rows = [
-    {delta:titleDelta, title:'Title framing', detail: state.titleId==='plain' ? 'A plain, neutral title neither adds nor reduces bias \u2014 it just doesn\u2019t engage.'
+    {delta:titleDelta, title:'Title framing', detail: state.titleId==='plain' ? 'A plain, neutral title neither adds nor reduces score \u2014 it just doesn\u2019t engage.'
       : state.titleId==='severe' ? '\u201cMen in charge\u201d actively increases perceived bias by framing men as the norm.'
       : 'Engaging, women-centred framing without stigmatising language reduces bias.'},
-    {delta:iconDelta, title:'Pictogram choice', detail: state.pictogramChoiceId==='bars' ? 'Plain bars carry no body imagery, which keeps bias low.'
-      : state.pictogramChoiceId==='silhouette-occupation' ? 'A man-with-a-tie stereotype vs. a nurse icon still encodes career/authority vs. caregiving roles by sex, even without an explicit occupation label \u2014 a strong bias increase.'
+    {delta:iconDelta, title:'Pictogram choice', detail: state.pictogramChoiceId==='bars' ? 'Plain bars carry no body imagery, increasing your score.'
+      : state.pictogramChoiceId==='silhouette-occupation' ? 'A man-with-a-tie stereotype vs. a nurse icon still encodes career/authority vs. caregiving roles by sex, even without an explicit occupation label \u2014 a strong score decrease.'
       : 'Any human silhouette (even a neutral one) still adds some gendered body imagery compared to plain bars.'},
-    {delta:paletteDelta, title:'Colour palette', detail: paletteStereotyped ? 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype that increases bias.' : 'A palette that doesn\u2019t rely on pink/blue reduces bias.'},
-    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Clearly distinguishable \u2014 reduces bias further.' : cbDist < 50 ? 'Colours look nearly identical to colourblind readers \u2014 a significant bias increase.' : 'Too similar for colourblind readers \u2014 adds bias.'}`},
-    {delta:orderDelta, title:'Order', detail: state.womenFirst ? 'Listing women (the smaller share) first reduces bias slightly.' : 'Men are listed first by default \u2014 has a small bias cost.'},
-    {delta:fontDelta, title:'Label size', detail: `Labels set to ${state.fontSize}px. ${state.fontSize>=11 ? 'Legible size reduces bias slightly.' : 'Below 11px is harder to read, a small bias cost.'}`}
+    {delta:paletteDelta, title:'Colour palette', detail: paletteStereotyped ? 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype that decrease score.' : 'A palette that doesn\u2019t rely on pink/blue increases the score.'},
+    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Clearly distinguishable \u2014 increases score further.' : cbDist < 50 ? 'Colours look nearly identical to colourblind readers \u2014 a significant score decrease.' : 'Too similar for colourblind readers \u2014 reduces score.'}`},
+    {delta:orderDelta, title:'Order', detail: state.womenFirst ? 'Listing women (the smaller share) first increases score slightly.' : 'Men are listed first by default \u2014 has a small  cost.'},
+    {delta:fontDelta, title:'Label size', detail: `Labels set to ${state.fontSize}px. ${state.fontSize>=11 ? 'Legible size reduces score slightly.' : 'Below 11px is harder to read, a small cost.'}`}
   ];
 
   const list = document.getElementById('checklist');
