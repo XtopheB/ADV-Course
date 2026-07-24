@@ -433,15 +433,15 @@ const pictogramChoices = [
   {id:'silhouette-occupation', label:'Working man and woman', style:'silhouette', icon:{men:'sdg-worker', women:'sdg-nurse'}},
   {id:'silhouette-neutral', label:'Women silhouette vs Men silhouette', style:'silhouette', icon:{men:'sdg-man-full', women:'sdg-woman-full'}},
   {id:'bars', label:'Bars', style:'bars', icon:null},
-  {id:'bars-icon', label:'Bars with women/men silhouette on top', style:'bars', icon:{men:'sdg-man-profile', women:'sdg-woman-profile'}}
+  {id:'bars-icon', label:'Bars with silhouette on top', style:'bars', icon:{men:'sdg-man-profile', women:'sdg-woman-profile'}}
 ];
 function getPictogramChoice(id){ return pictogramChoices.find(c=>c.id===id); }
 
 const titles = [
-  {id:'plain', text:'Local government seats, by sex', good:false},
-  {id:'engaging1', text:'Meet the women reshaping local government', good:true},
-  {id:'severe', text:'Men in charge: the truth about women in local government', good:false},
-  {id:'engaging2', text:"Women's growing voice in local councils", good:true}
+  {id:'plain', text:'Local government seats, by sex.', good:false},
+  {id:'engaging1', text:'How close are we to equal representation in local government?', good:true},
+  {id:'severe', text:'Men in charge: the truth about women in local government.', good:false},
+  {id:'engaging2', text:"Behind the numbers: gender balance in local government.", good:true}
 ];
 
 const state = {
@@ -725,7 +725,7 @@ function render(){
   const cbMen = simulateDeuteranopia(state.colorMen);
   const cbWomen = simulateDeuteranopia(state.colorWomen);
   const cbDist = colorDistance(cbMen, cbWomen);
-  const colorblindGood = cbDist >= 120;
+  const colorblindGood = cbDist >= 200;
 
   const paletteStereotyped = isPinkish(state.colorWomen) && isBluish(state.colorMen);
 
@@ -737,21 +737,21 @@ function render(){
     : 8; // bars-icon or silhouette-neutral
   const paletteDelta = paletteStereotyped ? 20 : -10;
   // graduated: near-identical colours (low distance) are penalised hard, not just flatly
-  const colorblindDelta = Math.max(-8, Math.min(15, -8 + (120 - cbDist) * 0.5));
+  const colorblindDelta = Math.max(-8, Math.min(15, -8 + (200 - cbDist) * 0.5));
   const orderDelta = state.womenFirst ? -3 : 0;
   const fontDelta = state.fontSize >= 11 ? -5 : 0;
 
   const rows = [
     {delta:titleDelta, title:'Title framing', detail: state.titleId==='plain' ? 'A plain, neutral title neither adds nor reduces score \u2014 it just doesn\u2019t engage.'
       : state.titleId==='severe' ? '\u201cMen in charge\u201d actively increases perceived bias by framing men as the norm.'
-      : 'Engaging, women-centred framing without stigmatising language increases score.'},
-    {delta:iconDelta, title:'Pictogram choice', detail: state.pictogramChoiceId==='bars' ? 'Plain bars carry no body imagery, increasing your score.'
-      : state.pictogramChoiceId==='silhouette-occupation' ? 'A man-with-a-tie stereotype vs. a nurse icon still encodes career/authority vs. caregiving roles by sex, even without an explicit occupation label \u2014 a strong score decrease.'
-      : 'Any human silhouette (even a neutral one) still adds some gendered body imagery compared to plain bars.'},
-    {delta:paletteDelta, title:'Colour palette', detail: paletteStereotyped ? 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype that decrease score.' : 'A palette that doesn\u2019t rely on pink/blue increases the score.'},
-    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Clearly distinguishable \u2014 increases score further.' : cbDist < 50 ? 'Colours look nearly identical to colourblind readers \u2014 a significant score decrease.' : 'Too similar for colourblind readers \u2014 reduces score.'}`},
-    {delta:orderDelta, title:'Order', detail: state.womenFirst ? 'Listing women (the smaller share) first increases score slightly.' : 'Men are listed first by default \u2014 has a small  cost.'},
-    {delta:fontDelta, title:'Label size', detail: `Labels set to ${state.fontSize}px. ${state.fontSize>=11 ? 'Legible size reduces score slightly.' : 'Below 11px is harder to read, a small cost.'}`}
+      : 'Engaging, without stigmatising language.'},
+    {delta:iconDelta, title:'Pictogram choice', detail: state.pictogramChoiceId==='bars' ? 'Plain bars carry no body imagery. Good choice.'
+      : state.pictogramChoiceId==='silhouette-occupation' ? 'A man-with-a-tie stereotype vs. a nurse icon still encodes career/authority vs. caregiving roles by sex, even without an explicit occupation label.'
+      : 'Any human silhouette (even a neutral one) still adds some gendered body imagery compared to plain bars. Also distords comparisons.'},
+    {delta:paletteDelta, title:'Colour palette', detail: paletteStereotyped ? 'This palette maps women to pink and men to blue \u2014 a strong cultural stereotype.' : 'A palette that doesn\u2019t rely on pink/blue. Good choice.'},
+    {delta:colorblindDelta, title:'Colourblind distinguishability', detail: `Simulated deuteranopia colour distance: ${cbDist.toFixed(0)}. ${colorblindGood ? 'Clearly distinguishable. Good choice' : cbDist < 250 ? 'Colours may look nearly identical to colourblind readers. Try again.' : 'Too similar for colourblind readers.'}`},
+    {delta:orderDelta, title:'Order', detail: state.womenFirst ? 'Listing women (the smaller share) first increases score slightly.' : 'Men are listed first by default. We may prefer the reverse.'},
+    {delta:fontDelta, title:'Label size', detail: `Labels set to ${state.fontSize}px. ${state.fontSize>=11 ? 'Legible size reduces score slightly.' : 'Below 11px is harder to read.'}`}
   ];
 
   const list = document.getElementById('checklist');
