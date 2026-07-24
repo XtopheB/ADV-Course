@@ -158,7 +158,7 @@ regional_scale_by   <- round(n_subregions / regional_focus_span, 1)
 
 # Scrollytelling with maps
 
-*Christophe Bontemps (SIAP)*
+*Christophe Bontemps (SIAP) -  Version  1.5 (2026)*
 
 ***Scrollytelling*** combines narrative text with interactive maps to reveal information progressively as the reader scrolls. By synchronizing map movements and visual changes with the story, it helps audiences explore complex geographic data in a clear and engaging way.
 
@@ -285,5 +285,10 @@ This is the most important limitation of Choropleth maps. Interactivity here hel
 Scrollytelling with maps offer a powerful way to combine narrative, data, and geography into a single interactive experience. By synchronizing movements on a map (zooming, panning, highlighting) with explanatory text, they guide readers through complex spatial information in a clear and engaging way.
 
 Effective scrollytelling is not simply about adding animation. Rather, it is about using animation and data visualization to support a compelling narrative, draw attention to key insights, and help the audience develop a deeper understanding of the information being presented.
+
+---
+ 
+This demo has been created using *closeread* with R code (maps) and a *quarto* notebook. 
+
 
 
