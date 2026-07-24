@@ -269,7 +269,7 @@
 <body>
 <div class="wrap">
   <h1>Redesign the Chart</h1>
-  <p class="eyebrow">Christophe Bontemps (SIAP) - <i>Version 1.2 (2026)</i></p>
+  <p class="eyebrow">Christophe Bontemps (SIAP) - <i>Version 1.4 (2026)</i></p>
   <p class="intro"> There are many choices one can do when designing a chart, even a simple one. 
     Below is an example, where an SDG indicator is reported using a chart that encodes gender through color, iconography
   and wording. Adjust the controls (palette, pictograms, title, ..) and improve the data visualization score.
@@ -454,6 +454,7 @@ const state = {
   legend: true,
   womenFirst: false
 };
+let hasInteracted = false;
 
 function populateSelect(id, items, valueKey){
   const sel = document.getElementById(id);
@@ -723,6 +724,9 @@ function render(){
   const selectedTitle = titles.find(t=>t.id===state.titleId);
   document.getElementById('after-title').textContent = selectedTitle.text;
 
+  document.querySelector('.lower').style.display = hasInteracted ? 'grid' : 'none';
+  if(!hasInteracted) return;
+
   const cbMen = simulateDeuteranopia(state.colorMen);
   const cbWomen = simulateDeuteranopia(state.colorWomen);
   const cbDist = colorDistance(cbMen, cbWomen);
@@ -789,6 +793,7 @@ function render(){
 }
 
 document.getElementById('paletteSelect').addEventListener('change', e=>{
+  hasInteracted = true;
   const p = palettes.find(x=>x.id===e.target.value);
   state.paletteId = p.id;
   const customWrap = document.getElementById('customPickers');
@@ -806,29 +811,35 @@ document.getElementById('paletteSelect').addEventListener('change', e=>{
   render();
 });
 document.getElementById('colorMen').addEventListener('input', e=>{
+  hasInteracted = true;
   state.colorMen = e.target.value;
   document.getElementById('colorMenHex').textContent = e.target.value.toUpperCase();
   render();
 });
 document.getElementById('colorWomen').addEventListener('input', e=>{
+  hasInteracted = true;
   state.colorWomen = e.target.value;
   document.getElementById('colorWomenHex').textContent = e.target.value.toUpperCase();
   render();
 });
 document.getElementById('pictogramChoice').addEventListener('change', e=>{
+  hasInteracted = true;
   state.pictogramChoiceId = e.target.value;
   render();
 });
 document.getElementById('titleSelect').addEventListener('change', e=>{
+  hasInteracted = true;
   state.titleId = e.target.value;
   render();
 });
 document.getElementById('fontSize').addEventListener('input', e=>{
+  hasInteracted = true;
   state.fontSize = parseInt(e.target.value,10);
   document.getElementById('fontSizeVal').textContent = state.fontSize;
   render();
 });
 document.getElementById('legendToggle').addEventListener('click', ()=>{
+  hasInteracted = true;
   state.legend = !state.legend;
   const track = document.querySelector('#legendToggle .toggle-track');
   track.classList.toggle('on', state.legend);
@@ -836,6 +847,7 @@ document.getElementById('legendToggle').addEventListener('click', ()=>{
   render();
 });
 document.getElementById('orderToggle').addEventListener('click', ()=>{
+  hasInteracted = true;
   state.womenFirst = !state.womenFirst;
   document.getElementById('orderTrack').classList.toggle('on', state.womenFirst);
   document.getElementById('orderState').textContent = state.womenFirst ? 'On (women first)' : 'Off (men first)';
