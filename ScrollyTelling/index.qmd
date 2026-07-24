@@ -286,4 +286,9 @@ Scrollytelling with maps offer a powerful way to combine narrative, data, and ge
 
 Effective scrollytelling is not simply about adding animation. Rather, it is about using animation and data visualization to support a compelling narrative, draw attention to key insights, and help the audience develop a deeper understanding of the information being presented.
 
+---
+ 
+This demo has been done using *closeread* with R code (maps) and a *quarto* notebook. 
+
+
 
