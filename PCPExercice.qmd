@@ -255,7 +255,7 @@ Coloring the lines by sex makes the two groups visually distinct.
 data_with_sex <- data %>%
   select(id, sex, , income, age, education)
 
-ggparcoord(
+fig.sex <- ggparcoord(
   data_with_sex,
   columns = 3:5,
   groupColumn = "sex",
@@ -266,6 +266,7 @@ ggparcoord(
   labs(title = "Two Distinct Groups", x = NULL, y = "Scaled Values (0-1)") +
   theme_minimal() +
   theme(legend.position = "none")
+fig.sex
 ```
 
 ## Key Patterns
@@ -289,6 +290,11 @@ data %>%
     digits = 1,
     col.names = c("Sex", "N", "Avg Age", "Avg Education", "Avg Income")
   )
+```
+
+
+```{r}
+fig.sex
 ```
 
 ## Key Insights
