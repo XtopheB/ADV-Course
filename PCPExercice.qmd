@@ -1,14 +1,30 @@
 ---
 title: "Exercise with Parallel Coordinate Plots (PCP)"
 subtitle: "*An example*"
-author: "Christophe Bontemps (SIAP)"
-date: last-modified
+author:
+  - name:  "Christophe Bontemps (SIAP)"
+    affiliation:  "![](Images/escap_siap_logo.png){width=150px} "
+
 format:
   revealjs:
-    toc: false
+    theme: solarized
+    css: myReveal.css
+    embed-resources: true
     slide-number: true
-    theme: default
-    incremental: false
+    footer: "Christophe Bontemps - SIAP "
+    transition: fade
+    center: false
+    progress: true
+  html:
+    toc: true
+    code-fold: true
+  pdf:
+    documentclass: article
+    toc: true
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
 ```{r setup, include=FALSE}
@@ -39,35 +55,83 @@ Parallel Coordinate Plots (PCP) are a powerful visualization technique for explo
 library(tidyverse)
 library(GGally)      # For ggparcoord
 library(plotly)      # For interactive plots
+library(kableExtra)  # for tables
 ```
 
 ## Data
 
-We generate the data for the sake of the exercise.
+Data set used for the sake of the exercise (generated).
 
 ```{r generate-data}
 set.seed(123)
 
-data <- tibble(
-  id = 1:10,
-  sex = c(rep("Men", 6), rep("Women", 4)),
-
-  # Age: Men older (45-55), Women younger (25-35)
-  age = c(48, 52, 45, 50, 47, 54,
-          28, 32, 26, 30),
-
-  # Education: Men lower (12-14 yrs), Women higher (16-18 yrs)
-  education = c(12, 14, 13, 12, 14, 13,
-                18, 17, 18, 16),
-
-  # Income: Men high (70k-90k), Women moderate (40k-55k)
-  income = c(85000, 78000, 82000, 90000, 75000, 88000,
-             48000, 52000, 45000, 50000)
-)
-
-write.csv(select(data, age, education, income),
-          "Data/PCPData.csv", row.names = FALSE)
+# data <- tibble(
+#   id = 1:10,
+#   sex = c(rep("Men", 6), rep("Women", 4)),
+# 
+#   # Age: Men older (45-55), Women younger (25-35)
+#   age = c(48, 52, 45, 50, 47, 54,
+#           28, 32, 26, 30),
+# 
+#   # Education: Men lower (12-14 yrs), Women higher (16-18 yrs)
+#   education = c(12, 14, 13, 12, 14, 13,
+#                 18, 17, 18, 16),
+# 
+#   # Income: Men high (70k-90k), Women moderate (40k-55k)
+#   income = c(85000, 78000, 82000, 90000, 75000, 88000,
+#              48000, 52000, 45000, 50000)
+# )
 ```
+
+
+```{r}
+N = 10
+
+
+generate_pcp_data <- function(Nobs) {
+ set.seed(123)
+ n_men   <- round(Nobs * 0.6)
+ n_women <- Nobs - n_men
+
+  tibble(
+    id  = 1:Nobs,
+    sex = c(rep("Men", n_men), rep("Women", n_women)),
+    age = round(c(rnorm(n_men,   mean = 49.3,  sd = 5),
+                  rnorm(n_women, mean = 49.3,    sd = 6))),
+    education = round(c(rnorm(n_men,   mean = 13,    sd = 0.9),
+                        rnorm(n_women, mean = 17.25, sd = 0.96))),
+    income = round(c(rnorm(n_men,   mean = 83000, sd = 4700),
+                     rnorm(n_women, mean = 65750, sd = 5100)))
+  )
+}
+
+data <- generate_pcp_data(N)
+```
+
+
+
+
+```{r write-data}
+#| eval: false
+#| include: false
+write.csv(select(data, age, education, income),
+          paste0("Data/PCPData-",Nobs,".csv"), row.names = FALSE)
+```
+
+```{r}
+data %>% 
+  select(-sex) %>%
+  select(-1) %>%   # Remove id
+  kable(caption = paste0("Data Set, N=",N),
+    align = "c",
+    digits = 2
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE
+  )
+```
+
 
 ## Basic Parallel Coordinate Plot
 
@@ -78,12 +142,12 @@ data_pcp <- data %>%
 
 ggparcoord(
   data_pcp,
-  columns = 2:4,
+  columns = c(4,2,3),
   groupColumn = "id",
   scale = "uniminmax"
 ) +
   labs(
-    title = "Age, Education, and Income",
+    title = "Income, Age and Education",
     x = NULL, y = "Scaled Values (0-1)"
   ) +
   theme_minimal() +
@@ -96,18 +160,18 @@ Notice how the lines form two distinct groups, even though we haven't colored th
 
 ## Enhanced PCP with Transparency
 
-Adding transparency (`alpha`) helps reveal overlapping patterns and density.
+Adding transparency (`alpha`) helps reveal overlapping patterns.
 
 ```{r enhanced-pcp}
 #| fig-align: center
 ggparcoord(
   data_pcp,
-  columns = 2:4,
+  columns = c(4,2,3),
   groupColumn = "id",
   scale = "uniminmax",
-  alphaLines = 0.6
+  alphaLines = 0.2
 ) +
-  geom_line(linewidth = 1.2) +
+  geom_line(linewidth = 1.2, alpha =  0.2) +
   labs(title = "With transparency", x = NULL, y = "Scaled Values") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -115,11 +179,10 @@ ggparcoord(
 
 ## Interactive Version {.smaller}
 
-Click the button to reveal the hidden grouping by **sex**.
+Using interactivity and applying a color to the two groups
 
 ```{r interactive-pcp}
-#| fig-height: 5 
-#| fig-width: 8
+
 plot_data <- data %>%
   mutate(
     color_code = ifelse(sex == "Men", 0, 1),
@@ -144,9 +207,10 @@ fig <- plot_ly(
     width = 4
   ),
   dimensions = list(
-    list(label = 'Age', values = ~age, range = c(20, 60)),
-    list(label = 'Education (years)', values = ~education, range = c(10, 20)),
-    list(label = 'Income ($)', values = ~income, range = c(30000, 90000))
+    list(label = 'Income ($)', values = ~income, range = c(60000, 90000)),
+    list(label = 'Age', values = ~age, range = c(20, 70)),
+    list(label = 'Education (years)', values = ~education, range = c(10, 20))
+    
   )
 )
 
@@ -173,7 +237,7 @@ fig <- fig %>%
       )
     )),
     margin = list(l = 100, r = 100, t = 110, b = 30),
-    height = 380,
+    height = 400,
     autosize = TRUE,
     plot_bgcolor = '#f8f9fa',
     paper_bgcolor = 'white'
@@ -189,7 +253,7 @@ Coloring the lines by sex makes the two groups visually distinct.
 ```{r pcp-colored}
 #| fig-align: center
 data_with_sex <- data %>%
-  select(id, sex, age, education, income)
+  select(id, sex, , income, age, education)
 
 ggparcoord(
   data_with_sex,
