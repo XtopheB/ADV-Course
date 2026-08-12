@@ -1,0 +1,247 @@
+---
+title: "Exercise with Parallel Coordinate Plots (PCP)"
+subtitle: "*An example*"
+author: "Christophe Bontemps (SIAP)"
+date: last-modified
+format:
+  revealjs:
+    toc: false
+    slide-number: true
+    theme: default
+    incremental: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+## Introduction
+
+Parallel Coordinate Plots (PCP) are a powerful visualization technique for exploring multivariate data.
+
+- Each variable is a vertical axis
+- Each observation is a connected line across the axes
+- Useful for spotting patterns across **many dimensions at once**
+
+<!-- ## Load Libraries -->
+
+<!-- Before running this code, install 3 packages: -->
+
+<!-- - `tidyverse` – main package for data science -->
+<!-- - `GGally` – provides `ggparcoord()` for PCPs -->
+<!-- - `plotly` – for interactive graphics -->
+
+```{r load-libraries}
+library(tidyverse)
+library(GGally)      # For ggparcoord
+library(plotly)      # For interactive plots
+```
+
+## Data
+
+We generate the data for the sake of the exercise.
+
+```{r generate-data}
+set.seed(123)
+
+data <- tibble(
+  id = 1:10,
+  sex = c(rep("Men", 6), rep("Women", 4)),
+
+  # Age: Men older (45-55), Women younger (25-35)
+  age = c(48, 52, 45, 50, 47, 54,
+          28, 32, 26, 30),
+
+  # Education: Men lower (12-14 yrs), Women higher (16-18 yrs)
+  education = c(12, 14, 13, 12, 14, 13,
+                18, 17, 18, 16),
+
+  # Income: Men high (70k-90k), Women moderate (40k-55k)
+  income = c(85000, 78000, 82000, 90000, 75000, 88000,
+             48000, 52000, 45000, 50000)
+)
+
+write.csv(select(data, age, education, income),
+          "Data/PCPData.csv", row.names = FALSE)
+```
+
+## Basic Parallel Coordinate Plot
+
+```{r basic-pcp}
+#| fig-align: center
+data_pcp <- data %>%
+  select(id, age, education, income)
+
+ggparcoord(
+  data_pcp,
+  columns = 2:4,
+  groupColumn = "id",
+  scale = "uniminmax"
+) +
+  labs(
+    title = "Age, Education, and Income",
+    x = NULL, y = "Scaled Values (0-1)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+::: {.notes}
+Notice how the lines form two distinct groups, even though we haven't colored them.
+:::
+
+## Enhanced PCP with Transparency
+
+Adding transparency (`alpha`) helps reveal overlapping patterns and density.
+
+```{r enhanced-pcp}
+#| fig-align: center
+ggparcoord(
+  data_pcp,
+  columns = 2:4,
+  groupColumn = "id",
+  scale = "uniminmax",
+  alphaLines = 0.6
+) +
+  geom_line(linewidth = 1.2) +
+  labs(title = "With transparency", x = NULL, y = "Scaled Values") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Interactive Version {.smaller}
+
+Click the button to reveal the hidden grouping by **sex**.
+
+```{r interactive-pcp}
+#| fig-height: 5 
+#| fig-width: 8
+plot_data <- data %>%
+  mutate(
+    color_code = ifelse(sex == "Men", 0, 1),
+    label = paste0(
+      "ID: ", id, "<br>",
+      "Sex: ", sex, "<br>",
+      "Age: ", age, "<br>",
+      "Education: ", education, " years<br>",
+      "Income: $", format(income, big.mark = ",")
+    )
+  )
+
+n <- nrow(plot_data)
+
+fig <- plot_ly(
+  data = plot_data,
+  type = 'parcoords',
+  line = list(
+    color = rep(0, n),
+    colorscale = list(c(0, '#999999'), c(1, '#999999')),
+    showscale = FALSE,
+    width = 4
+  ),
+  dimensions = list(
+    list(label = 'Age', values = ~age, range = c(20, 60)),
+    list(label = 'Education (years)', values = ~education, range = c(10, 20)),
+    list(label = 'Income ($)', values = ~income, range = c(30000, 90000))
+  )
+)
+
+fig <- fig %>%
+  layout(
+    title = list(text = "Parallel Coordinate Plot", font = list(size = 16), y = 0.98),
+    annotations = list(list(
+      text = "Drag axes to filter",
+      showarrow = FALSE, xref = "paper", yref = "paper",
+      x = 0.8, y = 1.15, font = list(size = 9, color = "grey40")
+    )),
+    updatemenus = list(list(
+      type = "buttons", direction = "right",
+      x = 0.5, xanchor = "center", y = 1.3, yanchor = "top",
+      buttons = list(
+        list(method = "restyle",
+             args = list(list("line.color" = list(rep(0, n)),
+                               "line.colorscale" = list(list(c(0, '#999999'), c(1, '#999999'))))),
+             label = "No Color"),
+        list(method = "restyle",
+             args = list(list("line.color" = list(plot_data$color_code),
+                               "line.colorscale" = list(list(c(0, '#3498DB'), c(1, '#E74C3C'))))),
+             label = "Color")
+      )
+    )),
+    margin = list(l = 100, r = 100, t = 110, b = 30),
+    height = 380,
+    autosize = TRUE,
+    plot_bgcolor = '#f8f9fa',
+    paper_bgcolor = 'white'
+  )
+
+fig
+```
+
+## PCP with Hidden Grouping
+
+Coloring the lines by sex makes the two groups visually distinct.
+
+```{r pcp-colored}
+#| fig-align: center
+data_with_sex <- data %>%
+  select(id, sex, age, education, income)
+
+ggparcoord(
+  data_with_sex,
+  columns = 3:5,
+  groupColumn = "sex",
+  scale = "uniminmax",
+  alphaLines = 0.7
+) +
+  scale_color_manual(values = c("Men" = "#3498DB", "Women" = "#E74C3C")) +
+  labs(title = "Two Distinct Groups", x = NULL, y = "Scaled Values (0-1)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+## Key Patterns
+
+- **Blue lines** (Men): Higher age and income, moderate education
+- **Red lines** (Women): Lower age and income, higher education
+
+## Summary Statistics by Group
+
+```{r summary-stats}
+data %>%
+  group_by(sex) %>%
+  summarise(
+    n = n(),
+    avg_age = mean(age),
+    avg_education = mean(education),
+    avg_income = mean(income),
+    .groups = "drop"
+  ) %>%
+  knitr::kable(
+    digits = 1,
+    col.names = c("Sex", "N", "Avg Age", "Avg Education", "Avg Income")
+  )
+```
+
+## Key Insights
+
+1. **Two Distinct Patterns**: Even without labeling sex, two clear groups emerge
+2. **Age–Income Relationship**: Higher age correlates with higher income (men)
+3. **Group Characteristics**
+   - Men: older, moderate education, higher income
+   - Women: younger, higher education, lower income
+
+## Conclusion
+
+Parallel Coordinate Plots are excellent for:
+
+- Visualizing multivariate relationships
+- Identifying patterns and clusters
+- Exploring high-dimensional data
+- Interactive data exploration
+
+The key advantage: seeing **multiple dimensions** simultaneously, making hidden patterns visible.
