@@ -140,18 +140,38 @@ data %>%
 data_pcp <- data %>%
   select(id, age, education, income)
 
+
+# Computing values for axes as workaround for scaling
+vars <- names(data_pcp)[2:4]
+
+range_labels <- data.frame(
+  x = seq_along(vars),
+  min_val = sapply(vars, function(v) min(data_pcp[[v]], na.rm = TRUE)),
+  max_val = sapply(vars, function(v) max(data_pcp[[v]], na.rm = TRUE))
+)
+
 ggparcoord(
   data_pcp,
   columns = c(4,2,3),
-  groupColumn = "id",
+  #groupColumn = "id",
+  showPoints = TRUE,
   scale = "uniminmax"
 ) +
   labs(
     title = "Income, Age and Education",
     x = NULL, y = "Scaled Values (0-1)"
   ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  geom_line(color = "orange")+
+  labs(title = "PCP with points", x = NULL, y = NULL) +
+ theme_minimal() +
+ theme(legend.position = "none",
+        axis.text.y = element_blank()) +
+  geom_text(data = range_labels, aes(x = x, y = -0.06, label = round(min_val, 1)),
+            inherit.aes = FALSE, size = 3, color = "grey30") +
+  geom_text(data = range_labels, aes(x = x, y = 1.06, label = round(max_val, 1)),
+            inherit.aes = FALSE, size = 3, color = "grey30") +
+  coord_cartesian(clip = "off", ylim = c(-0.1, 1.1))
+
 ```
 
 ::: {.notes}
@@ -246,49 +266,63 @@ fig <- fig %>%
 fig
 ```
 
-## PCP with Hidden Grouping
+## PCP with revealed group (hidden)
 
 Coloring the lines by sex makes the two groups visually distinct.
 
 ```{r pcp-colored}
 #| fig-align: center
 data_with_sex <- data %>%
-  select(id, sex, , income, age, education)
+  select(id, sex,  education,income,  age)
 
+# Computing values for axes
+vars <- names(data_with_sex)[3:5]
+
+range_labels <- data.frame(
+  x = seq_along(vars),
+  min_val = sapply(vars, function(v) min(data_with_sex[[v]], na.rm = TRUE)),
+  max_val = sapply(vars, function(v) max(data_with_sex[[v]], na.rm = TRUE))
+)
+
+# PCP
 fig.sex <- ggparcoord(
   data_with_sex,
   columns = 3:5,
-  groupColumn = "sex",
+  groupColumn = "sex",  # for color"
+  splineFactor = 1,  # Straight line
   scale = "uniminmax",
   alphaLines = 0.7
 ) +
   scale_color_manual(values = c("Men" = "#3498DB", "Women" = "#E74C3C")) +
-  labs(title = "Two Distinct Groups", x = NULL, y = "Scaled Values (0-1)") +
+  labs(title = "Two Distinct Groups", x = NULL, y = NULL) +
   theme_minimal() +
-  theme(legend.position = "none")
+ theme(legend.position = "top",
+        axis.text.y = element_blank()) +
+  geom_text(data = range_labels, aes(x = x, y = -0.06, label = round(min_val, 1)),
+            inherit.aes = FALSE, size = 3, color = "grey30") +
+  geom_text(data = range_labels, aes(x = x, y = 1.06, label = round(max_val, 1)),
+            inherit.aes = FALSE, size = 3, color = "grey30") +
+  coord_cartesian(clip = "off", ylim = c(-0.1, 1.1))
+
+
 fig.sex
 ```
 
-## Key Patterns
-
-- **Blue lines** (Men): Higher age and income, moderate education
-- **Red lines** (Women): Lower age and income, higher education
-
-## Summary Statistics by Group
+## Analysis by sex
 
 ```{r summary-stats}
 data %>%
   group_by(sex) %>%
   summarise(
-    n = n(),
-    avg_age = mean(age),
     avg_education = mean(education),
     avg_income = mean(income),
+    avg_age = mean(age),
+     n = n(),
     .groups = "drop"
   ) %>%
   knitr::kable(
     digits = 1,
-    col.names = c("Sex", "N", "Avg Age", "Avg Education", "Avg Income")
+    col.names = c("Sex", "Avg Education", "Avg Income","Avg Age",  "N")
   )
 ```
 
@@ -300,10 +334,10 @@ fig.sex
 ## Key Insights
 
 1. **Two Distinct Patterns**: Even without labeling sex, two clear groups emerge
-2. **Age–Income Relationship**: Higher age correlates with higher income (men)
+2. **Education–Income paradox**: Higher education correlates with lower income (women)
 3. **Group Characteristics**
-   - Men: older, moderate education, higher income
-   - Women: younger, higher education, lower income
+   - Men:  moderate education, higher income
+   - Women: higher education, lower income, a bit younger. 
 
 ## Conclusion
 
