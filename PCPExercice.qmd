@@ -85,7 +85,7 @@ set.seed(123)
 
 
 ```{r}
-N = 10
+N = 1000
 
 
 generate_pcp_data <- function(Nobs) {
@@ -152,7 +152,7 @@ range_labels <- data.frame(
 
 ggparcoord(
   data_pcp,
-  columns = c(4,2,3),
+  columns = c(2,3,4),
   #groupColumn = "id",
   showPoints = TRUE,
   scale = "uniminmax"
@@ -186,7 +186,7 @@ Adding transparency (`alpha`) helps reveal overlapping patterns.
 #| fig-align: center
 ggparcoord(
   data_pcp,
-  columns = c(4,2,3),
+  columns = c(2,3,4),
   #groupColumn = "id",
   scale = "uniminmax",
   alphaLines = 1/N  # This parameter is overpassed by next one (alpha)
