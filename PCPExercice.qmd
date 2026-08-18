@@ -187,11 +187,13 @@ Adding transparency (`alpha`) helps reveal overlapping patterns.
 ggparcoord(
   data_pcp,
   columns = c(4,2,3),
-  groupColumn = "id",
+  #groupColumn = "id",
   scale = "uniminmax",
-  alphaLines = 0.2
+  alphaLines = 1/N  # This parameter is overpassed by next one (alpha)
 ) +
-  geom_line(linewidth = 1.2, alpha =  0.2) +
+  geom_line(linewidth =  ifelse(N >10,  1.5, 1.2),
+            color = "orange",
+            alpha =  ifelse(N >10,  20/N, 0.5) ) +
   labs(title = "With transparency", x = NULL, y = "Scaled Values") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -227,10 +229,9 @@ fig <- plot_ly(
     width = 4
   ),
   dimensions = list(
-    list(label = 'Income ($)', values = ~income, range = c(60000, 90000)),
-    list(label = 'Age', values = ~age, range = c(20, 70)),
+    list(label = 'Income ($)', values = ~income, range = c(50000, 95000)),
+    list(label = 'Age', values = ~age, range = c(35, 65)),
     list(label = 'Education (years)', values = ~education, range = c(10, 20))
-    
   )
 )
 
@@ -291,7 +292,7 @@ fig.sex <- ggparcoord(
   groupColumn = "sex",  # for color"
   splineFactor = 1,  # Straight line
   scale = "uniminmax",
-  alphaLines = 0.7
+  alphaLines = ifelse(N >10,  20/N, 0.5)
 ) +
   scale_color_manual(values = c("Men" = "#3498DB", "Women" = "#E74C3C")) +
   labs(title = "Two Distinct Groups", x = NULL, y = NULL) +
