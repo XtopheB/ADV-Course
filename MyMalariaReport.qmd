@@ -1,0 +1,212 @@
+---
+title: "Malaria: Global Incidence Analysis"
+subtitle: " This example is one personal work, other analysis and graphics exist."
+author: "Christophe Bontemps (SIAP)"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+  # html:
+  #   toc: false
+  #   code-fold: true
+  #   fig-width: 8
+  #   fig-height: 5
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+library(scales)
+library(ggrepel)   
+library(plotly)
+
+world <- read_csv("Data/MalariaWorld.csv") |>
+  filter(!is.na(Value), Region != "NA")
+
+age <- read_csv("Data/MalariaByAge.csv") |>
+  mutate(Age = factor(Age,
+                       levels = c("01-05","05-14","15-29","30-49","50-59","60-69","70+"),
+                       labels = c("0-5","5-14","15-29","30-49","50-59","60-69","70+")))
+```
+
+## Part 1 — Global incidence (WHO, 2000–2021)
+
+Malaria incidence has fallen sharply worldwide since 2000, but the gains are uneven and progress has stalled in some countries.
+
+```{r regional-trend}
+region_avg <- world |>
+  group_by(Region, Year) |>
+  summarise(Value = mean(Value), .groups = "drop")
+
+ssa_2021 <- region_avg |> filter(Region == "Sub-Saharan Africa", Year == 2021) |> pull(Value)
+
+ggplot(region_avg, aes(Year, Value, group = Region)) +
+  geom_line(color = "grey75", linewidth = 0.6,
+            data = filter(region_avg, Region != "Sub-Saharan Africa")) +
+  geom_line(color = "#B2182B", linewidth = 1.2,
+            data = filter(region_avg, Region == "Sub-Saharan Africa")) +
+  annotate("text", x = 2021, y = ssa_2021, label = "Sub-Saharan\nAfrica",
+           hjust = 0, color = "#B2182B", size = 3.4, lineheight = 0.9,
+           nudge_x = 0.3) +
+  scale_x_continuous(limits = c(2000, 2024), breaks = seq(2000, 2020, 5)) +
+  labs(title = "Sub-Saharan Africa carries almost all of the global malaria burden",
+       subtitle = "Mean incidence per region, unweighted average of countries (per 1,000 at risk)",
+       x = NULL, y = "Incidence per 1,000 at risk",
+       caption = "Source: WHO World Malaria Report 2022") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot",
+        panel.grid.minor = element_blank())
+```
+
+Every other region sits close to the bottom of the chart but Sub-Saharan Africa is still at a very high level.
+
+```{r all-countries-spaghetti}
+last_year <- max(world$Year)
+
+# africa_avg <- world |>
+#   filter(Region == "Sub-Saharan Africa") |>
+#   group_by(Year) |>
+#   summarise(Value = mean(Value), .groups = "drop") |>
+#   mutate(Country = "Africa (avg.)")
+
+striking <- c("Burkina Faso", "Rwanda")
+
+Asia <- c("Solomon Islands", "Papua New Guinea")
+
+striking_df <- world |>
+  filter(Country %in% striking) |>
+  select(Country, Year, Value)
+
+Asia_df <- world |>
+  filter(Country %in% Asia) |>
+  select(Country, Year, Value)
+
+highlight_df <-  striking_df
+labels_df <- highlight_df |> filter(Year == last_year)
+
+highlight_Asia <-  Asia_df
+labels_Asia <- highlight_Asia |> filter(Year == last_year)
+
+t <-ggplot() +
+  geom_line(data = world, aes(Year, Value, group = Country),
+            color = "grey80", linewidth = 0.3, alpha = 0.7) +
+  geom_line(data = highlight_df, aes(Year, Value, group = Country),
+            color = "#B2182B", linewidth = 1) +
+  geom_text_repel(data = labels_df, aes(Year, Value, label = Country),
+                   color = "#B2182B",  size = 3.2,
+                   hjust = 0, direction = "y", 
+                  nudge_y = 3,
+                  segment.color = "grey60", segment.size = 0.3,
+                   xlim = c(NA, 2032)) +
+   geom_line(data = Asia_df, aes(Year, Value, group = Country),
+            color = "steelblue", linewidth = 1) +
+  geom_text_repel(data = labels_Asia, aes(Year, Value, label = Country),
+                   color = "steelblue",  size = 3.2,
+                   hjust = 0, direction = "y", nudge_x = 1.2,
+                   segment.color = "grey60", segment.size = 0.3,
+                   xlim = c(NA, 2032)) +
+  scale_x_continuous(limits = c(2000, 2032), breaks = seq(2000, 2020, 5)) +
+  labs(title = "African countries are the most affected, but a few countries in Asia-Pacific are also struggling",
+       subtitle = "Incidence per 1,000 at risk, all 110 countries (grey), 2000-2021",
+       x = NULL, y = "Incidence per 1,000 at risk",
+       caption = "Source: WHO World Malaria Report 2022") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        plot.title.position = "plot")
+
+#ggplotly(t)
+t
+
+```
+
+All 110 countries are represented there (in grey) and show a global decline in Malaria, while some striking patterns for some Sub-Saharan Africa countries (in red) show spikes and steady high level. In Asia-Pacific only a couple of countries (in Blue) still experience a high level (Solomon Islands and Papua New Guinea). These are the exceptions to an otherwise low, flat, global backdrop (in grey).
+
+### Focus on some specific stories: 
+
+```{r country-facets}
+highlight <- c("Sri Lanka", "Paraguay", "Timor-Leste",
+               "Madagascar", "Djibouti", "Venezuela (Bolivarian Republic of)")
+
+world_hl <- world |>
+  filter(Country %in% highlight) |>
+  mutate(Country = recode(Country, "Venezuela (Bolivarian Republic of)" = "Venezuela"),
+         pattern = if_else(Country %in% c("Sri Lanka", "Paraguay", "Timor-Leste"),
+                            "Eliminated", "Resurged"),
+         Country = factor(Country, levels = c("Sri Lanka", "Paraguay", "Timor-Leste",
+                                                "Madagascar", "Djibouti", "Venezuela")))
+
+ggplot(world_hl, aes(Year, Value, color = pattern)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~Country, scales = "free_y", ncol = 3) +
+  scale_color_manual(values = c("Eliminated" = "#2166AC", "Resurged" = "#B2182B")) +
+  labs(title = "Two opposite country stories",
+       subtitle = "Elimination successes (blue) vs. resurgence (red).",
+       x = NULL, y = "Incidence per 1,000 at risk", color = NULL,
+       caption = "Note: Top and bottom panels have different y-axes scales. \n 
+       Source: WHO World Malaria Report 2022") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "top",
+        plot.title.position = "plot",
+        panel.grid.minor = element_blank())
+```
+
+**Elimination stories:** Sri Lanka, Paraguay and Timor-Leste all reached zero locally-transmitted cases, while Madagascar's incidence roughly tripled since 2000. Djibouti went from near-zero to one of the highest rates in the world, and Venezuela's incidence climbed.
+
+## Part 2 — Age analysis: Who Malaria kills?
+
+```{r age-summary}
+totals <- age |> group_by(Year) |> summarise(total = sum(Value))
+u5_share <- age |> filter(Age == "0-5") |>
+  left_join(totals, by = "Year") |>
+  mutate(share = Value / total)
+```
+
+Globally, the estimated deaths almost halved from `r comma(totals$total[1])` (in 2000) to `r comma(totals$total[4])` (2019), but children under 5 still made up **`r percent(u5_share$share[4], accuracy = 1)`** of all malaria deaths in 2019. Even if the numbers are decreasing since 2000, children under the age of 5 are the most affected by Malaria.
+
+```{r age-chart}
+#| eval: false
+#| include: false
+
+lbls <- age |> filter(Age == "0-5") |>
+  left_join(u5_share |> select(Year, share), by = "Year")
+
+ggplot(age, aes(Year, Value, fill = fct_rev(Age))) +
+  geom_col(position = "stack", width = 3.2) +
+#  geom_text(data = lbls, aes(y = Value / 2, label = percent(share, accuracy = 1)),
+#           inherit.aes = FALSE, color = "white", fontface = "bold", size = 3.6) +
+  scale_x_continuous(breaks = c(2000, 2010, 2015, 2019)) +
+  scale_y_continuous(labels = comma) +
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                     guide = guide_legend(reverse = TRUE)) +
+  labs(title = "Children under 5 dominate malaria deaths — every year",
+       subtitle = "Estimated malaria deaths by age group, sub-Saharan Africa (labels = under-5 share)",
+       x = NULL, y = "Estimated deaths", fill = "Age group",
+       caption = "Source: WHO Global Health Estimates") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot",
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank())
+```
+
+```{r age-area}
+ggplot(age, aes(Year, Value, fill = fct_rev(Age))) +
+  geom_area(position = "stack", alpha = 0.9) +
+  geom_point(color = "white", size = 0.8, position = "stack", show.legend = FALSE) +
+  scale_x_continuous(breaks = c(2000, 2010, 2015, 2019)) +
+  scale_y_continuous(labels = comma) +
+  scale_fill_brewer(palette = "Blues", direction = -1,
+                     guide = guide_legend(reverse = TRUE)) +
+  labs(title = "Malaria kills mostly children, even if the numbers are decreasing",
+       subtitle = "Estimated malaria deaths by age group, sub-Saharan Africa",
+       x = NULL, y = "Estimated deaths", fill = "Age group",
+       caption = "Note: Years are unevenly spaced (2000, 2010, 2015, 2019).\nSource: WHO Global Health Estimates") +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot",
+        panel.grid.minor = element_blank())
+```
+
+The thick bottom band represent children (under 5). The estimated death shrinks steadily, while the thin upper bands (older age groups) barely move — almost all of the progress against malaria mortality has come from protecting young children, even if that share represents the vast majority of deaths.

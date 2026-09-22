@@ -3,17 +3,20 @@
 .Rhistory
 .RData
 .Ruserdata
-
 # *.html
 *.md
 *.Rproj
 *.pdf
-# Specific
 
+# data
+*.csv
+
+
+# Specific
 LineUncertainty_cache
 LineUncertainty_files
 report_files
 RegressionLineUncertainty_cache
 RegressionLineUncertainty_files
 *.nb.html
-
+ADVProjectExampleMalaria_files
