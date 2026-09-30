@@ -44,6 +44,25 @@
   font-size: 0.95em;
 }
 
+/* ---- Changed for slides on ggplot (left column)
+*/
+.reveal .column:first-child p,
+.reveal .column:first-child li {
+  font-size: 0.72em;
+}
+
+
+/* -----------------------------
+   CODE BLOCK BACKGROUND & LINE NUMBERS
+   ----------------------------- */
+
+/* Light grey background instead of yellow */
+.reveal pre,
+.reveal pre code {
+  background-color: #f0f0f0 !important;
+}
+
+
 /* -----------------------------
    LOGO (top-right corner)
    ----------------------------- */
