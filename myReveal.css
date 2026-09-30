@@ -51,9 +51,16 @@
   font-size: 0.72em;
 }
 
+/* -------   spefici column change -----------------   */
+/* Used to change the fonts size of one  specific slide using 
+column-small   */ 
+
+.column-small {
+  font-size: 0.7em;
+}
 
 /* -----------------------------
-   CODE BLOCK BACKGROUND & LINE NUMBERS
+   CODE BLOCK BACKGROUND
    ----------------------------- */
 
 /* Light grey background instead of yellow */
