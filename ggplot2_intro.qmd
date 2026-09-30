@@ -43,7 +43,6 @@ library(dplyr)
 1. **Data** — the foundation
 2. **Mapping** — translate data to aesthetics
 3. **Layers** — geometric representations
-
 4. ***Scales*** — control axes and legends*
 5. ***Facets*** — small multiples*
 6. ***Coordinates*** — spatial interpretation*
@@ -54,6 +53,8 @@ library(dplyr)
 
 ::: {.column width="50%"}
 ![](https://ggplot2.tidyverse.org/articles/ggplot2_files/figure-html/overview_graphic-1.png){width=120%}
+<p style="font-size:0.45em; color:#93a1a1;">This presentation was directly inspired by the excellent - [Introduction to ggplot2](https://ggplot2.tidyverse.org) by  Hadley Whickham et al.</p>
+
 :::
 
 ::::
