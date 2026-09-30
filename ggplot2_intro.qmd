@@ -43,16 +43,17 @@ library(dplyr)
 1. **Data** — the foundation
 2. **Mapping** — translate data to aesthetics
 3. **Layers** — geometric representations
-4. **Scales** — control axes and legends
-5. **Facets** — small multiples
-6. **Coordinates** — spatial interpretation
-7. **Theme** — visual look & feel
 
-<p style="font-size:0.6em; color:#93a1a1;">At minimum: **data**, a **mapping**, and one **layer**.</p>
+4. ***Scales*** — control axes and legends*
+5. ***Facets*** — small multiples*
+6. ***Coordinates*** — spatial interpretation*
+7. ***Theme*** — visual look & feel*
+
+<p style="font-size:0.6em; color:#93a1a1;">At minimum: **data**, a **mapping**, and one **layer**. Other layers (marked *) are optional. </p>
 :::
 
 ::: {.column width="50%"}
-![](https://ggplot2.tidyverse.org/articles/ggplot2_files/figure-html/overview_graphic-1.png){width=100%}
+![](https://ggplot2.tidyverse.org/articles/ggplot2_files/figure-html/overview_graphic-1.png){width=120%}
 :::
 
 ::::
@@ -285,7 +286,7 @@ ggplot(mpg, aes(cty, hwy)) +
   theme_minimal() +
   labs(x = "City mpg", y = "Highway mpg")
 ```
- or with `year~drv`
+ or with `facet_grid(year~drv)`
 ```{r facets-plot6, echo=FALSE, fig.height=5}
 ggplot(mpg, aes(cty, hwy)) +
   geom_point(color = "#2A9D8F", alpha = 0.6, size = 1.5) +
