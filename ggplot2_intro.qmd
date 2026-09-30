@@ -1,0 +1,472 @@
+---
+title: "The logic of ggplot2"
+subtitle: "A Grammar of Graphics"
+author:
+  - name:  "Christophe Bontemps (SIAP)"
+    affiliation:  "![](Images/escap_siap_logo.png){width=150px} "
+
+format:
+  revealjs:
+    theme: solarized
+    css: myReveal.css
+    embed-resources: true
+    slide-number: true
+    footer: "Christophe Bontemps - SIAP "
+    transition: fade
+    center: false
+    progress: true
+    code-line-numbers: false
+  html:
+    toc: true
+    code-fold: true
+  pdf:
+    documentclass: article
+    toc: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+## The 7 Components of a ggplot2 Chart
+
+:::: {.columns}
+
+::: {.column width="50%"}
+ A *`ggplot2`*  graphic is assembled from up to 7 parts (often less):
+
+1. **Data** — the foundation
+2. **Mapping** — translate data to aesthetics
+3. **Layers** — geometric representations
+4. **Scales** — control axes and legends
+5. **Facets** — small multiples
+6. **Coordinates** — spatial interpretation
+7. **Theme** — visual look & feel
+
+<p style="font-size:0.6em; color:#93a1a1;">At minimum: **data**, a **mapping**, and one **layer**.</p>
+:::
+
+::: {.column width="50%"}
+![](https://ggplot2.tidyverse.org/articles/ggplot2_files/figure-html/overview_graphic-1.png){width=100%}
+:::
+
+::::
+
+## 1. Data and `ggplot()`
+
+:::: {.columns}
+
+::: {.column width="55%"}
+ggplot2 works best with **tidy data** (Rows = observations; Columns = variables)
+
+The first step is to pass the data to `ggplot()` 
+
+```{r data, eval=FALSE}
+ggplot(data = mpg)
+```
+or 
+
+```{r datatidy, eval=FALSE}
+mpg %>% 
+  ggplot()
+``` 
+
+<p style="font-size:0.65em; color:#93a1a1;">This creates an empty canvas — no visual output yet, but the data is ready.</p>
+
+:::
+
+::: {.column width="45%"  .column-small}
+```{r data-plot, echo=FALSE, fig.height=5}
+ggplot(data = mpg) +
+  annotate("text", x = 0.5, y = 0.5,
+           label = "Empty canvas\n(data loaded,\nno layer yet)",
+           size = 6, color = "#586e75",
+           hjust = 0.5) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank()) +
+  labs(x = NULL, y = NULL)
+```
+
+**The `mpg` dataset** used in all examples:
+
+| Variable | Description |
+|----------|-------------|
+| `cty`, `hwy` | City / highway mpg |
+| `class` | Type of car |
+| `drv` | Drive train |
+| `displ` | Engine displacement |
+
+
+:::
+
+::::
+
+## 2. Mapping: The link between variables and graphic attributes
+
+:::: {.columns}
+
+::: {.column width="55%"}
+A mapping links **variables** into **graphics attributes** (or aesthetic), 
+acting as a  dictionary between data and graphics.
+
+```{r mapping, eval=FALSE}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy)
+```
+
+The `aes()` function pairs:
+
+- **Aesthetic**:  `x`, `y`, `colour`, `fill`, with 
+- **Variables**:  `cty`, `hwy`, `class` in `mpg` data set
+
+<p style="font-size:0.65em; color:#93a1a1;">This creates a frame with axis, scales and labels. No data yet.</p>
+
+
+:::
+
+::: {.column width="45%" .column-small}
+```{r mapping-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, mapping = aes(x = cty, y = hwy)) +
+  theme_minimal() +
+  labs(title = "Axes defined, no geometry yet",
+       x = "City mpg (cty)",
+       y = "Highway mpg (hwy)") +
+  theme(plot.title = element_text(size = 10,
+                                   color = "#586e75"))
+```
+
+Key aesthetic attributes:
+
+| Aesthetic | Controls |
+|-----------|----------|
+| `x`, `y` | Position |
+| `colour`, `fill` | Colour |
+| `size`, `shape` | Point style |
+| `alpha` | Transparency |
+
+:::
+
+::::
+
+## 3. Layers: The heart of a ggplot2 chart
+
+:::: {.columns}
+
+::: {.column width="55%"}
+The most common layer is the **Geometry**  defining *how* data is displayed
+
+```{r layers, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point()              # scatterplot 
+ 
+```
+
+One can add layers: 
+
+```{r layers2, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point() +              # scatterplot 
+  geom_smooth(formula = y ~ x,
+              method = "lm")  # linear trend 
+```
+
+Two layers stacked with `+`:  
+`geom_point()` + `geom_smooth()`
+:::
+
+::: {.column width="45%"}
+
+```{r layers-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(color = "#2A9D8F", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Scatterplot (basic)",
+       x = "City mpg (cty)",
+       y = "Highway mpg (hwy)") 
+```
+
+
+```{r layers-plot2 , echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(color = "#2A9D8F", alpha = 0.7) +
+  geom_smooth(formula = y ~ x, method = "lm",
+              color = "#E9C46A") +
+  theme_minimal() +
+  labs(title = "Scatterplot with linear regression",
+       x = "City mpg (cty)",
+       y = "Highway mpg (hwy)") 
+```
+:::
+
+::::
+
+## 4. Scales
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Scales **translate**  what is shown on the graph back to an understanding of the data — axes, legends, colour,  bars.
+
+
+```{r scales, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point() +         
+  scale_colour_viridis_d()
+```
+
+<p style="font-size:0.65em; color:#93a1a1;"> Formally, `scale` is a function from a region in the data space (the domain of the scale) to a region in aesthetic space (the range of the scale). </p>
+
+
+:::
+
+::: {.column width="45%" .column-small}
+```{r scales-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy, colour = class)) +
+  geom_point(size = 2, alpha = 0.8) +
+  scale_colour_viridis_d() +
+  theme_minimal() +
+  labs(x = "City mpg", y = "Highway mpg",
+       colour = "Class")
+```
+
+**Scales controls**:
+
+- Axis limits and breaks
+- Label formatting  
+- Colour palettes
+- Data transformations (`log`, `sqrt`...)
+
+:::
+
+::::
+
+## 5. Facets: Graphics by groups 
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Facets split the data into **small multiples** and separate panels for subsets of the data according to a factor variable.
+
+```{r facets, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point() +         
+  facet_grid(~year)
+```
+
+Two facet functions:
+
+- `facet_grid(row ~ col)` — strict grid
+- `facet_wrap(~ var)` — wraps into space
+
+<p style="font-size:0.65em; color:#93a1a1;">Here: 2 years =  2 panels or 2 years  x 3 drives = 6 panels</p>
+:::
+
+::: {.column width="45%"}
+```{r facets-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(color = "#2A9D8F", alpha = 0.6, size = 1.5) +
+  facet_grid(~year ) +
+  theme_minimal() +
+  labs(x = "City mpg", y = "Highway mpg")
+```
+ or with `year~drv`
+```{r facets-plot6, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(color = "#2A9D8F", alpha = 0.6, size = 1.5) +
+  facet_grid(year~drv ) +
+  theme_minimal() +
+  labs(x = "City mpg", y = "Highway mpg")
+```
+
+:::
+
+::::
+
+## 6. Coordinates: Fix positions
+
+:::: {.columns}
+
+::: {.column width="55%"}
+Coordinates interpret **position aesthetics**. The default is Cartesian, but alternatives exist:
+
+
+```{r coords, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point() +         
+  coord_fixed()
+```
+
+<p style="font-size:0.65em; color:#93a1a1;">Here: 1 unit on x = 1 unit on y, making slope visually meaningful.</p>
+:::
+
+::: {.column width="45%"}
+```{r coords-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(color = "#2A9D8F", alpha = 0.7) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(x = "City mpg", y = "Highway mpg",
+       title = "Fixed aspect ratio")
+```
+
+| Function | Use |
+|----------|-----|
+| `coord_fixed()` | Equal x/y units |
+| `coord_flip()` | Swap x and y |
+| `coord_polar()` | Polar / pie charts |
+| `coord_map()` | Map projections |
+
+
+:::
+
+::::
+
+## 7. Theme: The look and feel
+
+:::: {.columns}
+
+::: {.column width="55%"}
+
+The theme controls **all non-data visuals**: background, grid lines, fonts, legend position, axis styling.
+
+```{r theme, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point() +         
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    axis.line = element_line(
+      linewidth = 0.75),
+    axis.line.x.bottom = element_line(
+      colour = "blue")
+  )
+```
+
+Built-in themes: `theme_minimal()`, `theme_bw()`, `theme_classic()`, `theme_void()`...
+:::
+
+::: {.column width="45%"}
+```{r theme-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy, colour = class)) +
+  geom_point(size = 2, alpha = 0.8) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    axis.line = element_line(linewidth = 0.75),
+    axis.line.x.bottom = element_line(colour = "blue")
+  ) +
+  labs(x = "City mpg", y = "Highway mpg",
+       colour = "Class")
+```
+:::
+
+::::
+
+## Putting it all together
+
+:::: {.columns}
+
+::: {.column width="55%"}
+All 7 components combined with `+`:
+
+```{r combining, eval=TRUE, fig.show='hide'}
+mpg %>% 
+  ggplot() +
+  aes(x = cty, y = hwy) +
+  geom_point( mapping = aes(colour = displ)) +
+  scale_colour_viridis_c() +
+  facet_grid(year ~ drv) +
+  coord_fixed() +
+  theme_minimal() +
+  theme(panel.grid.minor =
+          element_blank())
+```
+
+Each `+` adds a new component.  
+Order matters for **layers**; less so for others.
+:::
+
+::: {.column width="45%"}
+```{r combining-plot, echo=FALSE, fig.height=5}
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(mapping = aes(colour = displ), alpha = 0.8) +
+#  geom_smooth(formula = y ~ x, method = "lm") +
+  scale_colour_viridis_c() +
+  facet_grid(year ~ drv) +
+  coord_fixed() +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+```
+:::
+
+::::
+
+## Summary
+
+:::: {.columns}
+
+::: {.column width="55%"}
+
+| Component | Function(s) | Required |
+|-----------|-------------|----------|
+| Data | `ggplot(data)` | Yes
+| Mapping | `aes()` | Yes|
+| Layers | `geom_*()`, `stat_*()` | Yes|
+| Scales | `scale_*()` | — |
+| Facets | `facet_grid/wrap()` | — |
+| Coordinates | `coord_*()` | — |
+| Theme | `theme_*()`, `theme()` | — |
+
+**To learn more:**
+
+- [ggplot2-book.org](https://ggplot2-book.org/) (free online)
+- [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org)
+
+:::
+
+::: {.column width="45%" .column-small}
+
+**The ggplot2 recipe:**
+
+1. Start with `ggplot(data)`
+2. Map variables with `aes()`
+3. Add geometry with `geom_*()`
+4. Refine with scales, facets, coordinates, and theme
+5. Layer components with `+`
+
+
+```{r summary-plot, echo=FALSE, fig.height=3.5}
+ggplot(mpg, aes(cty, hwy, colour = class)) +
+  geom_point(size = 1.5, alpha = 0.7) +
+  scale_colour_viridis_d() +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 7),
+        legend.title = element_text(size = 7)) +
+  labs(x = "City mpg", y = "Highway mpg",
+       colour = NULL)
+```
+
+:::
+
+::::
