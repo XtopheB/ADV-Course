@@ -228,7 +228,6 @@ ggplot(barley, aes(x = yield, y = variety, shape = year)) +
   theme_minimal(base_size = 12) +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor   = element_blank() ,
-        strip.background   = element_rect(fill = "grey92"),
         legend.position    = "bottom")
 ```
 
