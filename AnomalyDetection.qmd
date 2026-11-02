@@ -207,28 +207,28 @@ ggplot(barley, aes(x = yield, y = variety, shape = year)) +
         strip.background   = element_rect(fill = "grey92"),
         legend.position    = "bottom")
 ```
-## Cleveland 1993' Solution:  Multiway dot plot
+## Cleveland 1993' Solution: modern version
 
 ```{r}
 #| fig-width: 7
 #| fig-height: 9
 #| fig-align: center
 
-# 1 = one column of 6 panels (as in the lattice/Trellis version); 2 = 2 columns
-ncol_panels <- 1
 
-
-ggplot(barley, aes(x = yield, y = variety, shape = year)) +
-  geom_point(size = 2.6, stroke = 0.9) +
-  scale_shape_manual(values = c("1931" = 1, "1932" = 3), name = NULL) +
+ggplot(barley, aes(x = yield, y = variety, colour = year)) +
+  geom_point(size = 2.8, alpha = 0.9) +
+  scale_colour_manual(values = c("1931" = "grey70", "1932" = "#E69F00"),
+                      name = NULL) +
   facet_wrap(~ site, ncol = ncol_panels) +
-  labs(x = "Barley yield (bushels per acre)", 
+  labs(x = "Barley yield (bushels per acre)",
        y = NULL,
-       caption = "At five sites, 1931 yields are higher than 1932. At Morris, it is the other way round") +
+       caption = "At five sites, 1931 yields are higher than 1932. At Morris, it is the other way round.") +
   theme_minimal(base_size = 12) +
   theme(panel.grid.major.x = element_blank(),
-        panel.grid.minor   = element_blank() ,
-        legend.position    = "bottom")
+        panel.grid.major.y = element_line(colour = "grey92"),
+        panel.grid.minor   = element_blank(),
+        legend.position    = "bottom",
+        plot.caption       = element_text(hjust = 0))
 ```
 
 ## Double lollipop: 1931 versus 1932
