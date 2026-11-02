@@ -259,7 +259,7 @@ ggplot(site_means, aes(y = site)) +
   
   labs(x = "Mean barley yield for 6 production sites (bushels per acre)",
        y = NULL, 
-       title = "Visualizing the difference. 1931 -1932", 
+       title = "Visualizing the average difference: 1931 vs 1932", 
        subtitle = "Double lolipop graphic", 
         caption = "At five sites, 1931 yields are higher than 1932. At Morris, it is the other way round") +
   theme_minimal() +
