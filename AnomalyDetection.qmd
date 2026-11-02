@@ -19,7 +19,7 @@ execute:
 library(tidyverse)
 
 # Colours (colour-blind safe, no red)
-col_base <- "#6c757d"   # grey
+col_base <- "grey80"   # grey
 col_high <- "#E69F00"   # orange (highlight)
 
 ```
@@ -155,7 +155,12 @@ ggplot(barley, aes(x = yield, y = site, color = variety)) +
   theme_minimal()
 ```
 
-```{r dotplot-highlight, fig.width=11, fig.height=4.8, fig.align="center"}
+```{r dotplot-highlight, fig.align="center", fig.height=4.8, fig.width=11}
+#| eval: false
+#| include: false
+
+# Not run
+
 ggplot(barley, aes(x = yield, y = site)) +
   geom_point(data = filter(barley, !is_morris),
              shape = 1, size = 2.9, stroke = 1.1, colour = col_base) +
@@ -168,8 +173,6 @@ ggplot(barley, aes(x = yield, y = site)) +
 
 
 ## Cleveland 1993' Solution:  Multiway dot plot
-Original graphic by Cleveland (1993)
-
 
 ```{r}
 #| fig-width: 7
@@ -184,7 +187,9 @@ ggplot(barley, aes(x = yield, y = variety, shape = year)) +
   geom_point(size = 2.6, stroke = 0.9) +
   scale_shape_manual(values = c("1931" = 1, "1932" = 3), name = NULL) +
   facet_wrap(~ site, ncol = ncol_panels) +
-  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  labs(x = "Barley yield (bushels per acre)", 
+       y = NULL,
+       caption = "At five sites, 1931 yields are higher than 1932. At Morris, it is the other way round") +
   theme_bw(base_size = 12) +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor   = element_blank(),
@@ -193,13 +198,6 @@ ggplot(barley, aes(x = yield, y = variety, shape = year)) +
         strip.background   = element_rect(fill = "grey92"),
         legend.position    = "bottom")
 ```
-
-<p style="font-size:0.7em;">At five sites, 1931 yields are **higher** than 1932.  
-but not at **Morris** , it is the other way round.</p>
-
-
-
-
 
 
 ## Double lollipop: 1931 versus 1932
@@ -212,23 +210,34 @@ site_means <- barley |>
   mutate(is_morris = site == "Morris")
 
 ggplot(site_means, aes(y = site)) +
+  # Segments
   geom_segment(aes(x = `1931`, xend = `1932`, yend = site,
-                   colour = is_morris), linewidth = 1.5) +
+                   colour = is_morris), linewidth = 1.2) +
+  # Dots
   geom_point(aes(x = `1931`, fill = "1931"),
-             shape = 21, size = 4.6, stroke = 1.2, colour = "grey20") +
+             shape = 21, size = 4.6, stroke = 1.2, colour = "grey50") +
   geom_point(aes(x = `1932`, fill = "1932"),
-             shape = 21, size = 4.6, stroke = 1.2, colour = "grey20") +
-  scale_colour_manual(values = c(`FALSE` = "grey70", `TRUE` = col_high),
-                      guide = "none") +
-  scale_fill_manual(values = c("1931" = "white", "1932" = "grey20"),
+             shape = 21, size = 4.6, stroke = 1.2, colour = "orange") +
+  
+  scale_fill_manual(values = c("1931" = "grey50", "1932" = "orange"),
                     name = NULL) +
-  labs(x = "Mean barley yield over the 10 varieties (bushels per acre)",
-       y = NULL) +
-  theme_dot +
+  # Segment colors
+  scale_colour_manual(values = c(`FALSE` = "grey70", `TRUE` = "grey20"),
+                      guide = "none") +
+
+  
+  labs(x = "Mean barley yield for  6production sites (bushels per acre)",
+       y = NULL, 
+       title = "Visualizing the difference. 1931 -1932", 
+       subtitle = "Double lolipop graphic", 
+        caption = "At five sites, 1931 yields are higher than 1932. At Morris, it is the other way round") +
+  theme_minimal() +
   theme(legend.position = "bottom")
 ```
 
-<p style="font-size:0.65em;">Open dot = 1931, filled dot = 1932. The stem is orange when the site goes **up** from 1931 to 1932.</p>
+<p style="font-size:0.65em;">
+Only in<strong>Morris</strong> did production go <strong>up</strong> from 1931 to  <span style="color:#E69F00;">1932</span>.
+</p>
 
 ## Lollipop: change in mean yield, 1932 − 1931
 
