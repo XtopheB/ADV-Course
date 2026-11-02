@@ -90,8 +90,85 @@ barley |>
 
 ::::
 
-## One dot plot for each year
 
+## Can you spot a problem? 
+Original graphic: Yield by variety, by site for  2 years. 
+
+```{r}
+#| fig-width: 8
+#| fig-height: 9
+#| fig-align: center
+ggplot(barley, aes(x = yield, y = variety)) +
+  geom_point(shape = 1, size = 2.6, stroke = 0.9) +
+  facet_grid(site ~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor   = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dotted",
+                                          colour = "grey60"),
+        strip.background   = element_rect(fill = "grey92"))
+```
+
+## Can you spot a problem? 
+Revamped graphic: Yield by variety, by site for 2 years. 
+
+```{r}
+#| fig-width: 8
+#| fig-height: 9
+#| fig-align: center
+
+
+ggplot(barley, aes(x = yield, y = variety,  color = variety)) +
+  geom_point(shape = 1, size = 2.6, stroke = 0.9 ) +
+  facet_grid(site ~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor   = element_blank(),
+        )
+```
+
+## Grouping points
+Maybe grouping varieties can help?
+
+```{r dotplot-highligh, fig.width=11, fig.height=4.8, fig.align="center"}
+
+ggplot(barley, aes(x = yield, y = site,  color = variety)) +
+  geom_point(shape = 1, size = 2.9,
+             stroke = 1.1) +
+  facet_wrap(~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_minimal()
+```
+
+## Grouping points
+Grouping varieties with some jitter
+
+```{r dotplot-highlight-jitter, fig.width=11, fig.height=4.8, fig.align="center"}
+
+ggplot(barley, aes(x = yield, y = site, color = variety)) +
+  geom_point(shape = 1, size = 2.9, stroke = 1.1,
+             position = position_jitter(width = 0, height = 0.2, seed = 1)) +
+  facet_wrap(~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_minimal()
+```
+
+```{r dotplot-highlight, fig.width=11, fig.height=4.8, fig.align="center"}
+ggplot(barley, aes(x = yield, y = site)) +
+  geom_point(data = filter(barley, !is_morris),
+             shape = 1, size = 2.9, stroke = 1.1, colour = col_base) +
+  geom_point(data = filter(barley, is_morris),
+             shape = 1, size = 3.4, stroke = 1.6, colour = col_high) +
+  facet_wrap(~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_dot
+```
+
+
+## Cleveland 1993' Solution:  Multiway dot plot
+Original graphic by Cleveland (1993)
 
 
 ```{r}
@@ -117,55 +194,13 @@ ggplot(barley, aes(x = yield, y = variety, shape = year)) +
         legend.position    = "bottom")
 ```
 
-
-
-## 1931 on the left, 1932 on the right
-
-```{r}
-#| fig-width: 8
-#| fig-height: 9
-#| fig-align: center
-ggplot(barley, aes(x = yield, y = variety)) +
-  geom_point(shape = 1, size = 2.6, stroke = 0.9) +
-  facet_grid(site ~ year) +
-  labs(x = "Barley yield (bushels per acre)", y = NULL) +
-  theme_bw(base_size = 12) +
-  theme(panel.grid.major.x = element_blank(),
-        panel.grid.minor   = element_blank(),
-        panel.grid.major.y = element_line(linetype = "dotted",
-                                          colour = "grey60"),
-        strip.background   = element_rect(fill = "grey92"))
-```
-
-
-```{r dotplot, fig.align="center", fig.height=4.8, fig.width=11}
-#| eval: false
-#| include: false
-#| 
-ggplot(barley, aes(x = yield, y = site)) +
-  geom_point(shape = 1, size = 2.9, stroke = 1.1, colour = col_base) +
-  facet_wrap(~ year) +
-  labs(x = "Barley yield (bushels per acre)", y = NULL) +
-  theme_dot
-```
-
-<p style="font-size:0.6em;">Each row is a location; each dot is one variety (10 per row). Sites are ordered by overall mean yield.</p>
-
-## Where is Morris?
-
-```{r dotplot-highlight, fig.width=11, fig.height=4.8, fig.align="center"}
-ggplot(barley, aes(x = yield, y = site)) +
-  geom_point(data = filter(barley, !is_morris),
-             shape = 1, size = 2.9, stroke = 1.1, colour = col_base) +
-  geom_point(data = filter(barley, is_morris),
-             shape = 1, size = 3.4, stroke = 1.6, colour = col_high) +
-  facet_wrap(~ year) +
-  labs(x = "Barley yield (bushels per acre)", y = NULL) +
-  theme_dot
-```
-
 <p style="font-size:0.7em;">At five sites, 1931 yields are **higher** than 1932.  
-At **Morris** (orange), it is the other way round.</p>
+but not at **Morris** , it is the other way round.</p>
+
+
+
+
+
 
 ## Double lollipop: 1931 versus 1932
 
