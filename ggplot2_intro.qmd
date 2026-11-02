@@ -6,16 +6,16 @@ author:
     affiliation:  "![](Images/escap_siap_logo.png){width=150px} "
 
 format:
-  revealjs:
-    theme: solarized
-    css: myReveal.css
-    embed-resources: true
-    slide-number: true
-    footer: "Christophe Bontemps - SIAP "
-    transition: fade
-    center: false
-    progress: true
-    code-line-numbers: false
+  # revealjs:
+  #   theme: solarized
+  #   css: myReveal.css
+  #   embed-resources: true
+  #   slide-number: true
+  #   footer: "Christophe Bontemps - SIAP "
+  #   transition: fade
+  #   center: false
+  #   progress: true
+  #   code-line-numbers: false
   html:
     toc: true
     code-fold: true
@@ -53,7 +53,7 @@ library(dplyr)
 
 ::: {.column width="50%"}
 ![](https://ggplot2.tidyverse.org/articles/ggplot2_files/figure-html/overview_graphic-1.png){width=120%}
-<p style="font-size:0.45em; color:#93a1a1;">This presentation was directly inspired by the excellent - [Introduction to ggplot2](https://ggplot2.tidyverse.org) by  Hadley Whickham et al.</p>
+<p style="font-size:0.45em; color:#93a1a1;">This presentation was directly inspired by the excellent - [The  ggplot2 book](https://ggplot2-book.org/) by Hadley Wickham, Danielle Navarro, and Thomas Lin Pedersen. The image above is from [Introduction to ggplot2](https://ggplot2.tidyverse.org). </p>
 
 :::
 

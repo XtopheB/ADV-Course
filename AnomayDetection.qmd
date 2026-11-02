@@ -1,0 +1,192 @@
+---
+title: "The Morris anomaly"
+subtitle: "What a dot plot reveals that a summary hides"
+author: "Christophe Bontemps (SIAP)"
+date: today
+format:
+  revealjs:
+    css: myReveal.css
+    theme: solarized
+    slide-number: true
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+library(tidyverse)
+
+# Colours (colour-blind safe, no red)
+col_base <- "#6c757d"   # grey
+col_high <- "#E69F00"   # orange (highlight)
+
+```
+
+
+```{r data}
+# Data: barley.csv (same folder as this file)
+barley <- read_csv("Data/barley.csv") |>
+  mutate(year = factor(year))
+```
+
+
+```{r }
+
+# Sites ordered by overall mean yield, so rows read bottom -> top
+site_order <- barley |>
+  group_by(site) |>
+  summarise(m = mean(yield), .groups = "drop") |>
+  arrange(m) |>
+  pull(site)
+
+barley <- barley |>
+  mutate(site = factor(site, levels = site_order),
+         is_morris = site == "Morris")
+
+# Cleveland-style theme: light dotted horizontal guide lines
+theme_dot <- theme_bw(base_size = 14) +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor   = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dotted",
+                                          colour = "grey60"),
+        strip.background   = element_rect(fill = "grey92"),
+        legend.position    = "none")
+```
+
+## The source
+
+:::: {.columns}
+
+::: {.column width="55%"}
+**William S. Cleveland**  
+*Visualizing Data* (1993)  
+Hobart Press, Summit, New Jersey
+
+In the first chapter, Cleveland uses a famous **barley experiment** to show how a good graph can expose a problem that numbers alone would never flag.
+
+**The experiment**
+
+- 10 barley varieties
+- 6 sites in Minnesota
+- 2 years: **1931** and **1932**
+- Measure: yield (bushels per acre)
+
+<p style="font-size:0.6em; color:#93a1a1;">Original data: Immer, Hayes &amp; Powers (1934), *Journal of the American Society of Agronomy*, 26.</p>
+:::
+
+::: {.column width="45%"}
+```{r preview}
+barley |>
+  filter(site == "Morris", year == "1931") |>
+  select(variety, yield) |>
+  mutate(yield = round(yield, 1)) |>
+  head(6) |>
+  knitr::kable(col.names = c("Variety", "Yield"))
+```
+
+<p style="font-size:0.6em; color:#93a1a1;">120 rows = 10 varieties × 6 sites × 2 years</p>
+:::
+
+::::
+
+## One dot plot for each year
+
+```{r dotplot, fig.width=11, fig.height=4.6, fig.align="center"}
+ggplot(barley, aes(x = yield, y = site)) +
+  geom_point(colour = col_base, size = 2.6, alpha = 0.85) +
+  facet_wrap(~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_dot
+```
+
+<p style="font-size:0.6em;">Each dot is one variety. Sites are ordered by overall mean yield.</p>
+
+## Does anything look odd?
+
+```{r dotplot-highlight, fig.width=11, fig.height=4.6, fig.align="center"}
+ggplot(barley, aes(x = yield, y = site)) +
+  geom_point(aes(colour = is_morris), size = 2.6, alpha = 0.9) +
+  scale_colour_manual(values = c(`FALSE` = col_base, `TRUE` = col_high)) +
+  facet_wrap(~ year) +
+  labs(x = "Barley yield (bushels per acre)", y = NULL) +
+  theme_dot
+```
+
+<p style="font-size:0.7em;">At five sites, 1931 yields are **higher** than 1932.  
+At **Morris**, it is the other way round.</p>
+
+## Lollipop: change in mean yield, 1932 − 1931
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{r lollipop, fig.width=7, fig.height=5}
+change <- barley |>
+  group_by(site, year) |>
+  summarise(m = mean(yield), .groups = "drop") |>
+  pivot_wider(names_from = year, values_from = m) |>
+  mutate(diff = `1932` - `1931`,
+         is_morris = site == "Morris") |>
+  arrange(diff) |>
+  mutate(site = factor(site, levels = site))
+
+ggplot(change, aes(x = diff, y = site, colour = is_morris)) +
+  geom_vline(xintercept = 0, colour = "grey40") +
+  geom_segment(aes(x = 0, xend = diff, yend = site), linewidth = 1.2) +
+  geom_point(size = 5) +
+  scale_colour_manual(values = c(`FALSE` = col_base, `TRUE` = col_high)) +
+  labs(x = "Change in mean yield, 1932 − 1931 (bushels per acre)",
+       y = NULL) +
+  theme_bw(base_size = 14) +
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.minor   = element_blank(),
+        legend.position    = "none")
+```
+:::
+
+::: {.column width="40%"}
+<div style="font-size:0.75em;">
+
+- Five sites: yield **falls** in 1932
+- **Morris**: yield **rises** by about 12 bushels per acre
+- Morris moves in the opposite direction, and by a similar magnitude to the other sites' changes
+
+</div>
+:::
+
+::::
+
+## So what?
+
+:::: {.columns}
+
+::: {.column width="55%"}
+<div style="font-size:0.8em;">
+
+- Averages alone would hide this: Morris just looks like a site with a "good" 1932.
+- The multi-dot view shows that **all ten varieties** behave the same way at Morris, which is unlikely to be chance.
+- Cleveland's reading: the year labels for Morris were probably **swapped** in the data.
+- A graph is a tool for **checking the data**, not only for presenting results.
+
+</div>
+:::
+
+::: {.column width="45%"}
+<div style="font-size:0.75em;">
+
+**Questions for discussion**
+
+1. How would you confirm the suspected swap?
+2. What would you do if the original records were lost?
+3. Which other datasets in your work deserve this check?
+
+</div>
+:::
+
+::::
+
+::: {.notes}
+Data source: vega-datasets / lattice `barley`. The conclusion about swapped years is Cleveland's interpretation; verify page references against your copy of the book.
+:::
