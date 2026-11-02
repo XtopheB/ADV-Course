@@ -6,16 +6,16 @@ author:
     affiliation:  "![](Images/escap_siap_logo.png){width=150px} "
 
 format:
-  # revealjs:
-  #   theme: solarized
-  #   css: myReveal.css
-  #   embed-resources: true
-  #   slide-number: true
-  #   footer: "Christophe Bontemps - SIAP "
-  #   transition: fade
-  #   center: false
-  #   progress: true
-  #   code-line-numbers: false
+  revealjs:
+    theme: solarized
+    css: myReveal.css
+    embed-resources: true
+    slide-number: true
+    footer: "Christophe Bontemps - SIAP "
+    transition: fade
+    center: false
+    progress: true
+    code-line-numbers: false
   html:
     toc: true
     code-fold: true
