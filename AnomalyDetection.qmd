@@ -56,38 +56,50 @@ theme_dot <- theme_bw(base_size = 14) +
 ```
 
 ## The source
+<p style="font-size:0.4em; color:#93a1a1;">From *William S. Cleveland* *Visualizing Data* (1993), Hobart Press, Summit, New Jersey </p> 
 
 :::: {.columns}
 
 ::: {.column width="55%"}
-
-In his seminal book, W. Cleveland uses a famous **barley experiment** to show how a good graph can expose a problem that numbers alone would never flag.
-
 **The Data: **  Barley Yield (bushels per acre)
 
 - 10 barley varieties
 - 6 sites in Minnesota
 - 2 years: **1931** and **1932**
 
-<p style="font-size:0.6em; color:#93a1a1;">From *William S. Cleveland* *Visualizing Data* (1993),     
-Hobart Press, Summit, New Jersey\br 
-Original data: Immer, Hayes &amp; Powers (1934), *Journal of the American Society of Agronomy*, 26.</p>
-:::
+<p style="font-size:0.6em; color:#6b7575;"><strong> Barley yields by site</strong></p>
 
-::: {.column width="45%"}
-```{r preview}
+```{r previewS}
 barley |>
   group_by(site, year) |>
   summarise(m = round(mean(yield), 1), .groups = "drop") |>
   pivot_wider(names_from = year, values_from = m) |>
   arrange(desc(site)) |>
   knitr::kable(col.names = c("Site", "1931", "1932"), 
-               label = " Average Yields in 6 sites")
+               label = " Average Yields by site of production")
 ```
 
-<p style="font-size:0.6em; color:#93a1a1;"> 10 varieties × 6 sites × 2 years</p>
 :::
 
+::: {.column width="45%"}
+
+<p style="font-size:0.6em; color:#6b7575;"><strong> Barley yields by variety</strong></p>
+
+```{r previewV}
+barley |>
+  group_by(variety, year) |>
+  summarise(m = round(mean(yield), 1), .groups = "drop") |>
+  pivot_wider(names_from = year, values_from = m) |>
+  arrange(desc(variety)) |>
+  knitr::kable(col.names = c("Variety", "1931", "1932"), 
+               label = " Average Yields by variety")
+```
+
+
+
+:::
+
+<p style="font-size:0.4em; color:#93a1a1;">Original data: Immer, Hayes &amp; Powers (1934), *Journal of the American Society of Agronomy*, 26.</p>
 ::::
 
 
@@ -267,7 +279,7 @@ ggplot(site_means, aes(y = site)) +
 ```
 
 <p style="font-size:0.65em;">
-Only in<strong>Morris</strong> did production go <strong>up</strong> from 1931 to  <span style="color:#E69F00;">1932</span>.
+Only in <strong>Morris</strong> did production go <strong>up</strong> from 1931 to  <span style="color:#E69F00;">1932</span>.
 </p>
 
 ## Lollipop: change in mean yield, 1932 − 1931
@@ -304,7 +316,7 @@ ggplot(change, aes(x = diff, y = site, colour = is_morris)) +
 
 - Five sites: yield **falls** in 1932
 - **Morris**: yield **rises** by about 12 bushels per acre
-- Morris moves in the opposite direction, and by a similar magnitude to the other sites' changes
+- Morris moves in the **opposite direction**, and by a similar magnitude to the other sites' changes
 
 </div>
 :::
@@ -316,28 +328,37 @@ ggplot(change, aes(x = diff, y = site, colour = is_morris)) +
 :::: {.columns}
 
 ::: {.column width="55%"}
-<div style="font-size:0.8em;">
+<div style="font-size:0.9em;">
 
-- Averages alone would hide this: Morris just looks like a site with a "good" 1932.
-- The dot plots show that the **whole cloud of varieties** shifts at Morris, not just one or two outliers (in 1931, 9 of 10 varieties yield less at Morris than at the other sites on average; in 1932, all 10 yield more), which is unlikely to be chance.
+- **Tables** alone would hide this: Morris just looks like a site with a "good" 1932.
+- The dot plots shows  the **whole cloud of  points, for each variety** 
+- **One color** (or shape) helps comparing years
+- Averages, box an whiskers can hide errors
 - Cleveland's reading: the year labels for Morris were probably **swapped** in the data.
-- A graph is a tool for **checking the data**, not only for presenting results.
 
 </div>
 :::
 
 ::: {.column width="45%"}
-<div style="font-size:0.75em;">
+<div style="font-size:0.8em;">
 
-**Questions for discussion**
+**Now that you saw it**
 
-1. How would you confirm the suspected swap?
-2. What would you do if the original records were lost?
-3. Which other datasets in your work deserve this check?
+<p style="font-size:0.6em; color:#6b7575;"><strong> Barley yields by site</strong></p>
+
+```{r previewS2}
+barley |>
+  group_by(site, year) |>
+  summarise(m = round(mean(yield), 1), .groups = "drop") |>
+  pivot_wider(names_from = year, values_from = m) |>
+  arrange(desc(site)) |>
+  knitr::kable(col.names = c("Site", "1931", "1932"), 
+               label = " Average Yields by site of production")
+```
 
 </div>
 :::
-
+<p style="font-size:0.8em; color:#6b7575;"><strong> A good graph is a tool for **checking the data**, not only for presenting results.</strong></p>
 ::::
 
 ::: {.notes}
