@@ -1,6 +1,6 @@
 ---
 title: "The Anomaly"
-subtitle: "What an effcient plot can reveal"
+subtitle: "What an efficient plot can reveal"
 author: "Christophe Bontemps (SIAP)"
 date: today
 format:
@@ -333,7 +333,7 @@ ggplot(change, aes(x = diff, y = site, colour = is_morris)) +
 - **Tables** alone would hide this: Morris just looks like a site with a "good" 1932.
 - The dot plots shows  the **whole cloud of  points, for each variety** 
 - **One color** (or shape) helps comparing years
-- Averages, box an whiskers can hide errors
+- **Averages**, box an whiskers can hide errors
 - Cleveland's reading: the year labels for Morris were probably **swapped** in the data.
 
 </div>
