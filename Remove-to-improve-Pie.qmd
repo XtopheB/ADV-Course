@@ -1,5 +1,8 @@
 ---
-pagetitle: "Remove to improve: the pie chart edition"
+title: "Remove to improve"
+author:
+  - name:  "Christophe Bontemps (SIAP)"
+    affiliation:  "Adapted from DarkHorse Analytics \\ ![](Images/escap_siap_logo.png){width=150px} "
 format:
   revealjs:
     width: 960
@@ -8,7 +11,7 @@ format:
     slide-number: false
     transition: none
     center: false
-    css: styles.css
+    css: myReveal.css
 execute:
   echo: false
   warning: false
@@ -37,14 +40,14 @@ showtext_auto(); showtext_opts(dpi = 100)
 px <- function(p) p * 0.72 / ggplot2::.pt      # pixel font size -> geom size (mm)
 
 # ---- Data and palette -------------------------------------------------------
-cats  <- c("Bacon", "Ribs", "Ham", "Other")
-share <- c(Bacon = 42, Ribs = 14, Ham = 12, Other = 32)
-cols_multi <- c(Bacon = "#C0504D", Ribs = "#B2A1C7", Ham = "#9BBB59", Other = "#4F81BD")
+cats  <- c("Food", "Energy", "Clothes", "Other")
+share <- c(Food = 42, Energy = 14, Clothes = 12, Other = 32)
+cols_multi <- c(Food = "#C0504D", Energy = "#B2A1C7", Clothes = "#9BBB59", Other = "#4F81BD")
 gris <- "#7F7F7F"
-cols_gray <- c(Bacon = "#C0504D", Ribs = "#7F7F7F", Ham = "#7F7F7F", Other = "#7F7F7F")
+cols_gray <- c(Food = "#C0504D", Energy = "#7F7F7F", Clothes = "#7F7F7F", Other = "#7F7F7F")
 dark <- "#595959"
 darken <- function(col, f) rgb(t(pmin(255, col2rgb(col) * f)), maxColorValue = 255)
-side_f <- c(Bacon = .55, Ribs = .6, Ham = .72, Other = .42)
+side_f <- c(Food = .55, Energy = .6, Clothes = .72, Other = .42)
 
 # ---- Pixel layout measured on the GIF (960 x 720) ---------------------------
 lab <- tibble(
@@ -55,8 +58,8 @@ lab <- tibble(
   x1    = 254 + 7.9 * share              # length proportional to share
 )
 
-# Pie, clockwise from 12 o'clock: Bacon, Other, Ham, Ribs; first edge at -40.5 deg
-pie_order <- c("Bacon", "Other", "Ham", "Ribs")
+# Pie, clockwise from 12 o'clock: Food, Other, Clothes, Energy; first edge at -40.5 deg
+pie_order <- c("Food", "Other", "Clothes", "Energy")
 ang_w  <- share[pie_order] / 100 * 2 * pi
 ang_0  <- -40.5 * pi / 180 + cumsum(c(0, head(ang_w, -1)))
 ang_1  <- ang_0 + ang_w
@@ -91,10 +94,10 @@ side_poly <- function(m, p, n = 40, strips = 8) {   # visible front wall (angles
 }
 
 title_html <- function(gray = FALSE) {
-  if (gray) return("<b style='color:#7F7F7F'>Pig Meat Preferences</b>")
-  paste0("<b><span style='color:#E36C0A'>Pig</span> ",
-         "<span style='color:#8064A2'>Meat</span> ",
-         "<span style='color:#F20000'>Preferences</span></b>")
+  if (gray) return("<b style='color:#7F7F7F'>Household expenditure</b>")
+  paste0("<b><span style='color:#E36C0A'>Household</span> ",
+         "<span style='color:#8064A2'>expenditure</span> ",
+         "<span style='color:#F20000'>categories</span></b>")
 }
 
 canvas <- function() {
@@ -126,10 +129,10 @@ frame <- function(heading,
                   t = 0,                       # 0 = 3D ... 1 = flat
                   keep = cats,                 # wedges still drawn
                   fills = cols_multi,
-                  bold = rep(TRUE, 4),         # Bacon, Ribs, Ham, Other
+                  bold = rep(TRUE, 4),         # Food, Energy, Clothes, Other
                   title_gray = FALSE,
                   bar_h = 0,                   # >0: lines have become bars
-                  red_bacon = FALSE,
+                  red_Food = FALSE,
                   lines = TRUE) {
   g <- canvas()
 
@@ -171,7 +174,7 @@ frame <- function(heading,
   }
 
   if (bar_h > 0) {
-    bars <- lab |> mutate(col = if (red_bacon) ifelse(meat == "Bacon", cols_multi[["Bacon"]], gris) else gris)
+    bars <- lab |> mutate(col = if (red_Food) ifelse(meat == "Food", cols_multi[["Food"]], gris) else gris)
     g <- g + geom_rect(data = bars, aes(xmin = x0, xmax = x1, ymin = y - bar_h / 2,
                                         ymax = y + bar_h / 2, fill = col))
   } else if (lines) {
@@ -225,6 +228,10 @@ less_more <- function(word) {
              size = px(36), colour = "#C0504D", family = fam_l)
 }
 ```
+
+
+
+
 
 ```{r}
 intro_card()
@@ -335,7 +342,7 @@ frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = c(cols_multi[1:3], O
 ---
 
 ```{r}
-frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = c(Bacon = cols_multi[[1]], Ribs = cols_multi[[2]], Ham = gris, Other = gris))
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = c(Food = cols_multi[[1]], Energy = cols_multi[[2]], Clothes = gris, Other = gris))
 ```
 
 ---
@@ -359,19 +366,19 @@ frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title
 ---
 
 ```{r}
-frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Bacon", "Ribs", "Ham"))
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Food", "Energy", "Clothes"))
 ```
 
 ---
 
 ```{r}
-frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Bacon", "Ribs"))
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Food", "Energy"))
 ```
 
 ---
 
 ```{r}
-frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = "Bacon")
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = "Food")
 ```
 
 ---
@@ -413,13 +420,13 @@ frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray
 ---
 
 ```{r}
-frame("Emphasize the bacon", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33)
+frame("Emphasize the Food", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33)
 ```
 
 ---
 
 ```{r}
-frame("Emphasize the bacon", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_bacon = TRUE)
+frame("Emphasize the Food", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_Food = TRUE)
 ```
 
 ---
@@ -449,5 +456,5 @@ frame("Before", outer = "cyan", inner = "gray", legend = TRUE, border = dark)
 ---
 
 ```{r}
-frame("After", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_bacon = TRUE)
+frame("After", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_Food = TRUE)
 ```
