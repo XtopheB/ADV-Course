@@ -1,0 +1,453 @@
+---
+pagetitle: "Remove to improve: the pie chart edition"
+format:
+  revealjs:
+    width: 960
+    height: 720
+    margin: 0
+    slide-number: false
+    transition: none
+    center: false
+    css: styles.css
+execute:
+  echo: false
+  warning: false
+  message: false
+  fig-width: 9.6
+  fig-height: 7.2
+  fig-dpi: 100
+---
+
+```{r setup}
+# Every slide is ONE 960 x 720 "canvas" plot (same pixel size as the GIF), so
+# the pie, the leader lines, the labels and the heading sit exactly where they
+# do in the original frames.
+library(tidyverse)
+library(ggtext)
+library(showtext)
+
+fam <- "sans"; fam_l <- "sans"
+try({
+  sysfonts::font_add_google("Open Sans", "os",       regular.wt = 400, bold.wt = 700)
+  sysfonts::font_add_google("Open Sans", "os-light", regular.wt = 300)
+  fam <- "os"; fam_l <- "os-light"
+}, silent = TRUE)
+showtext_auto(); showtext_opts(dpi = 100)
+
+px <- function(p) p * 0.72 / ggplot2::.pt      # pixel font size -> geom size (mm)
+
+# ---- Data and palette -------------------------------------------------------
+cats  <- c("Bacon", "Ribs", "Ham", "Other")
+share <- c(Bacon = 42, Ribs = 14, Ham = 12, Other = 32)
+cols_multi <- c(Bacon = "#C0504D", Ribs = "#B2A1C7", Ham = "#9BBB59", Other = "#4F81BD")
+gris <- "#7F7F7F"
+cols_gray <- c(Bacon = "#C0504D", Ribs = "#7F7F7F", Ham = "#7F7F7F", Other = "#7F7F7F")
+dark <- "#595959"
+darken <- function(col, f) rgb(t(pmin(255, col2rgb(col) * f)), maxColorValue = 255)
+side_f <- c(Bacon = .55, Ribs = .6, Ham = .72, Other = .42)
+
+# ---- Pixel layout measured on the GIF (960 x 720) ---------------------------
+lab <- tibble(
+  meat  = factor(cats, levels = cats),
+  share = unname(share[cats]),
+  y     = c(309, 375, 441, 507),          # label / line / bar centre
+  x0    = 254,                            # line start
+  x1    = 254 + 7.9 * share              # length proportional to share
+)
+
+# Pie, clockwise from 12 o'clock: Bacon, Other, Ham, Ribs; first edge at -40.5 deg
+pie_order <- c("Bacon", "Other", "Ham", "Ribs")
+ang_w  <- share[pie_order] / 100 * 2 * pi
+ang_0  <- -40.5 * pi / 180 + cumsum(c(0, head(ang_w, -1)))
+ang_1  <- ang_0 + ang_w
+names(ang_0) <- names(ang_1) <- pie_order
+
+lerp <- function(a, b, t) a + (b - a) * t
+# t = 0: original 3D pie (tilted ellipse + side wall); t = 1: flat circle
+pie_par <- function(t) list(
+  cx = lerp(531, 513, t), cy = lerp(414, 418, t),
+  a  = lerp(221, 178, t), b  = lerp(151, 178, t),
+  vx = lerp(528, 513, t), vy = lerp(401, 418, t),
+  d  = lerp(62, 0, t))
+
+wedge_poly <- function(m, p, n = 80) {
+  th <- seq(ang_0[[m]], ang_1[[m]], length.out = n)
+  tibble(meat = m,
+         x = c(p$vx, p$cx + p$a * sin(th)),
+         y = c(p$vy, p$cy - p$b * cos(th)))
+}
+side_poly <- function(m, p, n = 40, strips = 8) {   # visible front wall (angles 90-270)
+  lo <- max(ang_0[[m]], pi / 2); hi <- min(ang_1[[m]], 3 * pi / 2)
+  if (p$d <= 0 || hi <= lo) return(NULL)
+  th  <- seq(lo, hi, length.out = n)
+  top <- tibble(x = p$cx + p$a * sin(th), y = p$cy - p$b * cos(th))
+  map_dfr(seq_len(strips), function(j) {
+    y_a <- (j - 1) / strips * p$d;  y_b <- j / strips * p$d      # y grows downward
+    bind_rows(mutate(top, y = y + y_a),
+              mutate(arrange(top, desc(row_number())), y = y + y_b)) |>
+      mutate(meat = m, strip = j,
+             shade = lerp(1.35, 0.65, (j - 0.5) / strips))      # light top -> dark bottom
+  })
+}
+
+title_html <- function(gray = FALSE) {
+  if (gray) return("<b style='color:#7F7F7F'>Pig Meat Preferences</b>")
+  paste0("<b><span style='color:#E36C0A'>Pig</span> ",
+         "<span style='color:#8064A2'>Meat</span> ",
+         "<span style='color:#F20000'>Preferences</span></b>")
+}
+
+canvas <- function() {
+  ggplot() +
+    scale_fill_identity() +
+    scale_colour_identity() +
+    scale_y_reverse(limits = c(720, 0), expand = c(0, 0)) +   # pixel y grows DOWNWARD
+    coord_cartesian(xlim = c(0, 960), expand = FALSE) +
+    theme_void() +
+    theme(plot.margin = margin(0, 0, 0, 0),
+          plot.background = element_rect(fill = "white", colour = NA))
+}
+
+add_heading_footer <- function(g, heading) {
+  g +
+    annotate("text", x = 60, y = 88, label = heading, hjust = 0,
+             size = px(62), colour = "#404040", family = fam_l) +
+    annotate("text", x = 180, y = 693, hjust = 0, size = px(15), colour = gris,
+             family = fam,
+             label = "Recreated from \u201cRemove to improve\u201d by Darkhorse Analytics")
+}
+
+# ---- One frame of the GIF ---------------------------------------------------
+frame <- function(heading,
+                  outer = "none",              # "cyan" | "white" | "line" | "none"
+                  inner = "none",              # "gray" | "none"
+                  legend = FALSE,              # coloured legend squares
+                  border = "white",            # wedge outline colour
+                  t = 0,                       # 0 = 3D ... 1 = flat
+                  keep = cats,                 # wedges still drawn
+                  fills = cols_multi,
+                  bold = rep(TRUE, 4),         # Bacon, Ribs, Ham, Other
+                  title_gray = FALSE,
+                  bar_h = 0,                   # >0: lines have become bars
+                  red_bacon = FALSE,
+                  lines = TRUE) {
+  g <- canvas()
+
+  if (outer != "none") {
+    g <- g + annotate("rect", xmin = 87, xmax = 881, ymin = 171, ymax = 670,
+                      fill = c(cyan = "#AEE2EC", white = "white", line = NA)[[outer]],
+                      colour = "black", linewidth = 0.8)
+    if (outer == "cyan") {
+      set.seed(7)
+      drops <- tibble(x = runif(260, 95, 873), y = runif(260, 178, 663),
+                      s = runif(260, 1.5, 6))
+      g <- g + geom_point(data = drops, aes(x, y, size = s), shape = 21,
+                          fill = "#D2F1F7", colour = "#8FD0DE", alpha = .7,
+                          show.legend = FALSE) + scale_size_identity()
+    }
+  }
+  if (inner == "gray") {
+    g <- g + annotate("rect", xmin = 140, xmax = 829, ymin = 247, ymax = 640,
+                      fill = "#BFBFBF", colour = "black", linewidth = 0.8)
+  }
+
+  if (length(keep) > 0) {
+    p <- pie_par(t)
+    sides  <- map_dfr(keep, side_poly, p = p)
+    wedges <- map_dfr(keep, wedge_poly, p = p)
+    if (nrow(sides) > 0) {
+      sides$col <- pmap_chr(list(as.character(sides$meat), sides$shade),
+                            ~ darken(fills[[..1]], side_f[[..1]] * ..2))
+      g <- g + geom_polygon(data = sides, aes(x, y, group = interaction(meat, strip), fill = col, colour = col),
+                            linewidth = 0.3)       # same-colour outline hides seams between strips
+      if (border != "white") {            # keep the dark outline of the early frames
+        g <- g + geom_path(data = sides |> filter(strip == 8), aes(x, y, group = meat),
+                           colour = border, linewidth = 1)
+      }
+    }
+    wedges$col <- fills[wedges$meat]
+    g <- g + geom_polygon(data = wedges, aes(x, y, group = meat, fill = col),
+                          colour = border, linewidth = 1, linejoin = "round")
+  }
+
+  if (bar_h > 0) {
+    bars <- lab |> mutate(col = if (red_bacon) ifelse(meat == "Bacon", cols_multi[["Bacon"]], gris) else gris)
+    g <- g + geom_rect(data = bars, aes(xmin = x0, xmax = x1, ymin = y - bar_h / 2,
+                                        ymax = y + bar_h / 2, fill = col))
+  } else if (lines) {
+    g <- g + geom_segment(data = lab, aes(x = x0, xend = x1, y = y, yend = y),
+                          colour = "#404040", linewidth = 0.3)
+  }
+
+  if (legend) {
+    sq <- lab |> mutate(col = cols_multi[as.character(meat)])
+    g <- g + geom_rect(data = sq, aes(xmin = 161, xmax = 186, ymin = y - 12.5,
+                                      ymax = y + 12.5, fill = col))
+  }
+
+  lab2 <- lab |> mutate(face = ifelse(bold, "bold", "plain"))
+  g <- g +
+    geom_text(data = lab2, aes(x = 196, y = y, label = meat, fontface = face),
+              hjust = 0, size = px(18), colour = "black", family = fam) +
+    geom_text(data = lab2, aes(x = x1 + 9, y = y, label = paste0(share, "%")),
+              hjust = 0, size = px(17), colour = "#404040", family = fam) +
+    geom_richtext(data = tibble(x = 195, y = 213, label = title_html(title_gray)),
+                  aes(x, y, label = label), hjust = 0, fill = NA, label.colour = NA,
+                  label.padding = unit(rep(0, 4), "pt"), size = px(36), family = fam)
+
+  add_heading_footer(g, heading)
+}
+
+# ---- Title cards ------------------------------------------------------------
+intro_card <- function() {
+  canvas() +
+    annotate("text", x = 90,  y = 250, label = "Remove", hjust = 0, size = px(118),
+             fontface = "bold", colour = "#404040", family = fam) +
+    annotate("text", x = 218, y = 328, label = "to", hjust = 0, size = px(46),
+             colour = "#404040", family = fam_l) +
+    annotate("text", x = 296, y = 335, label = "improve", hjust = 0, size = px(88),
+             colour = "#404040", family = fam_l) +
+    geom_richtext(data = tibble(x = 88, y = 400,
+                                label = "the <b>pie chart</b> edition"),
+                  aes(x, y, label = label), hjust = 0, fill = NA, label.colour = NA,
+                  label.padding = unit(rep(0, 4), "pt"), size = px(46),
+                  colour = "#C0504D", family = fam_l)
+}
+less_more <- function(word) {
+  canvas() +
+    annotate("text", x = 170, y = 262, label = "Less", hjust = 0, size = px(100),
+             colour = "#404040", family = fam_l) +
+    annotate("text", x = 178, y = 330, label = "is", hjust = 0, size = px(32),
+             colour = "#404040", family = fam_l) +
+    annotate("text", x = 232, y = 340, label = "more", hjust = 0, size = px(108),
+             fontface = "bold", colour = "#404040", family = fam) +
+    annotate("text", x = 236, y = 405, label = paste0("(", word, ")"), hjust = 0,
+             size = px(36), colour = "#C0504D", family = fam_l)
+}
+```
+
+```{r}
+intro_card()
+```
+
+---
+
+```{r}
+frame("Remove backgrounds", outer = "cyan", inner = "gray", legend = TRUE, border = dark)
+```
+
+---
+
+```{r}
+frame("Remove backgrounds", outer = "white", inner = "gray", legend = TRUE, border = dark)
+```
+
+---
+
+```{r}
+frame("Remove backgrounds", outer = "line", legend = TRUE, border = dark)
+```
+
+---
+
+```{r}
+frame("Remove borders", legend = TRUE, border = dark)
+```
+
+---
+
+```{r}
+frame("Remove borders", legend = TRUE, border = "white")
+```
+
+---
+
+```{r}
+frame("Remove redundant legend", legend = TRUE)
+```
+
+---
+
+```{r}
+frame("Remove redundant legend")
+```
+
+---
+
+```{r}
+frame("Remove 3D", t = 0.25)
+```
+
+---
+
+```{r}
+frame("Remove 3D", t = 0.5)
+```
+
+---
+
+```{r}
+frame("Remove 3D", t = 0.75)
+```
+
+---
+
+```{r}
+frame("Remove 3D", t = 1)
+```
+
+---
+
+```{r}
+frame("Remove bolding", t = 1, bold = c(FALSE, TRUE, TRUE, TRUE))
+```
+
+---
+
+```{r}
+frame("Remove bolding", t = 1, bold = c(FALSE, FALSE, TRUE, TRUE))
+```
+
+---
+
+```{r}
+frame("Remove bolding", t = 1, bold = c(FALSE, FALSE, FALSE, TRUE))
+```
+
+---
+
+```{r}
+frame("Remove bolding", t = 1, bold = c(FALSE, FALSE, FALSE, FALSE))
+```
+
+---
+
+```{r}
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4))
+```
+
+---
+
+```{r}
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = c(cols_multi[1:3], Other = gris))
+```
+
+---
+
+```{r}
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = c(Bacon = cols_multi[[1]], Ribs = cols_multi[[2]], Ham = gris, Other = gris))
+```
+
+---
+
+```{r}
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = cols_gray)
+```
+
+---
+
+```{r}
+frame("Reduce colors", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE)
+```
+
+---
+
+```{r}
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE)
+```
+
+---
+
+```{r}
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Bacon", "Ribs", "Ham"))
+```
+
+---
+
+```{r}
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = c("Bacon", "Ribs"))
+```
+
+---
+
+```{r}
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = "Bacon")
+```
+
+---
+
+```{r}
+frame("Remove the wedges", t = 1, bold = rep(FALSE, 4), fills = cols_gray, title_gray = TRUE, keep = character(0))
+```
+
+---
+
+```{r}
+frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 2)
+```
+
+---
+
+```{r}
+frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 6)
+```
+
+---
+
+```{r}
+frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 14)
+```
+
+---
+
+```{r}
+frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 24)
+```
+
+---
+
+```{r}
+frame("Thicken the lines", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33)
+```
+
+---
+
+```{r}
+frame("Emphasize the bacon", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33)
+```
+
+---
+
+```{r}
+frame("Emphasize the bacon", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_bacon = TRUE)
+```
+
+---
+
+```{r}
+less_more("effective")
+```
+
+---
+
+```{r}
+less_more("attractive")
+```
+
+---
+
+```{r}
+less_more("impactive")
+```
+
+---
+
+```{r}
+frame("Before", outer = "cyan", inner = "gray", legend = TRUE, border = dark)
+```
+
+---
+
+```{r}
+frame("After", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_bacon = TRUE)
+```
