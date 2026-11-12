@@ -10,6 +10,7 @@ format:
     height: 720
     margin: 0
     slide-number: false
+    embed-resources: true
     transition: none
     center: false
     css: myReveal.css
