@@ -2,7 +2,8 @@
 title: "Remove to improve"
 author:
   - name:  "Christophe Bontemps (SIAP)"
-    affiliation:  "Adapted from DarkHorse Analytics \\ ![](Images/escap_siap_logo.png){width=150px} "
+    affiliation:  "![](Images/escap_siap_logo.png){width=150px}"
+    email: "Adapted from DarkHorse Analytics"
 format:
   revealjs:
     width: 960
@@ -201,7 +202,7 @@ frame <- function(heading,
   add_heading_footer(g, heading)
 }
 
-# ---- Title cards ------------------------------------------------------------
+# ---- Title cards  <-- No used
 intro_card <- function() {
   canvas() +
     annotate("text", x = 90,  y = 250, label = "Remove", hjust = 0, size = px(118),
@@ -230,12 +231,14 @@ less_more <- function(word) {
 ```
 
 
+## How to improve a Pie Chart
 
+- Pie Chart can be useful
+- But 3-D Pie Chart should be **avoided**
+- Alternative happen
+- Just remove non-data ink and colors
 
-
-```{r}
-intro_card()
-```
+Let's try...
 
 ---
 
@@ -458,3 +461,11 @@ frame("Before", outer = "cyan", inner = "gray", legend = TRUE, border = dark)
 ```{r}
 frame("After", keep = character(0), bold = rep(FALSE, 4), title_gray = TRUE, bar_h = 33, red_Food = TRUE)
 ```
+
+## Removing is improving!
+
+*"Perfection is achieved not when there is nothing more to add,
+but when there is nothing left to take away"*
+
+Antoine de Saint-Exupery
+ 
