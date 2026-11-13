@@ -1,0 +1,179 @@
+---
+title: "Women's Political Empowerment Index, 2025"
+subtitle: "Two choropleth maps: equal-interval vs. Jenks natural breaks"
+author:
+  - name:  "Christophe Bontemps (SIAP)"
+    affiliation:  "![](Images/escap_siap_logo.png){width=150px}"
+    email: "Adapted from DarkHorse Analytics"
+format:
+  html:
+    embed-resources: true
+    code-fold: true
+    toc: false
+execute:
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(sf)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(rnaturalearth)
+library(classInt)
+
+# Number of classes for each map
+n_equal <- 5
+n_jenks <- 5
+
+# Equal Earth projection (equal-area, suited to choropleths)
+crs_map <- "+proj=eqearth +lon_0=0"
+```
+
+## Data and boundaries
+
+Data: *Women's Political Empowerment Index* (0 = lowest, 1 = highest), Our World in Data, 2025.
+Boundaries: Natural Earth via `rnaturalearth`. Countries are joined by ISO-3 code, with fixes for
+codes that Natural Earth leaves blank (France, Norway) or that OWID defines itself (Kosovo, `OWID_KOS`).
+Countries without data are shown in grey.
+
+```{r}
+#| label: data
+dat <- read_csv("Data/OurWinData2026-women-political-empowerment-index.csv",
+                show_col_types = FALSE) |>
+  rename(index = `Women's Political Empowerment Index`,
+         region = `World region according to OWID`)
+
+world <- ne_countries(scale = "medium", returnclass = "sf") |>
+  filter(adm0_a3 != "ATA") |>                       # Antarctica is not a country
+  mutate(Code = case_when(
+    adm0_a3 == "KOS"                ~ "OWID_KOS",    # Kosovo
+    adm0_a3 %in% c("IOA", "ATC")    ~ NA_character_, # Australian external territories
+    TRUE                            ~ iso_a3_eh      # fixes France / Norway
+  )) |>
+  left_join(dat, by = "Code") |>
+  st_transform(crs_map)
+
+# Sanity check: every country in the data set is on the map
+stopifnot(all(dat$Code %in% world$Code))
+cat(nrow(dat), "countries with data;",
+    sum(is.na(world$index)), "map units without data (grey)\n")
+```
+
+```{r}
+#| label: helpers
+# Build class labels from break values; classes use the exact breaks
+classify <- function(x, breaks, digits = 2) {
+  lab <- paste0(formatC(head(breaks, -1), format = "f", digits = digits), " to ",
+                formatC(tail(breaks, -1), format = "f", digits = digits))
+  factor(cut(x, breaks, include.lowest = TRUE, labels = lab), levels = lab)
+}
+
+# Small countries are invisible at world scale: add a marker so all are represented
+small <- world |>
+  filter(!is.na(index), as.numeric(st_area(geometry)) < 2.5e10) |>   # < 25,000 km²
+  st_point_on_surface()
+
+map_theme <- theme_void(base_size = 12) +
+  theme(plot.background  = element_rect(fill = "white", colour = NA),
+        panel.background = element_rect(fill = "white", colour = NA),   # white oceans
+        legend.position  = "bottom",
+        legend.title     = element_text(face = "bold"),
+        plot.title       = element_text(face = "bold", size = 15),
+        plot.caption     = element_text(colour = "grey35", hjust = 0))
+
+make_map <- function(fills, title, subtitle, legend_title) {
+  ggplot() +
+    geom_sf(data = world, aes(fill = cls), colour = "white", linewidth = 0.15) +
+    geom_sf(data = small, aes(fill = cls), shape = 21, size = 1.6,
+            colour = "grey25", stroke = 0.25, show.legend = FALSE) +
+    scale_fill_manual(values = fills, na.value = "grey80", drop = FALSE,
+                      name = legend_title, na.translate = TRUE,
+                      labels = function(x) ifelse(is.na(x), "No data", x),
+                      guide = guide_legend(nrow = 1, title.position = "top",
+                                           override.aes = list(colour = "grey40"))) +
+    labs(title = title, subtitle = subtitle,
+         caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. Boundaries: Natural Earth.") +
+    map_theme
+}
+```
+
+## Map 1 — Equal intervals, single purple hue
+
+Classes of equal width across the observed range; lightness of one hue encodes the level.
+
+```{r}
+#| label: map-equal
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World choropleth map of the Women's Political Empowerment Index in 2025, five equal-interval classes in a light-to-dark purple scale. Countries without data are grey."
+br_equal <- seq(min(dat$index), max(dat$index), length.out = n_equal + 1)
+world$cls <- classify(world$index, br_equal)
+small$cls <- classify(small$index, br_equal)
+
+purples <- c("#f2f0f7", "#cbc9e2", "#9e9ac8", "#756bb1", "#54278f")
+
+make_map(purples,
+         "Women's Political Empowerment Index, 2025",
+         "Equal-interval classes, sequential purple scale",
+         "Index (0 to 1)")
+```
+
+## Map 2 — Jenks natural breaks, a different hue for each level
+
+Jenks breaks minimise within-class variance, so class limits follow gaps in the data.
+A diverging, colour-blind-safe palette gives each level its own hue (red → yellow → blue).
+
+```{r}
+#| label: map-jenks
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World choropleth map of the Women's Political Empowerment Index in 2025, five Jenks natural-break classes shown in distinct hues from red (lowest) through yellow to blue (highest). Countries without data are grey."
+br_jenks <- classIntervals(dat$index, n = n_jenks, style = "jenks")$brks
+world$cls <- classify(world$index, br_jenks)
+small$cls <- classify(small$index, br_jenks)
+
+hues <- c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6")   # RdYlBu, 5 classes
+
+make_map(hues,
+         "Women's Political Empowerment Index, 2025",
+         "Jenks natural breaks, distinct hue per level",
+         "Index (0 to 1)")
+```
+
+### With bad selection of hues
+
+```{r}
+#| label: map-jenks-Qualitative
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World choropleth map of the Women's Political Empowerment Index in 2025."
+br_jenks <- classIntervals(dat$index, n = n_jenks, style = "jenks")$brks
+world$cls <- classify(world$index, br_jenks)
+small$cls <- classify(small$index, br_jenks)
+
+hues <- c('#377eb8', '#984ea3', '#4daf4a',"#ffff33", "#a65628")  #  5 classes
+
+
+
+
+make_map(hues,
+         "Women's Political Empowerment Index, 2025",
+         "Jenks natural breaks, Qualitative palette",
+         "Index (0 to 1)")
+```
+
+## Class breaks and counts
+
+```{r}
+#| label: breaks
+tibble(
+  method = rep(c("Equal interval", "Jenks"), each = n_equal),
+  class  = c(levels(classify(dat$index, br_equal)),
+             levels(classify(dat$index, br_jenks))),
+  countries = c(table(classify(dat$index, br_equal)),
+                table(classify(dat$index, br_jenks)))
+) |> knitr::kable()
+```
