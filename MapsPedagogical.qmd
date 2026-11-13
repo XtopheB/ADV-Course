@@ -38,6 +38,11 @@ Data: *Women's Political Empowerment Index* (0 = lowest, 1 = highest), [Our Worl
 Boundaries: Natural Earth via `rnaturalearth`.
 Countries without data are shown in grey.
 
+### About the index
+**Women's political empowerment** is defined as a process of increasing capacity for women, leading to greater choice, agency, and participation in societal decision-making. It is understood to incorporate three equally-weighted dimensions: fundamental civil liberties, women's open discussion of political issues and participation in civil society organizations, and the descriptive representation of women in formal political positions.
+
+The index is made up of three sub-indices: women's civil liberties, women's civil society participation, and women's political participation (see[https://ourworldindata.org/women-rights](Women's Rights topic page).).
+
 ```{r}
 #| label: data
 dat <- read_csv("Data/OurWinData2026-women-political-empowerment-index.csv",
@@ -425,12 +430,19 @@ prop_base_ap() +
 #| fig-width: 11
 #| fig-height: 6.5
 #| fig-alt: "Asia-Pacific map with vertical green bars standing on each country, bar height proportional to the Women's Political Empowerment Index in 2025. Reference bars for 0.25, 0.5 and 1.0 are shown at lower left. Countries without data are dark grey."
+
+# Bar size:  Bars are drawn in map units, which are metres in the Equal Earth projection. A gap of 1 would be 2,200 km tall, and every bar is 260 km wide.
+
 bar_h_ap <- 2.2e6
 bar_w_ap <- 2.6e5
+
+# Legend data: Three reference bars, with values 0.25, 0.5 and 0.75. They are spaced 1,000 km apart and positioned from the lower-left corner of ap_window, which is an empty area of the map.
 
 leg_ap <- tibble(v = c(0.25, 0.5, 1),
                  x = ap_window$x[1] + 1.2e6 + c(0, 1, 2) * 1.0e6,
                  y = ap_window$y[1] + 0.9e6)
+
+# pts_ap is built in the setup chunk by keeping each country’s largest polygon and taking a point inside it. Without that step, countries such as Malaysia, the Philippines and Japan could have their bars placed on a distant island.
 
 prop_base_ap() +
   geom_rect(data = pts_ap, aes(xmin = x - bar_w_ap / 2, xmax = x + bar_w_ap / 2,
@@ -440,48 +452,59 @@ prop_base_ap() +
                                ymin = y, ymax = y + v * bar_h_ap),
             fill = sym_green, colour = NA) +
   geom_text(data = leg_ap, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
-  annotate("text", x = ap_window$x[1] + 1.2e6 - 1.5e5, y = ap_window$y[1] + 0.9e6 + bar_h_ap + 3.0e5,
-           label = "Index (0 to 1)", hjust = 0, fontface = "bold", size = 3.6) +
-  prop_labs_ap + labs(subtitle = "Proportional bars (height encodes the index)") +
+  annotate("text",
+           x = ap_window$x[1] + 1.2e6 - 1.5e5,
+           y = ap_window$y[1] + 0.9e6 + bar_h_ap + 3.0e5,
+           label = "Index (0 to 1)",
+           hjust = 0, fontface = "bold", size = 3.6) +
+  prop_labs_ap +
+  labs(subtitle = "Proportional bars (height encodes the index)") +
   map_theme
 ```
 
 #### Map 11 — Proportional bars with reverse index (Asia-Pacific)
 
+Reversing the index for a better representation of **low** values.
+
+>Low empowermentis now large bars.  
 
 
 ```{r}
-#| label: map-bars-gap
+#| label: map-ap-bars-gap
 #| fig-width: 11
-#| fig-height: 6
-#| fig-alt: "World map with vertical purple bars standing on each country, bar height proportional to 1 minus the Women's Political Empowerment Index in 2025, so taller bars mean a larger gap to full empowerment. Reference bars for 0.25, 0.5 and 0.75 are shown at lower left. Countries without data are dark grey."
-pts_gap <- pts |> mutate(gap = 1 - index)      # distance from full empowerment (0 = best)
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific map with vertical green bars standing on each country, bar height proportional to 1 minus the Women's Political Empowerment Index in 2025, so taller bars mean a larger gap to full empowerment. A dark dot marks the base of each bar. Reference bars for 0.25, 0.5 and 0.75 are shown at lower left. Countries without data are dark grey."
 
-bar_h <- 2.2e6   # map units (metres) for a gap of 1
-bar_w <- 2.2e5
+#
+pts_ap_gap <- pts_ap |>
+  mutate(gap = 1 - index) |>
+  arrange(desc(gap))                                      # draw tall bars first
 
-leg_ap <- tibble(v = c(0.25, 0.5, 1),
+# Bars height
+bar_h_ap <- 2.2e6   # map units (metres) for a gap of 1
+bar_w_ap <- 2.6e5   
+
+leg_ap <- tibble(v = c(0.25, 0.5, 0.75),
                  x = ap_window$x[1] + 1.2e6 + c(0, 1, 2) * 1.0e6,
                  y = ap_window$y[1] + 0.9e6)
 
-
-
 prop_base_ap() +
-  geom_rect(data = pts_gap, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
-                                ymin = y, ymax = y + gap * bar_h),
+  geom_rect(data = pts_ap_gap, aes(xmin = x - bar_w_ap / 2, xmax = x + bar_w_ap / 2,
+                                   ymin = y, ymax = y + gap * bar_h_ap),
             fill = sym_red, colour = "white", linewidth = 0.1) +
+  # dot marking the anchor point where each bar stands
+  geom_point(data = pts_ap_gap, aes(x = x, y = y), size = 0.8, colour = "darkred") +
+  
   # reference bars
-  geom_rect(data = leg, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
-                            ymin = y, ymax = y + v * bar_h),
+  geom_rect(data = leg_ap, aes(xmin = x - bar_w_ap / 2, xmax = x + bar_w_ap / 2,
+                               ymin = y, ymax = y + v * bar_h_ap),
             fill = sym_red, colour = NA) +
-  geom_text(data = leg, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
-  annotate("text", x = bb["xmin"] + 1.6e6 - 1.5e5, y = bb["ymin"] + 1.0e6 + bar_h + 3.0e5,
+  geom_text(data = leg_ap, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
+  annotate("text", x = ap_window$x[1] + 1.2e6 - 1.5e5, y = ap_window$y[1] + 0.9e6 + bar_h_ap + 3.0e5,
            label = "1 - index", hjust = 0, fontface = "bold", size = 3.6) +
-  prop_labs + labs(subtitle = "Proportional bars: gap to full empowerment (1 - index); taller = less empowerment") +
+  prop_labs_ap + labs(subtitle = "Proportional bars: gap to full empowerment (1 - index); taller = less empowerment") +
   map_theme
 ```
-
-
 
 
 
@@ -529,7 +552,7 @@ ggplot(rank_df, aes(x = index, y = reorder(Entity, index), fill = group)) +
 
 ## Ranking in Asia- Pacific
 
-Horizontal bars, ordered from highest to lowest index. The dashed line marks the **0.5 (50%) threshold**. Asia-Pacific countries only. 
+We also changed the ordering of the bar **from lowest to highest** index. The dashed line marks the **0.5 (50%) threshold**. Asia-Pacific countries only. 
 
 ```{r}
 #| label: ranking-AP
