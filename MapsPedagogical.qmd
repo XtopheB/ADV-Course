@@ -34,9 +34,8 @@ crs_map <- "+proj=eqearth +lon_0=0"
 
 ## Data and boundaries
 
-Data: *Women's Political Empowerment Index* (0 = lowest, 1 = highest), Our World in Data, 2025.
-Boundaries: Natural Earth via `rnaturalearth`. Countries are joined by ISO-3 code, with fixes for
-codes that Natural Earth leaves blank (France, Norway) or that OWID defines itself (Kosovo, `OWID_KOS`).
+Data: *Women's Political Empowerment Index* (0 = lowest, 1 = highest), [Our World in Data, 2025](https://ourworldindata.org/grapher/women-political-empowerment-index?tab=table&time=2025).
+Boundaries: Natural Earth via `rnaturalearth`.
 Countries without data are shown in grey.
 
 ```{r}
