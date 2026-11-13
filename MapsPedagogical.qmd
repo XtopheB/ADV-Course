@@ -1,6 +1,6 @@
 ---
 title: "Women's Political Empowerment Index, 2025"
-subtitle: "Two choropleth maps: equal-interval vs. Jenks natural breaks"
+subtitle: "Exercise with maps"
 author:
   - name:  "Christophe Bontemps (SIAP)"
     affiliation:  "![](Images/escap_siap_logo.png){width=150px}"
@@ -46,15 +46,17 @@ dat <- read_csv("Data/OurWinData2026-women-political-empowerment-index.csv",
   rename(index = `Women's Political Empowerment Index`,
          region = `World region according to OWID`)
 
-world <- ne_countries(scale = "medium", returnclass = "sf") |>
+world_ll <- ne_countries(scale = "medium", returnclass = "sf") |>
   filter(adm0_a3 != "ATA") |>                       # Antarctica is not a country
   mutate(Code = case_when(
     adm0_a3 == "KOS"                ~ "OWID_KOS",    # Kosovo
     adm0_a3 %in% c("IOA", "ATC")    ~ NA_character_, # Australian external territories
     TRUE                            ~ iso_a3_eh      # fixes France / Norway
-  )) |>
-  left_join(dat, by = "Code") |>
-  st_transform(crs_map)
+  ),
+  area_m2 = as.numeric(st_area(geometry))) |>
+  left_join(dat, by = "Code")
+
+world <- st_transform(world_ll, crs_map)
 
 # Sanity check: every country in the data set is on the map
 stopifnot(all(dat$Code %in% world$Code))
@@ -73,7 +75,7 @@ classify <- function(x, breaks, digits = 2) {
 
 # Small countries are invisible at world scale: add a marker so all are represented
 small <- world |>
-  filter(!is.na(index), as.numeric(st_area(geometry)) < 2.5e10) |>   # < 25,000 km²
+  filter(!is.na(index), area_m2 < 2.5e10) |>   # < 25,000 km²
   st_point_on_surface()
 
 map_theme <- theme_void(base_size = 12) +
@@ -84,10 +86,14 @@ map_theme <- theme_void(base_size = 12) +
         plot.title       = element_text(face = "bold", size = 15),
         plot.caption     = element_text(colour = "grey35", hjust = 0))
 
-make_map <- function(fills, title, subtitle, legend_title) {
+make_map <- function(fills, title, subtitle, legend_title,
+                     w = world, sm = small, context = NULL, window = NULL,
+                     dot_size = 1.6, caption_extra = "") {
   ggplot() +
-    geom_sf(data = world, aes(fill = cls), colour = "white", linewidth = 0.15) +
-    geom_sf(data = small, aes(fill = cls), shape = 21, size = 1.6,
+    {if (!is.null(context))
+      geom_sf(data = context, fill = "grey96", colour = "white", linewidth = 0.15)} +
+    geom_sf(data = w, aes(fill = cls), colour = "white", linewidth = 0.15) +
+    geom_sf(data = sm, aes(fill = cls), shape = 21, size = dot_size,
             colour = "grey25", stroke = 0.25, show.legend = FALSE) +
     scale_fill_manual(values = fills, na.value = "grey80", drop = FALSE,
                       name = legend_title, na.translate = TRUE,
@@ -95,7 +101,10 @@ make_map <- function(fills, title, subtitle, legend_title) {
                       guide = guide_legend(nrow = 1, title.position = "top",
                                            override.aes = list(colour = "grey40"))) +
     labs(title = title, subtitle = subtitle,
-         caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. Boundaries: Natural Earth.") +
+         caption = paste0("Source: Our World in Data, Women's Political Empowerment Index, 2025. Boundaries: Natural Earth.",
+                          caption_extra)) +
+    {if (!is.null(window))
+      coord_sf(xlim = window$x, ylim = window$y, expand = FALSE)} +
     map_theme
 }
 ```
@@ -143,6 +152,7 @@ make_map(hues,
          "Index (0 to 1)")
 ```
 
+
 ### With bad selection of hues
 
 ```{r}
@@ -154,26 +164,411 @@ br_jenks <- classIntervals(dat$index, n = n_jenks, style = "jenks")$brks
 world$cls <- classify(world$index, br_jenks)
 small$cls <- classify(small$index, br_jenks)
 
-hues <- c('#377eb8', '#984ea3', '#4daf4a',"#ffff33", "#a65628")  #  5 classes
+Qhues <- c('#377eb8', '#984ea3', '#4daf4a',"#ffff33", "#a65628")  #  5 classes
 
-
-
-
-make_map(hues,
+make_map(Qhues,
          "Women's Political Empowerment Index, 2025",
          "Jenks natural breaks, Qualitative palette",
          "Index (0 to 1)")
 ```
 
-## Class breaks and counts
+
+
+## Asia-Pacific focus
+
+Same two maps, zoomed to the Asia-Pacific region (UN ESCAP member States in Asia and the Pacific).
+**Class breaks are the global ones** from Maps 1 and 2, so colours mean the same thing as above.
+Countries outside the region are shown in light grey for context; "No data" stays darker grey.
+Map 3 uses a single **green** hue; Map 4 keeps a distinct hue per level.
 
 ```{r}
-#| label: breaks
-tibble(
-  method = rep(c("Equal interval", "Jenks"), each = n_equal),
-  class  = c(levels(classify(dat$index, br_equal)),
-             levels(classify(dat$index, br_jenks))),
-  countries = c(table(classify(dat$index, br_equal)),
-                table(classify(dat$index, br_jenks)))
-) |> knitr::kable()
+#| label: ap-setup
+# ESCAP regional members (geographic Asia-Pacific; excludes FRA, GBR, NLD, USA)
+ap_codes <- c("AFG","ARM","AUS","AZE","BGD","BTN","BRN","KHM","CHN","FJI","GEO","IND",
+              "IDN","IRN","JPN","KAZ","KIR","PRK","KOR","KGZ","LAO","MYS","MDV","MHL",
+              "FSM","MNG","MMR","NRU","NPL","NZL","PAK","PLW","PNG","PHL","RUS","WSM",
+              "SGP","SLB","LKA","TJK","THA","TLS","TON","TUR","TKM","TUV","UZB","VUT","VNM")
+
+crs_ap <- "+proj=eqearth +lon_0=120"            # centred on the region; Pacific stays in one piece
+
+# Crop to the region's longitude window (25E to 145W) on both sides of the antimeridian
+suppressMessages(sf_use_s2(FALSE))
+box <- function(x0, x1) st_as_sfc(st_bbox(c(xmin = x0, xmax = x1, ymin = -50, ymax = 80), crs = 4326))
+world_ap <- bind_rows(suppressWarnings(st_crop(world_ll, box(25, 180))),
+                      suppressWarnings(st_crop(world_ll, box(-180, -145)))) |>
+  mutate(in_ap = Code %in% ap_codes) |>
+  st_transform(crs_ap)
+suppressMessages(sf_use_s2(TRUE))
+
+ap_data <- world_ap |> filter(in_ap)
+ap_ctx  <- world_ap |> filter(!in_ap) |> st_geometry() |> st_sf()
+
+ap_data$cls_equal <- classify(ap_data$index, br_equal)
+ap_data$cls_jenks <- classify(ap_data$index, br_jenks)
+
+ap_small <- ap_data |> filter(area_m2 < 2.5e10) |>   # also no-data micro-states (shown grey)
+  st_point_on_surface() |> suppressWarnings()
+
+# Map window in projected coordinates
+corner <- st_sfc(st_point(c(25, 0)), st_point(c(-145, 0)),
+                 st_point(c(120, -48)), st_point(c(120, 78)), crs = 4326) |>
+  st_transform(crs_ap) |> st_coordinates()
+ap_window <- list(x = sort(corner[1:2, "X"]), y = sort(corner[3:4, "Y"]))
+
+# Which ESCAP members have no index value?
+missing_ap <- setdiff(ap_codes, dat$Code)
+cat("ESCAP members without data (grey):", ifelse(length(missing_ap), paste(missing_ap, collapse = ", "), "none"), "\n")
 ```
+
+### Map 3 — Equal intervals, single green hue
+
+```{r}
+#| label: map-ap-equal
+#| fig-width: 11
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific choropleth map of the Women's Political Empowerment Index in 2025, five equal-interval classes in a light-to-dark green scale. Countries without data are grey; countries outside the region are light grey."
+greens <- c("#d9f0d3", "#a6dba0", "#5aae61", "#1b7837", "#00441b")
+w3 <- ap_data |> mutate(cls = cls_equal)
+s3 <- ap_small |> mutate(cls = cls_equal)
+
+make_map(greens,
+         "Women's Political Empowerment Index, 2025: Asia-Pacific",
+         "Equal-interval classes (global breaks), sequential green scale",
+         "Index (0 to 1)",
+         w = w3, sm = s3, context = ap_ctx, window = ap_window, dot_size = 2.4,
+         caption_extra = " Light grey: outside focus region.")
+```
+
+### Map 4 — Jenks natural breaks, a different hue for each level
+
+```{r}
+#| label: map-ap-jenks
+#| fig-width: 11
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific choropleth map of the Women's Political Empowerment Index in 2025, five Jenks natural-break classes in distinct hues from red (lowest) through yellow to blue (highest). Countries without data are grey; countries outside the region are light grey."
+w4 <- ap_data |> mutate(cls = cls_jenks)
+s4 <- ap_small |> mutate(cls = cls_jenks)
+
+make_map(hues,
+         "Women's Political Empowerment Index, 2025: Asia-Pacific",
+         "Jenks natural breaks (global breaks), distinct hue per level",
+         "Index (0 to 1)",
+         w = w4, sm = s4, context = ap_ctx, window = ap_window, dot_size = 2.4,
+         caption_extra = " Light grey: outside focus region.")
+```
+
+## Proportional symbol maps
+
+Instead of colouring countries, each country gets a symbol placed inside it whose size encodes the
+index value (0 to 1). Countries are drawn light grey; countries **without data** are darker grey and carry no symbol.
+Symbols sit at an interior point of each country, so overlaps are expected in crowded areas (Europe, Caribbean, Pacific).
+
+```{r}
+#| label: prop-setup
+# Interior point of each country with data; draw large symbols first so small ones stay visible
+pts <- world |>
+  filter(!is.na(index)) |>
+  st_point_on_surface() |>
+  suppressWarnings()
+xy  <- st_coordinates(pts)
+pts <- pts |> mutate(x = xy[, "X"], y = xy[, "Y"]) |> arrange(desc(index))
+
+sym_col <- "#54278f"   # same purple as Map 1
+
+# Base map: light grey with data, darker grey without
+prop_base <- function() {
+  ggplot() +
+    geom_sf(data = world, aes(fill = is.na(index)), colour = "white", linewidth = 0.15,
+            show.legend = FALSE) +
+    scale_fill_manual(values = c(`FALSE` = "grey92", `TRUE` = "grey78"))
+}
+
+prop_labs <- labs(title = "Women's Political Empowerment Index, 2025",
+                  caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. Boundaries: Natural Earth. Dark grey: no data.")
+
+size_scale <- scale_size_area(max_size = 8, limits = c(0, 1),
+                              breaks = c(0.25, 0.5, 0.75, 1), name = "Index (0 to 1)")
+size_guide <- guides(size = guide_legend(nrow = 1, title.position = "top",
+                                         override.aes = list(alpha = 1)))
+```
+
+### Map 5 — Proportional circles
+
+```{r}
+#| label: map-circles
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World map with solid purple circles at each country, circle area proportional to the Women's Political Empowerment Index in 2025. Countries without data are dark grey."
+prop_base() +
+  geom_point(data = pts, aes(x = x, y = y, size = index),
+             shape = 21, fill = sym_col, colour = "white", stroke = 0.3) +
+  size_scale + size_guide +
+  prop_labs + labs(subtitle = "Proportional circles (area encodes the index)") +
+  map_theme
+```
+
+### Map 6 — Proportional circles with transparency
+
+Semi-transparent fill with a solid outline keeps overlapping circles readable.
+
+```{r}
+#| label: map-circles-alpha
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World map with semi-transparent purple circles with dark outlines at each country, circle area proportional to the Women's Political Empowerment Index in 2025. Countries without data are dark grey."
+prop_base() +
+  geom_point(data = pts, aes(x = x, y = y, size = index),
+             shape = 21, fill = sym_col, alpha = 0.45, colour = sym_col, stroke = 0.5) +
+  size_scale + size_guide +
+  prop_labs + labs(subtitle = "Proportional circles with transparency (area encodes the index)") +
+  map_theme
+```
+
+### Map 7 — Proportional bars
+
+Bar height is proportional to the index; the reference bars in the lower left show the scale.
+
+```{r}
+#| label: map-bars
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World map with vertical purple bars standing on each country, bar height proportional to the Women's Political Empowerment Index in 2025. Reference bars for 0.25, 0.5 and 1.0 are shown at lower left. Countries without data are dark grey."
+bar_h <- 2.2e6   # map units (metres) for an index of 1
+bar_w <- 2.2e5
+
+bb  <- st_bbox(world)
+leg <- tibble(v = c(0.25, 0.5, 1),
+              x = bb["xmin"] + 1.6e6 + c(0, 1, 2) * 1.0e6,
+              y = bb["ymin"] + 1.0e6)
+
+prop_base() +
+  geom_rect(data = pts, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
+                            ymin = y, ymax = y + index * bar_h),
+            fill = sym_col, colour = "white", linewidth = 0.1) +
+  # reference bars
+  geom_rect(data = leg, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
+                            ymin = y, ymax = y + v * bar_h),
+            fill = sym_col, colour = NA) +
+  geom_text(data = leg, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
+  annotate("text", x = bb["xmin"] + 1.6e6 - 1.5e5, y = bb["ymin"] + 1.0e6 + bar_h + 3.0e5,
+           label = "Index (0 to 1)", hjust = 0, fontface = "bold", size = 3.6) +
+  prop_labs + labs(subtitle = "Proportional bars (height encodes the index)") +
+  map_theme
+```
+
+### Asia-Pacific focus: proportional symbols (green)
+
+The same three symbol types, zoomed to the Asia-Pacific region defined above, in green.
+Light grey: outside the focus region; dark grey: no data.
+
+```{r}
+#| label: prop-ap-setup
+sym_green <- "#1b7837"
+sym_red <- "darkred"
+
+pts_ap <- ap_data |>
+  filter(!is.na(index)) |>
+  st_point_on_surface() |>
+  suppressWarnings()
+xy_ap  <- st_coordinates(pts_ap)
+pts_ap <- pts_ap |> mutate(x = xy_ap[, "X"], y = xy_ap[, "Y"]) |> arrange(desc(index))
+
+prop_base_ap <- function() {
+  ggplot() +
+    geom_sf(data = ap_ctx, fill = "grey96", colour = "white", linewidth = 0.15) +
+    geom_sf(data = ap_data, aes(fill = is.na(index)), colour = "white", linewidth = 0.15,
+            show.legend = FALSE) +
+    scale_fill_manual(values = c(`FALSE` = "grey90", `TRUE` = "grey75")) +
+    coord_sf(xlim = ap_window$x, ylim = ap_window$y, expand = FALSE)
+}
+
+prop_labs_ap <- labs(title = "Women's Political Empowerment Index, 2025: Asia-Pacific",
+                     caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. Boundaries: Natural Earth.\nDark grey: no data; light grey: outside focus region.")
+
+size_scale_ap <- scale_size_area(max_size = 11, limits = c(0, 1),
+                                 breaks = c(0.25, 0.5, 0.75, 1), name = "Index (0 to 1)")
+```
+
+#### Map 8 — Proportional circles (Asia-Pacific)
+
+```{r}
+#| label: map-ap-circles
+#| fig-width: 11
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific map with solid green circles at each country, circle area proportional to the Women's Political Empowerment Index in 2025. Countries without data are dark grey."
+prop_base_ap() +
+  geom_point(data = pts_ap, aes(x = x, y = y, size = index),
+             shape = 21, fill = sym_green, colour = "white", stroke = 0.3) +
+  size_scale_ap + size_guide +
+  prop_labs_ap + labs(subtitle = "Proportional circles (area encodes the index)") +
+  map_theme
+```
+
+#### Map 9 — Proportional circles with transparency (Asia-Pacific)
+
+```{r}
+#| label: map-ap-circles-alpha
+#| fig-width: 11
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific map with semi-transparent green circles with outlines at each country, circle area proportional to the Women's Political Empowerment Index in 2025. Countries without data are dark grey."
+prop_base_ap() +
+  geom_point(data = pts_ap, aes(x = x, y = y, size = index),
+             shape = 21, fill = sym_green, alpha = 0.45, colour = sym_green, stroke = 0.5) +
+  size_scale_ap + size_guide +
+  prop_labs_ap + labs(subtitle = "Proportional circles with transparency (area encodes the index)") +
+  map_theme
+```
+
+#### Map 10 — Proportional bars (Asia-Pacific)
+
+```{r}
+#| label: map-ap-bars
+#| fig-width: 11
+#| fig-height: 6.5
+#| fig-alt: "Asia-Pacific map with vertical green bars standing on each country, bar height proportional to the Women's Political Empowerment Index in 2025. Reference bars for 0.25, 0.5 and 1.0 are shown at lower left. Countries without data are dark grey."
+bar_h_ap <- 2.2e6
+bar_w_ap <- 2.6e5
+
+leg_ap <- tibble(v = c(0.25, 0.5, 1),
+                 x = ap_window$x[1] + 1.2e6 + c(0, 1, 2) * 1.0e6,
+                 y = ap_window$y[1] + 0.9e6)
+
+prop_base_ap() +
+  geom_rect(data = pts_ap, aes(xmin = x - bar_w_ap / 2, xmax = x + bar_w_ap / 2,
+                               ymin = y, ymax = y + index * bar_h_ap),
+            fill = sym_green, colour = "white", linewidth = 0.1) +
+  geom_rect(data = leg_ap, aes(xmin = x - bar_w_ap / 2, xmax = x + bar_w_ap / 2,
+                               ymin = y, ymax = y + v * bar_h_ap),
+            fill = sym_green, colour = NA) +
+  geom_text(data = leg_ap, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
+  annotate("text", x = ap_window$x[1] + 1.2e6 - 1.5e5, y = ap_window$y[1] + 0.9e6 + bar_h_ap + 3.0e5,
+           label = "Index (0 to 1)", hjust = 0, fontface = "bold", size = 3.6) +
+  prop_labs_ap + labs(subtitle = "Proportional bars (height encodes the index)") +
+  map_theme
+```
+
+#### Map 11 — Proportional bars with reverse index (Asia-Pacific)
+
+
+
+```{r}
+#| label: map-bars-gap
+#| fig-width: 11
+#| fig-height: 6
+#| fig-alt: "World map with vertical purple bars standing on each country, bar height proportional to 1 minus the Women's Political Empowerment Index in 2025, so taller bars mean a larger gap to full empowerment. Reference bars for 0.25, 0.5 and 0.75 are shown at lower left. Countries without data are dark grey."
+pts_gap <- pts |> mutate(gap = 1 - index)      # distance from full empowerment (0 = best)
+
+bar_h <- 2.2e6   # map units (metres) for a gap of 1
+bar_w <- 2.2e5
+
+leg_ap <- tibble(v = c(0.25, 0.5, 1),
+                 x = ap_window$x[1] + 1.2e6 + c(0, 1, 2) * 1.0e6,
+                 y = ap_window$y[1] + 0.9e6)
+
+
+
+prop_base_ap() +
+  geom_rect(data = pts_gap, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
+                                ymin = y, ymax = y + gap * bar_h),
+            fill = sym_red, colour = "white", linewidth = 0.1) +
+  # reference bars
+  geom_rect(data = leg, aes(xmin = x - bar_w / 2, xmax = x + bar_w / 2,
+                            ymin = y, ymax = y + v * bar_h),
+            fill = sym_red, colour = NA) +
+  geom_text(data = leg, aes(x = x, y = y - 2.6e5, label = v), size = 3) +
+  annotate("text", x = bb["xmin"] + 1.6e6 - 1.5e5, y = bb["ymin"] + 1.0e6 + bar_h + 3.0e5,
+           label = "1 - index", hjust = 0, fontface = "bold", size = 3.6) +
+  prop_labs + labs(subtitle = "Proportional bars: gap to full empowerment (1 - index); taller = less empowerment") +
+  map_theme
+```
+
+
+
+
+
+
+## Ranking of all countries
+
+Horizontal bars, ordered from highest to lowest index. The dashed line marks the **0.5 (50%) threshold**.
+Asia-Pacific countries (ESCAP members, as defined above) are in green; all other countries are in light purple.
+
+```{r}
+#| label: ranking
+#| fig-width: 8
+#| fig-height: 32
+#| fig-alt: "Horizontal bar chart ranking 175 countries by Women's Political Empowerment Index in 2025, highest at top. A dashed vertical line marks the 0.5 threshold. Asia-Pacific countries are green, all others light purple."
+rank_df <- dat |>
+  mutate(group = ifelse(Code %in% ap_codes, "Asia-Pacific (ESCAP members)", "Other countries"))
+
+n_below  <- sum(rank_df$index < 0.5)
+n_ap_below <- sum(rank_df$index < 0.5 & rank_df$group != "Other countries")
+
+ggplot(rank_df, aes(x = index, y = reorder(Entity, index), fill = group)) +
+  geom_col(width = 0.8) +
+  geom_text(aes(label = sprintf("%.2f", index)), hjust = -0.2, size = 2.2, colour = "grey25") +
+  geom_vline(xintercept = 0.5, linetype = "dashed", linewidth = 0.8, colour = "darkred") +
+  annotate("label", x = 0.5, y = 3, label = "0.5 threshold", size = 3, fill = "white",
+           label.size = 0, hjust = -0.1) +
+  scale_fill_manual(values = c("Asia-Pacific (ESCAP members)" = "#1b7837",
+                               "Other countries"              = "#cbc9e2"),
+                    name = NULL) +
+  scale_x_continuous(limits = c(0, 1.05), breaks = seq(0, 1, 0.25), expand = c(0, 0)) +
+  labs(title = "Women's Political Empowerment Index, 2025",
+       subtitle = paste0(n_below, " of ", nrow(rank_df), " countries score below 0.5 (",
+                         n_ap_below, " in Asia-Pacific)"),
+       x = "Index (0 to 1)", y = NULL,
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025.") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_text(size = 6.5),
+        legend.position = "top", legend.justification = "left",
+        plot.title = element_text(face = "bold", size = 14),
+        plot.caption = element_text(colour = "grey35", hjust = 0),
+        plot.background = element_rect(fill = "white", colour = NA))
+```
+
+
+## Ranking in Asia- Pacific
+
+Horizontal bars, ordered from highest to lowest index. The dashed line marks the **0.5 (50%) threshold**. Asia-Pacific countries only. 
+
+```{r}
+#| label: ranking-AP
+#| fig-width: 8
+#| fig-height: 32
+#| fig-alt: "Horizontal bar chart ranking 175 countries by Women's Political Empowerment Index in 2025, highest at top. A dashed vertical line marks the 0.5 threshold. Asia-Pacific countries are green, all others light purple."
+
+rank_df_AP <- dat %>%
+  filter(Code %in% ap_codes) 
+  # mutate(group = ifelse(Code %in% ap_codes, "Asia-Pacific (ESCAP members)", "Other countries"))
+  # n_below  <- sum(rank_df$index < 0.5)
+  # n_ap_below <- sum(rank_df$index < 0.5 & rank_df$group != "Other countries")
+  
+
+rank_df_AP %>%
+  ggplot() +
+  aes(x = index, y = reorder(Entity, -index)) +
+  geom_col(width = 0.8, fill = "#1b7837") +
+  geom_text(aes(label = sprintf("%.2f", index)), hjust = -0.2, size = 3.2, colour = "grey25") +
+  geom_vline(xintercept = 0.5, linetype = "dashed", linewidth = 0.8, colour = "darkred") +
+  annotate("label", x = 0.5, y = 3, label = "0.5 threshold", size = 3, fill = "white",
+           label.size = 0, hjust = -0.1) +
+  scale_x_continuous(limits = c(0, 1.05), 
+                     breaks = seq(0, 1, 0.25), expand = c(0, 0)) +
+  labs(title = "Women's Political Empowerment Index, 2025",
+       subtitle = paste0(n_ap_below, " of ", nrow(rank_df_AP),"
+                         countries in Asia-Pacific score below 0.5"),
+       x = "Index (0 to 1)",
+       y = NULL,
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025.") +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.major.y = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y = element_text(size = 8.5),
+        legend.position = "top", legend.justification = "left",
+        plot.title = element_text(face = "bold", size = 14),
+        plot.caption = element_text(colour = "grey35", hjust = 0),
+        plot.background = element_rect(fill = "white", colour = NA))
+```
+
+
+
