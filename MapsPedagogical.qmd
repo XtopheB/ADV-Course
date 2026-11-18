@@ -4,7 +4,7 @@ subtitle: "Exercise with maps"
 author:
   - name:  "Christophe Bontemps (SIAP)"
     affiliation:  "![](Images/escap_siap_logo.png){width=150px}"
-    email: "Adapted from DarkHorse Analytics"
+    email: "christophe.Bontemps@un.org"
 format:
   html:
     embed-resources: true
@@ -593,4 +593,78 @@ rank_df_AP %>%
 ```
 
 
+# New geometries
 
+## Hex Maps
+Hex maps replace geographic areas with **equal-sized** hexagons arranged to preserve the approximate location of regions. They reduce the visual dominance of large areas and make comparisons across regions clearer and more balanced, while dramatically **removing the size and geometries** of the countries. 
+
+
+```{r}
+#| label: map-ap-hex
+#| fig-width: 11
+#| fig-height: 8
+#| fig-alt: "Hexagon map of 49 Asia-Pacific countries, one equal-size hexagon per country arranged roughly like geography, filled in five green classes by the Women's Political Empowerment Index in 2025. Each hexagon shows the country code and index value. Countries without data are grey."
+# Hand-made hex layout for the 49 ESCAP members: pointy-top hexes, odd rows shifted half a cell right.
+# col = west -> east, row = north -> south. Edit the table to move a country.
+hex_layout <- tribble(
+  ~Code, ~col, ~row,
+  "RUS",  7, 0,
+  "KAZ",  5, 1,  "MNG",  8, 1,
+  "GEO",  1, 2,  "AZE",  2, 2,  "UZB",  4, 2,  "KGZ",  5, 2,  "CHN",  8, 2,  "PRK",  9, 2,
+  "TUR",  0, 3,  "ARM",  1, 3,  "TKM",  3, 3,  "TJK",  5, 3,  "KOR",  9, 3,  "JPN", 10, 3,
+  "IRN",  2, 4,  "AFG",  4, 4,  "NPL",  6, 4,  "BTN",  7, 4,
+  "PAK",  4, 5,  "IND",  5, 5,  "BGD",  6, 5,  "MMR",  7, 5,  "LAO",  8, 5,  "VNM",  9, 5,  "PHL", 10, 5,
+  "LKA",  5, 6,  "THA",  7, 6,  "KHM",  8, 6,  "PLW", 11, 6,  "FSM", 12, 6,  "MHL", 14, 6,
+  "MDV",  4, 7,  "MYS",  7, 7,  "BRN",  9, 7,  "NRU", 13, 7,  "KIR", 15, 7,
+  "SGP",  8, 8,  "IDN",  9, 8,  "TLS", 10, 8,  "PNG", 12, 8,  "SLB", 13, 8,  "TUV", 15, 8,
+  "VUT", 13, 9,  "FJI", 14, 9,  "WSM", 16, 9,
+  "AUS", 10, 10, "TON", 15, 10,
+  "NZL", 14, 12
+)
+stopifnot(setequal(hex_layout$Code, ap_codes), !anyDuplicated(hex_layout[c("col", "row")]))
+
+# Hexagon outlines (circumradius 1/sqrt(3) makes neighbouring cell centres 1 apart; x0.95 leaves a gap)
+R   <- 0.95 / sqrt(3)
+ang <- pi / 180 * (30 + 60 * 0:5)
+
+hexes <- hex_layout |>
+  mutate(cx = col + 0.5 * (row %% 2),                     # odd rows shifted right
+         cy = -row * sqrt(3) / 2) |>
+  left_join(select(dat, Code, index), by = "Code") |>
+  mutate(cls = classify(index, br_equal),                 # same global equal-interval classes as Map 3
+         txt = ifelse(!is.na(cls) & as.integer(cls) >= 4, "white", "grey15"))
+
+polys <- hexes[rep(seq_len(nrow(hexes)), each = 6), ] |>
+  mutate(vertex = rep(1:6, times = nrow(hexes)),
+         px = cx + R * cos(ang[vertex]),
+         py = cy + R * sin(ang[vertex]))
+
+p <-polys %>%
+ggplot() +
+  geom_polygon(aes(px, py, group = Code, fill = cls),
+               colour = "white", linewidth = 0.4) +
+  geom_text(data = hexes, aes(cx, cy + 0.11, label = Code, colour = txt),
+            fontface = "bold", size = 3.1) +
+  geom_text(data = hexes, aes(cx, cy - 0.17, label = ifelse(is.na(index), "n/a", sprintf("%.2f", 1-index)), colour = txt),
+            size = 2.7) +
+  scale_fill_manual(values = greens, na.value = "grey80", drop = FALSE, na.translate = TRUE,
+                    labels = function(x) ifelse(is.na(x), "No data", x),
+                    name = "Index (0 to 1)",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  coord_equal() +
+  labs(title = "Women's Political Empowerment Index, 2025: Asia-Pacific",
+       subtitle = "Hexagon map: one equal-size hexagon per country, roughly following geography",
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025.") +
+  theme_void(base_size = 12) +
+  theme(plot.background = element_rect(fill = "white", colour = NA),
+        legend.position = "bottom", legend.title = element_text(face = "bold"),
+        plot.title = element_text(face = "bold", size = 15),
+        plot.caption = element_text(colour = "grey35", hjust = 0))
+
+p
+# library(plotly)
+# plotly::ggplotly(p)
+```
+
+## Dorling
