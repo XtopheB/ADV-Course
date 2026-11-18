@@ -755,3 +755,60 @@ ggplot() +
        caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. ESCAP members; ISO-3 codes. Boundaries: Natural Earth (background).") +
   map_theme
 ```
+
+# Cartogram
+
+
+```{r}
+#| label: map-ap-cartogram
+#| fig-width: 11
+#| fig-height: 7.5
+#| fig-alt: "Contiguous cartogram of 40 Asia-Pacific countries in which each country's area is made proportional to its Women's Political Empowerment Index in 2025, filled in five green classes. Larger countries with low index values shrink, and small countries with high values expand. Countries without data are not shown."
+library(cartogram)
+
+# One feature per country (some come in several pieces), only those with data;
+# simplified outlines keep the cartogram algorithm fast and stable
+carto_in <- ap_data |>
+  filter(!is.na(index)) |>
+  group_by(Code, Entity, index) |>
+  summarise(.groups = "drop") |>
+  st_make_valid() |>
+  st_simplify(dTolerance = 2e4, preserveTopology = TRUE)
+
+# Contiguous (Dougenik) cartogram: each country's AREA is made proportional to its index
+carto <- cartogram_cont(carto_in, weight = "index", itermax = 15, maxSizeError = 1.3)
+
+carto <- carto |>
+  mutate(cls = classify(index, br_equal))                 # same global equal-interval classes as Map 3
+
+# Labels: one point inside the largest part of each deformed country, only where there is room
+lab <- carto |>
+  st_cast("POLYGON") |>
+  suppressWarnings() |>
+  mutate(part_m2 = as.numeric(st_area(geometry))) |>
+  group_by(Code) |>
+  slice_max(part_m2, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  filter(part_m2 > 1.5e11) |>                             # label countries larger than ~150,000 km2 on the map
+  st_point_on_surface() |>
+  suppressWarnings()
+lab_xy <- st_coordinates(lab)
+lab <- lab |>
+  st_drop_geometry() |>
+  mutate(x = lab_xy[, "X"], y = lab_xy[, "Y"],
+         txt = ifelse(as.integer(cls) >= 4, "white", "grey15"))
+
+ggplot() +
+  geom_sf(data = carto, aes(fill = cls), colour = "white", linewidth = 0.25) +
+  geom_text(data = lab, aes(x, y, label = Code, colour = txt), fontface = "bold", size = 2.6) +
+  scale_fill_manual(values = greens, drop = FALSE,
+                    name = "Index (0 to 1)",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  labs(title = "Women's Political Empowerment Index, 2025: Asia-Pacific",
+       subtitle = "Contiguous cartogram: each country's area is proportional to its index",
+       caption = paste0("Source: Our World in Data, Women's Political Empowerment Index, 2025.\n",
+                        "ESCAP members with data (", nrow(carto), " of ", length(ap_codes),
+                        "); countries without data are not shown. Labels only where space allows.")) +
+  map_theme
+```
