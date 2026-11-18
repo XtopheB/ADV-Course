@@ -668,3 +668,90 @@ p
 ```
 
 ## Dorling
+
+The Dorling map, a special type of thematic map for visualizing geospatial statistical data. It transforms regions into circles with areas proportionate to statistical values while *endeavoring* to maintain regional spatial relationships. 
+
+
+```{r}
+#| label: map-ap-dorling
+#| fig-width: 11
+#| fig-height: 7.5
+#| fig-alt: "Dorling cartogram of Asia-Pacific countries: one circle per country over a faint base map, circle area proportional to the Women's Political Empowerment Index in 2025 and filled in five green classes, pushed apart so circles do not overlap. Countries without data are small grey circles."
+# 1. Start positions: one anchor per country (inside its largest polygon part)
+dor <- ap_data |>
+  st_cast("POLYGON") |>
+  suppressWarnings() |>
+  mutate(part_m2 = as.numeric(st_area(geometry))) |>
+  group_by(Code) |>
+  slice_max(part_m2, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  st_point_on_surface() |>
+  suppressWarnings()
+xy  <- st_coordinates(dor)
+dor <- dor |>
+  st_drop_geometry() |>
+  transmute(Code, index, x0 = xy[, "X"], y0 = xy[, "Y"])
+
+# 2. Circle radius: AREA proportional to the index (radius ~ sqrt(index)).
+#    Countries without data get a small fixed circle (grey) so every member is shown.
+r_max <- 7.5e5                                   # radius (metres) for an index of 1
+dor$r <- ifelse(is.na(dor$index), 0.25 * r_max, r_max * sqrt(dor$index))
+
+# 3. Dorling algorithm: push overlapping circles apart, while a weak spring
+#    pulls each circle back toward its true location
+dorling <- function(x0, y0, r, xlim, ylim, iter = 400, pad = 2e4, step = 0.5, spring = 0.02) {
+  x <- x0; y <- y0
+  for (it in seq_len(iter)) {
+    dx <- outer(x, x, "-"); dy <- outer(y, y, "-")
+    d  <- sqrt(dx^2 + dy^2); diag(d) <- Inf
+    ov <- pmax(outer(r, r, "+") + pad - d, 0)    # overlap between each pair
+    x  <- x + step * rowSums(dx / d * ov) / 2 + spring * (x0 - x)
+    y  <- y + step * rowSums(dy / d * ov) / 2 + spring * (y0 - y)
+    x  <- pmin(pmax(x, xlim[1] + r), xlim[2] - r)   # keep circles inside the map frame
+    y  <- pmin(pmax(y, ylim[1] + r), ylim[2] - r)
+  }
+  tibble(x = x, y = y)
+}
+dor <- bind_cols(dor, dorling(dor$x0, dor$y0, dor$r, ap_window$x, ap_window$y))
+
+# 4. Classes (same global equal-interval classes and green scale as Map 3), labels, draw order
+dor <- dor |>
+  mutate(cls = classify(index, br_equal),
+         txt = ifelse(!is.na(cls) & as.integer(cls) >= 4, "white", "grey15")) |>
+  arrange(desc(r))                               # big circles first, small ones on top
+
+# 5. Circle outlines as polygons, so circles stay true circles in map units
+th <- seq(0, 2 * pi, length.out = 61)[-61]
+circle_poly <- function(x, y, r, id) tibble(id = id, px = x + r * cos(th), py = y + r * sin(th))
+circles <- bind_rows(Map(circle_poly, dor$x, dor$y, dor$r, dor$Code)) |>
+  left_join(select(dor, Code, cls), by = c("id" = "Code"))
+
+# Reference circles for the size legend (lower left)
+leg_v   <- c(0.25, 0.5, 1)
+leg_r   <- r_max * sqrt(leg_v)
+leg_x   <- ap_window$x[1] + 1.0e6 + cumsum(c(0, leg_r[-3] + leg_r[-1] + 3e5))
+leg_y   <- ap_window$y[1] + 1.0e6 + leg_r
+leg_poly <- bind_rows(Map(circle_poly, leg_x, leg_y, leg_r, as.character(leg_v)))
+
+ggplot() +
+  geom_sf(data = ap_ctx,  fill = "grey96", colour = "white", linewidth = 0.15) +
+  geom_sf(data = ap_data, fill = "grey90", colour = "white", linewidth = 0.15) +
+  geom_polygon(data = circles, aes(px, py, group = id, fill = cls),
+               colour = "white", linewidth = 0.4, alpha = 0.95) +
+  geom_text(data = dor, aes(x, y, label = Code, colour = txt), fontface = "bold", size = 2.6) +
+  # size legend
+  geom_polygon(data = leg_poly, aes(px, py, group = id), fill = NA, colour = "grey30", linewidth = 0.4) +
+  annotate("text", x = leg_x, y = leg_y + leg_r + 2.2e5, label = leg_v, size = 3) +
+  annotate("text", x = leg_x[1] - leg_r[1], y = max(leg_y + leg_r) + 6.5e5,
+           label = "Circle area = index", hjust = 0, fontface = "bold", size = 3.4) +
+  scale_fill_manual(values = greens, na.value = "grey80", drop = FALSE, na.translate = TRUE,
+                    labels = function(x) ifelse(is.na(x), "No data (fixed size)", x),
+                    name = "Index (0 to 1)",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  coord_sf(xlim = ap_window$x, ylim = ap_window$y, expand = FALSE) +
+  labs(title = "Women's Political Empowerment Index, 2025: Asia-Pacific",
+       subtitle = "Dorling cartogram: circle area and colour show the index; circles are pushed apart to avoid overlap",
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. ESCAP members; ISO-3 codes. Boundaries: Natural Earth (background).") +
+  map_theme
+```
