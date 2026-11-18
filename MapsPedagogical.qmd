@@ -667,6 +667,54 @@ p
 # plotly::ggplotly(p)
 ```
 
+## Hex map with inverted index 
+
+```{r}
+#| label: map-ap-hex-gap
+#| fig-width: 11
+#| fig-height: 8
+#| fig-alt: "Hexagon map of 49 Asia-Pacific countries, one equal-size hexagon per country arranged roughly like geography, filled in five red classes by 1 minus the Women's Political Empowerment Index in 2025, darker red meaning a larger gap to full empowerment. Each hexagon shows the country code and the 1 minus index value. Countries without data are grey."
+# Uses hex_layout, R and ang from the hex map chunk (map-ap-hex)
+br_gap <- 1 - rev(br_equal)                               # global equal-interval breaks of the index, mirrored
+reds   <- c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15")
+
+hexes_gap <- hex_layout |>
+  mutate(cx = col + 0.5 * (row %% 2),                     # odd rows shifted right
+         cy = -row * sqrt(3) / 2) |>
+  left_join(select(dat, Code, index), by = "Code") |>
+  mutate(gap = 1 - index,                                 # distance from full empowerment (0 = best)
+         cls = classify(gap, br_gap),
+         txt = ifelse(!is.na(cls) & as.integer(cls) >= 4, "white", "grey15"))
+
+polys_gap <- hexes_gap[rep(seq_len(nrow(hexes_gap)), each = 6), ] |>
+  mutate(vertex = rep(1:6, times = nrow(hexes_gap)),
+         px = cx + R * cos(ang[vertex]),
+         py = cy + R * sin(ang[vertex]))
+
+ggplot() +
+  geom_polygon(data = polys_gap, aes(px, py, group = Code, fill = cls),
+               colour = "white", linewidth = 0.4) +
+  geom_text(data = hexes_gap, aes(cx, cy + 0.11, label = Code, colour = txt),
+            fontface = "bold", size = 3.1) +
+  geom_text(data = hexes_gap, aes(cx, cy - 0.17, label = ifelse(is.na(gap), "n/a", sprintf("%.2f", gap)), colour = txt),
+            size = 2.7) +
+  scale_fill_manual(values = reds, na.value = "grey80", drop = FALSE, na.translate = TRUE,
+                    labels = function(x) ifelse(is.na(x), "No data", x),
+                    name = "1 - index",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  coord_equal() +
+  labs(title = "Gap to full women's political empowerment (1 - index), 2025: Asia-Pacific",
+       subtitle = "Hexagon map: one equal-size hexagon per country (darker red = further from full empowerment)",
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. ESCAP members; ISO-3 country codes.") +
+  theme_void(base_size = 12) +
+  theme(plot.background = element_rect(fill = "white", colour = NA),
+        legend.position = "bottom", legend.title = element_text(face = "bold"),
+        plot.title = element_text(face = "bold", size = 15),
+        plot.caption = element_text(colour = "grey35", hjust = 0))
+```
+
+
 ## Dorling
 
 The Dorling map, a special type of thematic map for visualizing geospatial statistical data. It transforms regions into circles with areas proportionate to statistical values while *endeavoring* to maintain regional spatial relationships. 
@@ -756,8 +804,83 @@ ggplot() +
   map_theme
 ```
 
-# Cartogram
+### Dorling with inverted index
 
+```{r}
+#| label: map-ap-dorling-gap
+#| fig-width: 11
+#| fig-height: 7.5
+#| fig-alt: "Dorling cartogram of Asia-Pacific countries over a faint base map: one circle per country with circle area proportional to 1 minus the Women's Political Empowerment Index in 2025, filled in five red classes, pushed apart so circles do not overlap. Afghanistan, Iran and Myanmar have the largest, darkest circles; Australia, New Zealand and Japan are tiny. Countries without data are small grey circles."
+# Uses dorling() and circle_poly() from the Dorling map chunk (map-ap-dorling)
+br_gap <- 1 - rev(br_equal)                               # global equal-interval breaks of the index, mirrored
+reds   <- c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15")
+
+# 1. Start positions: one anchor per country (inside its largest polygon part)
+dor_g <- ap_data |>
+  st_cast("POLYGON") |>
+  suppressWarnings() |>
+  mutate(part_m2 = as.numeric(st_area(geometry))) |>
+  group_by(Code) |>
+  slice_max(part_m2, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  st_point_on_surface() |>
+  suppressWarnings()
+xy_g  <- st_coordinates(dor_g)
+dor_g <- dor_g |>
+  st_drop_geometry() |>
+  transmute(Code, gap = 1 - index, x0 = xy_g[, "X"], y0 = xy_g[, "Y"])
+
+# 2. Circle radius: AREA proportional to 1 - index (radius ~ sqrt(gap)); no-data countries: small fixed grey circle
+r_max_g <- 7.5e5                                          # radius (metres) for a gap of 1
+dor_g$r <- ifelse(is.na(dor_g$gap), 0.25 * r_max_g, r_max_g * sqrt(dor_g$gap))
+
+# 3. Push overlapping circles apart (weak spring back to true location, kept inside the map frame)
+dor_g <- bind_cols(dor_g, dorling(dor_g$x0, dor_g$y0, dor_g$r, ap_window$x, ap_window$y))
+
+# 4. Classes, labels, draw order
+dor_g <- dor_g |>
+  mutate(cls = classify(gap, br_gap),
+         txt = ifelse(!is.na(cls) & as.integer(cls) >= 4, "white", "grey15")) |>
+  arrange(desc(r))                                        # big circles first, small ones on top
+
+# 5. Circle outlines as polygons, so circles stay true circles in map units
+circles_g <- bind_rows(Map(circle_poly, dor_g$x, dor_g$y, dor_g$r, dor_g$Code)) |>
+  left_join(select(dor_g, Code, cls), by = c("id" = "Code"))
+
+# Reference circles for the size legend (lower left)
+leg_v    <- c(0.25, 0.5, 1)
+leg_r    <- r_max_g * sqrt(leg_v)
+leg_x    <- ap_window$x[1] + 1.0e6 + cumsum(c(0, leg_r[-3] + leg_r[-1] + 3e5))
+leg_y    <- ap_window$y[1] + 1.0e6 + leg_r
+leg_poly <- bind_rows(Map(circle_poly, leg_x, leg_y, leg_r, as.character(leg_v)))
+
+ggplot() +
+  geom_sf(data = ap_ctx,  fill = "grey96", colour = "white", linewidth = 0.15) +
+  geom_sf(data = ap_data, fill = "grey90", colour = "white", linewidth = 0.15) +
+  geom_polygon(data = circles_g, aes(px, py, group = id, fill = cls),
+               colour = "white", linewidth = 0.4, alpha = 0.95) +
+  geom_text(data = dor_g, aes(x, y, label = Code, colour = txt), fontface = "bold", size = 2.6) +
+  # size legend
+  geom_polygon(data = leg_poly, aes(px, py, group = id), fill = NA, colour = "grey30", linewidth = 0.4) +
+  annotate("text", x = leg_x, y = leg_y + leg_r + 2.2e5, label = leg_v, size = 3) +
+  annotate("text", x = leg_x[1] - leg_r[1], y = max(leg_y + leg_r) + 6.5e5,
+           label = "Circle area = 1 - index", hjust = 0, fontface = "bold", size = 3.4) +
+  scale_fill_manual(values = reds, na.value = "grey80", drop = FALSE, na.translate = TRUE,
+                    labels = function(x) ifelse(is.na(x), "No data (fixed size)", x),
+                    name = "1 - index",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  coord_sf(xlim = ap_window$x, ylim = ap_window$y, expand = FALSE) +
+  labs(title = "Gap to full women's political empowerment (1 - index), 2025: Asia-Pacific",
+       subtitle = "Dorling cartogram: circle area and colour show 1 - index (larger, darker = further from full empowerment)",
+       caption = "Source: Our World in Data, Women's Political Empowerment Index, 2025. ESCAP members; ISO-3 codes. Boundaries: Natural Earth (background).") +
+  map_theme
+```
+
+
+## Cartogram
+
+A cartogram is a thematic map that intentionally **distorts** geographic land area so that each region's size is proportional to a specific statistical **quantitative variable**  - here the empowerment index - rather than its actual physical 
 
 ```{r}
 #| label: map-ap-cartogram
@@ -807,6 +930,66 @@ ggplot() +
   scale_colour_identity() +
   labs(title = "Women's Political Empowerment Index, 2025: Asia-Pacific",
        subtitle = "Contiguous cartogram: each country's area is proportional to its index",
+       caption = paste0("Source: Our World in Data, Women's Political Empowerment Index, 2025.\n",
+                        "ESCAP members with data (", nrow(carto), " of ", length(ap_codes),
+                        "); countries without data are not shown. Labels only where space allows.")) +
+  map_theme
+```
+### Cartogram with inverted index
+
+```{r}
+#| label: map-ap-cartogram-gap
+#| fig-width: 11
+#| fig-height: 7.5
+#| fig-alt: "Contiguous cartogram of 40 Asia-Pacific countries in which each country's area is proportional to 1 minus the Women's Political Empowerment Index in 2025, filled in five red classes from light (small gap) to dark (large gap). Afghanistan, Iran and Myanmar are enlarged; Australia, New Zealand and Japan are small. Countries without data are not shown."
+library(cartogram)
+
+# One feature per country (some come in several pieces), only those with data;
+# simplified outlines keep the cartogram algorithm fast and stable
+carto_in <- ap_data |>
+  filter(!is.na(index)) |>
+  mutate(gap = 1 - index) |>                              # distance from full empowerment (0 = best)
+  group_by(Code, Entity, index, gap) |>
+  summarise(.groups = "drop") |>
+  st_make_valid() |>
+  st_simplify(dTolerance = 2e4, preserveTopology = TRUE)
+
+# Contiguous (Dougenik) cartogram: each country's AREA is made proportional to 1 - index
+carto <- cartogram_cont(carto_in, weight = "gap", itermax = 15, maxSizeError = 1.3)
+
+# Equal-interval classes of the gap: the global equal-interval breaks of the index, mirrored
+br_gap <- 1 - rev(br_equal)
+carto  <- carto |>
+  mutate(cls = classify(gap, br_gap))
+
+reds <- c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15")
+
+# Labels: one point inside the largest part of each deformed country, only where there is room
+lab <- carto |>
+  st_cast("POLYGON") |>
+  suppressWarnings() |>
+  mutate(part_m2 = as.numeric(st_area(geometry))) |>
+  group_by(Code) |>
+  slice_max(part_m2, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  filter(part_m2 > 1.5e11) |>                             # label countries larger than ~150,000 km2 on the map
+  st_point_on_surface() |>
+  suppressWarnings()
+lab_xy <- st_coordinates(lab)
+lab <- lab |>
+  st_drop_geometry() |>
+  mutate(x = lab_xy[, "X"], y = lab_xy[, "Y"],
+         txt = ifelse(as.integer(cls) >= 4, "white", "grey15"))
+
+ggplot() +
+  geom_sf(data = carto, aes(fill = cls), colour = "white", linewidth = 0.25) +
+  geom_text(data = lab, aes(x, y, label = Code, colour = txt), fontface = "bold", size = 2.6) +
+  scale_fill_manual(values = reds, drop = FALSE,
+                    name = "1 - index",
+                    guide = guide_legend(nrow = 1, title.position = "top")) +
+  scale_colour_identity() +
+  labs(title = "Gap to full women's political empowerment (1 - index), 2025: Asia-Pacific",
+       subtitle = "Contiguous cartogram: area proportional to 1 - index (larger = further from full empowerment)",
        caption = paste0("Source: Our World in Data, Women's Political Empowerment Index, 2025.\n",
                         "ESCAP members with data (", nrow(carto), " of ", length(ap_codes),
                         "); countries without data are not shown. Labels only where space allows.")) +
