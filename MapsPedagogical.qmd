@@ -645,7 +645,7 @@ ggplot() +
                colour = "white", linewidth = 0.4) +
   geom_text(data = hexes, aes(cx, cy + 0.11, label = Code, colour = txt),
             fontface = "bold", size = 3.1) +
-  geom_text(data = hexes, aes(cx, cy - 0.17, label = ifelse(is.na(index), "n/a", sprintf("%.2f", 1-index)), colour = txt),
+  geom_text(data = hexes, aes(cx, cy - 0.17, label = ifelse(is.na(index), "n/a", sprintf("%.2f", index)), colour = txt),
             size = 2.7) +
   scale_fill_manual(values = greens, na.value = "grey80", drop = FALSE, na.translate = TRUE,
                     labels = function(x) ifelse(is.na(x), "No data", x),
